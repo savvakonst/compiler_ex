@@ -1,0 +1,17 @@
+.idea/
+.idea/**
+/**/.vs/
+/**/.vs/**
+
+llvmLib/**
+/**/*.ipch
+/**/*pdb
+/**/*.db
+/**/*obj
+/**/*.tlog
+/**/*.log
+/**/*.log
+
+*.vcxproj*
+*.obj*
+*.tlog*
