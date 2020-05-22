@@ -11,7 +11,7 @@ template <class T> inline const T& max(const T& a, const T& b) {
 
 Line::Line(std::string name_, Variable* var, int index)
 {
-	unicle_index = index;
+
 	names.push_back(name_);
 
 	if (isConst(var)){
@@ -19,21 +19,22 @@ Line::Line(std::string name_, Variable* var, int index)
 		textValue   = var->getTextValue();
 	}
 
+	leftShift   = var->getLeftShift ();
+	rightShift  = var->getRightShift();
+
 	assignedVal = var;
-	dstype = var->dstype;
-	type = var->type;
-	length = var->getLength();
+	dstype      = var->dstype;
+	type        = var->type;
+	length      = var->getLength();
 }
 
 
 Line::Line(std::string name_, TypeEn ty, DataStructTypeEn dsty, uint64_t len, int index)
 {
-	unicle_index = index;
 	names.push_back(name_);
 
-
 	dstype = dsty;
-	type = ty;
+	type   = ty;
 	length = len;
 	is_arg = true;
 }
@@ -41,7 +42,7 @@ Line::Line(std::string name_, TypeEn ty, DataStructTypeEn dsty, uint64_t len, in
 
 Line::Line(std::string name_, int index)
 {
-	unicle_index = index;
+
 	names.push_back(name_);
 	type = TypeEn::Unknown_jty;
 	is_arg = true;

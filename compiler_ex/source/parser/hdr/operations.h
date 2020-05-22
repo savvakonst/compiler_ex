@@ -16,26 +16,55 @@ public:
 
 	Operation() { opCode = opCodeEn::NONE_op;  }
 
-	Operation(opCodeEn op, Variable* var, TypeEn targetType, int64_t intVal=0) {
+	Operation(opCodeEn op, Variable* var, TypeEn targetType, int64_t shiftOrDecimation=0) {
 		CommonSetup(op, var);
 		type = targetType;
 
 		if (op == opCodeEn::shift){
-			auto v=var->getLength()+ var->getDercimation()*intVal;
-			shiftParameter=intVal;
+			shiftParameter=shiftOrDecimation;
+			leftShift     =var->getLeftShift() + ((shiftParameter > 0) ? 0 : shiftParameter);
+			rightShift    =var->getRightShift() + ((shiftParameter < 0) ? 0 : -shiftParameter);
 		}
 		else if (op == opCodeEn::decimation) {
-			bufferLength=
-			decimationParameter=intVal;
+			print_error("op == opCodeEn::decimation unsupported yet");
+		}
+		else {
+			leftShift     =var->getLeftShift();
+			rightShift    =var->getRightShift();
 		}
 
 		operand.push_back(var); 
 	}
 
-	Operation(opCodeEn op, Variable* var1, Variable* var2, int64_t shift=0) {
+	Operation(opCodeEn op, Variable* largeArr, Variable* smallArr, int64_t shift) {
+		CommonSetup(op, maxDS(largeArr, smallArr));
+		int64_t len=smallArr->getLength();
+		int64_t le=len/2;
+		int64_t ri=(len-1)/2;
+
+		if (op == opCodeEn::convolve) {
+			shiftParameter  =shift;
+			leftShift       =largeArr->getLeftShift() + ((shift > 0) ? 0 : shift)+le;
+			rightShift      =largeArr->getRightShift() + ((shift < 0) ? 0 : -shift)+ri;
+			//leftShift     =largeArr->getLeftShift() + shift + le;
+			//rightShift    =largeArr->getRightShift() - shift + ri;
+		}else {
+			print_error("unknown convolve op");
+		}
+		type = largeArr->type;
+		shiftParameter = shift;
+		operand.push_back(largeArr);
+		operand.push_back(smallArr);
+	}
+
+
+	Operation(opCodeEn op, Variable* var1, Variable* var2) {
 		CommonSetup(op, maxDS(var1, var2));
 		type = var1->type;
-		shiftParameter = shift;
+
+		leftShift       =maxInt(var1->getLeftShift(), var2->getLeftShift());
+		rightShift      =maxInt(var1->getRightShift(), var2->getRightShift());
+
 		operand.push_back(var1);
 		operand.push_back(var2);
 	}
@@ -43,6 +72,10 @@ public:
 	Operation(opCodeEn op, Variable* var1, Variable* var2, Variable* var3, TypeEn targetType) {
 		CommonSetup(op, maxDS(var1, var2));
 		type = targetType;
+
+		leftShift       =maxInt(maxInt(var1->getLeftShift(), var2->getLeftShift()), var3->getLeftShift()) ;
+		rightShift      =maxInt(maxInt(var1->getRightShift(), var2->getRightShift()), var3->getRightShift());
+
 		operand.push_back(var1);
 		operand.push_back(var2);
 		operand.push_back(var3);
@@ -71,6 +104,7 @@ public:
 	virtual void visitExit( stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr = NULL)override;
 	virtual void visitExit( stack<std::string>* Stack  )override;
 
+	virtual void calcShiftVisitEnter(stack<Variable*>* visitorStack) { commonVisitEnter(visitorStack);  };
 	//dangerous functions . used reccursive call
 	virtual std::string Print() override;
 	virtual Variable* generate() override;
@@ -81,7 +115,7 @@ private:
 
 	// convolve params
 	int64_t shiftParameter = 0; 
-	int64_t decimationParameter = 1;
+	int64_t decimationParameter = 0;
 };
 
 

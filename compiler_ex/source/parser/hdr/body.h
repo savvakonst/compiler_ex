@@ -26,7 +26,6 @@ public:
 	}
 
 	bool isRetStackEmpty() {
-		
 		return 0 == returnStack.size();
 	}
 
@@ -57,7 +56,6 @@ public:
 	void addRangeOp(size_t argCount);
 	void addShiftOp			();
 	void addDecimationOp	();
-
 
 	//create call
 	void addCall(Body* body_);
@@ -104,13 +102,17 @@ public:
 		args = args_;
 
 		auto ret = body->getRet()[0];
-		type = ret->type;
-		dstype = ret->dstype;
-		length = ret->getLength();
+
+		type        = ret->type;
+		dstype      = ret->dstype;
+		length      = ret->getLength();
+		leftShift   = ret->getLeftShift ();
+		rightShift  = ret->getRightShift();
 
 		if (isConst(ret)) {
+
 			binaryValue = ret->getBinaryValue();
-			textValue = ret->getTextValue();
+			textValue   = ret->getTextValue();
 		}
 
 

@@ -152,8 +152,10 @@ public:
 	std::string  getTextValue    () { return textValue; }
 	uint64_t     getUsageCounter () { return usageCounter; }
 	int64_t      getLength       () { return length; }
-	int64_t      getShift        () { return shift; }
-	int64_t      getDercimation  () { return decimation; }
+	int64_t      getDecimation  () { return decimation; }
+	int64_t      getLeftShift    () { return leftShift; }
+	int64_t      getRightShift   () { return rightShift; }
+
 
 
 
@@ -166,13 +168,15 @@ public:
 	//safe functions .external stack is used
 	void commonVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
 
-
 	virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) { commonVisitEnter(visitorStack);  is_unused = false;  };
-
+	
 
 	virtual void visitEnter  (stack<Variable *> *visitorStack) { visitorStack->push(this); is_visited = true; };
 	virtual void visitExit   (stack<Variable *> *Stack, std::vector<Line *> *namespace_ptr = NULL) { Stack->push(new Variable(textValue, type)); is_visited = false; };
 	virtual void visitExit   (stack<std::string> *Stack) { Stack->push(textValue); is_visited = false; };
+
+	virtual void calcShiftVisitEnter(stack<Variable*>* visitorStack) { commonVisitEnter(visitorStack); };
+
 
 	//unsafe functions . recursive call is used
 	virtual std::string  Print    () { return textValue; };
@@ -191,14 +195,14 @@ protected:
 
 	uint64_t length = 1;
 	uint64_t shift = 0;
-	uint64_t decimation = 0;
+	uint64_t decimation=0;
+
+	uint64_t leftShift = 0;
+	uint64_t rightShift = 0;
 
 	uint64_t binaryValue  = 0;
-
 	uint64_t usageCounter = 0;
 
-	int64_t  bufferLength = 0;
-	int64_t  bufferShift  = 0;
 };
 
 
@@ -225,7 +229,7 @@ inline bool isUInteger(Variable* var) { return false; }
 
 inline Variable* max(Variable* var1, Variable* var2) { return var1->type < var2->type ? var2 : var1; }
 inline Variable* maxDS(Variable* var1, Variable* var2) { return var1->dstype < var2->dstype ? var2 : var1; }
-
+inline int64_t maxInt(int64_t var1, int64_t var2) { return (var1 < var2) ? var2 : var1; }
 
 
 inline bool operator<(TypeEn var1, Variable* var2) { return  var1 < var2->type; }

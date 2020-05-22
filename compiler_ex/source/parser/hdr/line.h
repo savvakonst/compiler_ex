@@ -43,7 +43,7 @@ private:
 
 	bool is_arg = false;
 
-	int targets_count=0;
+
 	int unicle_index=-1;
 
 
