@@ -102,9 +102,9 @@ Variable* Body::builtInFuncOp(opCodeEn uTypeOp, Variable* arg1 ){
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 
 	if (!isPrototype) {
-		if (TypeEn::Float_jty > arg1->type)
+		if (TypeEn::Float_jty > arg1->getType())
 			ret_arg1 = typeConvOp(TypeEn::Float_jty, arg1);
-		targetType = arg1->type;
+		targetType = arg1->getType();
 	}
 	return newBuiltInFuncOperation(targetType, ret_arg1, uTypeOp);
 }
@@ -114,9 +114,9 @@ Variable* Body::arithmeticOp(opCodeEn uTypeOp,Variable* arg1, Variable* arg2)
 	Variable * ret_arg1= arg1, * ret_arg2= arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!isPrototype) {
-		targetType = max(arg1, arg2)->type;
-		ret_arg1 = typeConvOp(targetType, arg1);
-		ret_arg2 = typeConvOp(targetType, arg2);
+		targetType = max(arg1, arg2)->getType();
+		ret_arg1   = typeConvOp(targetType, arg1);
+		ret_arg2   = typeConvOp(targetType, arg2);
 	}
 	return newArithmeticOperation(targetType, ret_arg1, ret_arg2,  uTypeOp );
 }
@@ -126,9 +126,9 @@ Variable* Body::convolveOp(opCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint
 	Variable* ret_arg1 = arg1, * ret_arg2 = arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!isPrototype) {
-		targetType = max(arg1, arg2)->type;
-		ret_arg1 = typeConvOp(targetType, arg1);
-		ret_arg2 = typeConvOp(targetType, arg2);
+		targetType = max(arg1, arg2)->getType();
+		ret_arg1   = typeConvOp(targetType, arg1);
+		ret_arg2   = typeConvOp(targetType, arg2);
 	}
 	return newConvolveOperation(targetType, ret_arg1, ret_arg2, shift, uTypeOp);
 }
@@ -138,9 +138,9 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 	Variable* ret_arg2 = arg2, * ret_arg3 = arg3;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!isPrototype) {
-		targetType = max(arg2, arg3)->type;
-		ret_arg2 = typeConvOp(targetType, arg2);
-		ret_arg3 = typeConvOp(targetType, arg3);
+		targetType = max(arg2, arg3)->getType();
+		ret_arg2   = typeConvOp(targetType, arg2);
+		ret_arg3   = typeConvOp(targetType, arg3);
 	}
 	return newSelectOp(targetType, arg1, ret_arg2, ret_arg3);
 }
@@ -241,9 +241,11 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 	stack<Variable*> visitorStack;
 	stack<std::string> stringStack;
+
+	const size_t max_line_length=90;
 	
-	//std::cout << " total lines : "<< lines.size()<<" :: "<< lines.capacity() <<"\n";
-	std::string result = " "+getName()+ "\n";
+	std::string result = " " + getName() + "\n";
+	std::string txtLine, txtSkip, txtShifts, txtUsaaage;
 
 	for (auto& value : lines) {
 		if (value->isArg()) {
@@ -263,10 +265,21 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 			auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
 			//std::cout << tab << value->getName()+"."+ value->getTxtDSType()<< "=" << stringStack.pop()  << "\n";
-			if (!hideUnusedLines || !value->isUnused())
-				result += tab + value->getName() + DST_postfix + "=" + stringStack.pop() +"\t\t" + std::to_string(value->getUsageCounter()) +"\n";
+			if (!hideUnusedLines || !value->isUnused()){
+				txtLine     = tab + value->getName() + DST_postfix + "=" + stringStack.pop() ;
+				txtShifts   = std::to_string(value->getLeftShift())+" : "+ std::to_string(value->getRightShift()) + " : " + std::to_string(value->getLength());
+				txtUsaaage  =std::to_string(value->getUsageCounter());
+				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
+				result     += txtLine + txtSkip + txtShifts + "\n";
+			}
+
+
+
+
+
 		}
 	}
+	
 	for (auto& value : returnStack) {
 		visitorStack.push(value->assignedVal);
 		do {
@@ -278,7 +291,13 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 		} while (!visitorStack.empty());
 
 		auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
-		result += tab + value->getName() + DST_postfix + "  " + stringStack.pop() + "\t\t" + std::to_string(value->getUsageCounter()) + "\n";
+
+
+		txtLine     = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
+		txtShifts   = std::to_string(value->getLeftShift()) + " : " + std::to_string(value->getRightShift());
+		txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
+		result     += txtLine + txtSkip + txtShifts + "\n";
+
 	}
 
 
@@ -291,8 +310,6 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 {
 	//std::cout << "debug args.size() " << args[0]->Print() << "\n";
 	auto arg= args.begin();
-
-
 
 	if (isPrototype == false)
 		return this;
@@ -338,14 +355,16 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 
 void Body::symplyfy()
 {
-	stack<Variable*> visitorStack;
-
-	for (auto& value : returnStack) {
-		visitorStack.push(value->assignedVal);
-		do {
-			auto var = visitorStack.pop();
-			var->markUnusedVisitEnter(&visitorStack);
-		} while (!visitorStack.empty());
-	}
-
+    stack<Variable*> visitorStack;
+    for (auto& value : returnStack) {
+        visitorStack.push(value->assignedVal);
+        do {
+            auto var = visitorStack.pop();
+            var->markUnusedVisitEnter(&visitorStack);
+			//if (var->isTermialLargeArray()) {
+            //    var->setBufferLength(value->getLeftShift(), value->getRightShift());
+            //}
+        } while (!visitorStack.empty());
+    }
 }
+

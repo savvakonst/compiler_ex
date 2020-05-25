@@ -133,7 +133,7 @@ public:
             CONV_TY(EGrammarParser::INT64   , TypeEn::Int64_jty);
         }
         activBody->push(new Variable(ctx->getText(), targetType));
-        #undef CONV_OP
+        #undef CONV_TY
     } 
 
     virtual void exitCallTConvBInFunc(EGrammarParser::CallTConvBInFuncContext  *ctx) override { 
@@ -148,7 +148,7 @@ public:
             CONV_TY(EGrammarParser::C_INT64,    TypeEn::Int64_jty);
         }
         activBody->addTypeConvOp(targetType);
-        #undef CONV_OP
+        #undef CONV_TY
     }
 
     virtual void exitCallUnaryBInFunc(EGrammarParser::CallUnaryBInFuncContext* ctx) override {
@@ -163,7 +163,7 @@ public:
             CONV_TY(EGrammarParser::SIN,    opCodeEn::SIN);
             CONV_TY(EGrammarParser::EXP,    opCodeEn::EXP);
         }
-        #undef CONV_OP
+        #undef CONV_TY
         activBody->addBuiltInFuncOp(op);
     }
 

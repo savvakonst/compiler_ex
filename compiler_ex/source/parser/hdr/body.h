@@ -15,77 +15,69 @@ class Body
 {
 public:
 
-	Body(std::string name_ = "main", bool isPrototype_ = false);
-	~Body();
+    Body(std::string name_ = "main", bool isPrototype_ = false);
+    ~Body();
 
-	Line* getLastLineFromName(std::string name);
-	std::string getName() { return name; };
-	bool isRetStackFull() {
-		if (name != "main") return 0 < returnStack.size();
-		else return false;
-	}
+    Line*       getLastLineFromName(std::string name);
+    std::string getName() { return name; };
 
-	bool isRetStackEmpty() {
-		return 0 == returnStack.size();
-	}
 
-	void addLine(std::string name, Variable* var);
-	void addArg(std::string name); //is necessary to add returned status value with line ,pos end error code and string;
-	void addParam(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
-	void addReturn(std::string name, Variable* var,int N=1); //is necessary to add returned status value with line ,pos end error code and string;
+    bool    isRetStackFull () {if (name != "main") return 0 < returnStack.size(); else return false;}
+    bool    isRetStackEmpty() {return 0 == returnStack.size();}
 
-	//varStack push/pop 
-	void push(Variable*);
-	Variable* pop();
+    void addLine    (std::string name, Variable* var);
+    void addArg     (std::string name); //is necessary to add returned status value with line ,pos end error code and string;
+    void addParam   (std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
+    void addReturn  (std::string name, Variable* var,int N=1); //is necessary to add returned status value with line ,pos end error code and string;
+
+    //varStack push/pop 
+    void push       (Variable*);
+    Variable* pop   ();
 private:
-	//create operation
-	Variable* typeConvOp    (TypeEn targetType, Variable* arg1);
-	Variable* builtInFuncOp (opCodeEn uTypeOp, Variable* arg1 );
-	Variable* arithmeticOp  (opCodeEn uTypeOp, Variable* arg1, Variable* arg2);
-	Variable* convolveOp    (opCodeEn uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
-	Variable* selectOp      ( Variable* arg1, Variable* arg2, Variable* arg3);
+    //create operation
+    Variable* typeConvOp    (TypeEn   targetType, Variable* arg1);
+    Variable* builtInFuncOp (opCodeEn    uTypeOp, Variable* arg1);
+    Variable* arithmeticOp  (opCodeEn    uTypeOp, Variable* arg1, Variable* arg2);
+    Variable* selectOp      (Variable*      arg1, Variable* arg2, Variable* arg3);
+    Variable* convolveOp    (opCodeEn    uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
 
 public:
-	//create operation and push to varStack
-	void addTypeConvOp      (TypeEn targetType);
-	void addBuiltInFuncOp   (opCodeEn uTypeOp);
-	void addArithmeticOp    (opCodeEn uTypeOp);
-	void addConvolveOp      (opCodeEn uTypeOp, uint32_t shift = 0);
-	void addSelectOp        ();
+    //create operation and push to varStack
+    void addTypeConvOp      (TypeEn targetType);
+    void addBuiltInFuncOp   (opCodeEn uTypeOp);
+    void addArithmeticOp    (opCodeEn uTypeOp);
+    void addConvolveOp      (opCodeEn uTypeOp, uint32_t shift = 0);
+    void addSelectOp        ();
 
-	void addRangeOp(size_t argCount);
-	void addShiftOp			();
-	void addDecimationOp	();
+    void addRangeOp(size_t argCount);
+    void addShiftOp         ();
+    void addDecimationOp    ();
 
-	//create call
-	void addCall(Body* body_);
+    //create call
+    void addCall            (Body* body_);
 
-	stack<Line*> getRet() { return returnStack; }
-	int getArgCount() { return argCount; }
+    stack<Line*>  getRet     () { return returnStack; }
+    int           getArgCount() { return argCount; }
 
-	// tree walker methods
-	void  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
-	Body* genBodyByPrototype(stack<Variable*> args = {});
-
-	void genBlocks();
-	void symplyfy();
-
-
+    // tree walker methods
+    void  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
+    Body* genBodyByPrototype(stack<Variable*> args = {});
+    void symplyfy();
+    void genBlocks();
 
 private:
 
-	bool isPrototype=false;
-	std::string name="main";
-	std::vector<Line*> lines;
+    bool isPrototype=false;
+    std::string name="main";
+    std::vector<Line*> lines;
 
-	stack<Variable*> varStack;
+    stack<Variable*> varStack;
 
-	stack<Line*> argStack;
-	stack<Line*> returnStack;
+    stack<Line*> argStack;
+    stack<Line*> returnStack;
 
-	int argCount=0;
-
-	Body* genBody;
+    int argCount=0;
+    Body* genBody;
 };
 
 
@@ -93,83 +85,83 @@ private:
 class Call :public Variable
 {
 public:
-	Call(Body* body_, stack<Variable*> args_ = {}) {
-		body = body_; 
+    Call(Body* body_, stack<Variable*> args_ = {}) {
+        body = body_; 
 
-		//for (int i = (args_.size() - 1); i >= 0; i--) {
-		//	args.push(args_[i]);
-		//}
-		args = args_;
+        //for (int i = (args_.size() - 1); i >= 0; i--) {
+        //	args.push(args_[i]);
+        //}
+        args = args_;
 
-		auto ret = body->getRet()[0];
+        auto ret = body->getRet()[0];
 
-		type        = ret->type;
-		dstype      = ret->dstype;
-		length      = ret->getLength();
-		leftShift   = ret->getLeftShift ();
-		rightShift  = ret->getRightShift();
+        type        = ret->getType();
+        dstype      = ret->getDSType();
+        length      = ret->getLength();
+        leftShift   = ret->getLeftShift ();
+        rightShift  = ret->getRightShift();
 
-		if (isConst(ret)) {
+        if (isConst(ret)) {
 
-			binaryValue = ret->getBinaryValue();
-			textValue   = ret->getTextValue();
-		}
-
-
-	}
-	~Call() {}
+            binaryValue = ret->getBinaryValue();
+            textValue   = ret->getTextValue();
+        }
 
 
-
-	//safe functions .external stack is used
-	virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override {
-		commonVisitEnter(visitorStack);
-		for (int i = (args.size() - 1); i >= 0; i--) {
-			visitorStack->push(args[i]);
-		}
-		is_unused = false;
-	}
+    }
+    ~Call() {}
 
 
-	virtual void visitEnter(stack<Variable*>* visitorStack) override {
-		visitorStack->push(this);
-		for(int i= (args.size()-1);i>=0;i--){
-			visitorStack->push(args[i]);
-		}
-		is_visited = true; 
-	};
 
-	virtual void visitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) override {
-		stack<Variable*> a;
-
-		for (auto &i : args) {
-			a.push(Stack->pop());
-		}
-
-		auto b=body->genBodyByPrototype(a);
-
-		Stack->push(new Call(b,a)); 
-		is_visited = false;
-	}
+    //safe functions .external stack is used
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override {
+        commonVisitEnter(visitorStack);
+        for (int i = (args.size() - 1); i >= 0; i--) {
+            visitorStack->push(args[i]);
+        }
+        is_unused = false;
+    }
 
 
-	virtual void visitExit(stack<std::string>* Stack) override {
-		std::cout << "  call." << body->getName() <<"\n";
-		body->print("    ");
-		for (auto& i : args) {
-			auto x=Stack->pop();
-		}
-		Stack->push( body->getName()+".ret."+ typeToStr(type));
-		is_visited = false;
-	};
+    virtual void visitEnter(stack<Variable*>* visitorStack) override {
+        visitorStack->push(this);
+        for(int i= (args.size()-1);i>=0;i--){
+            visitorStack->push(args[i]);
+        }
+        is_visited = true; 
+    };
 
-	//dangerous functions . recursive call is used
-	virtual std::string Print() { return textValue; };
-	virtual Variable* generate() { return new Variable(textValue, type); };
+    virtual void visitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) override {
+        stack<Variable*> a;
+
+        for (auto &i : args) {
+            a.push(Stack->pop());
+        }
+
+        auto b=body->genBodyByPrototype(a);
+
+        Stack->push(new Call(b,a)); 
+        is_visited = false;
+    }
+
+
+    virtual void visitExit(stack<std::string>* Stack) override {
+        std::cout << "  call." << body->getName() <<"\n";
+        body->print("    ");
+        for (auto& i : args) {
+            auto x=Stack->pop();
+        }
+        Stack->push( body->getName()+".ret."+ typeToStr(type));
+        is_visited = false;
+    };
+
+    //dangerous functions . recursive call is used
+    virtual std::string Print() { return textValue; };
+    virtual Variable* generate() { return new Variable(textValue, type); };
 
 private:
-	stack<Variable*> args;
-	Body* body = NULL;
+    stack<Variable*> args;
+    Body* body = NULL;
 
 };
 

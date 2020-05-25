@@ -11,7 +11,6 @@ template <class T> inline const T& max(const T& a, const T& b) {
 
 Line::Line(std::string name_, Variable* var, int index)
 {
-
 	names.push_back(name_);
 
 	if (isConst(var)){
@@ -23,8 +22,8 @@ Line::Line(std::string name_, Variable* var, int index)
 	rightShift  = var->getRightShift();
 
 	assignedVal = var;
-	dstype      = var->dstype;
-	type        = var->type;
+	dstype      = var->getDSType();
+	type        = var->getType();
 	length      = var->getLength();
 }
 
@@ -42,12 +41,11 @@ Line::Line(std::string name_, TypeEn ty, DataStructTypeEn dsty, uint64_t len, in
 
 Line::Line(std::string name_, int index)
 {
-
 	names.push_back(name_);
+
 	type = TypeEn::Unknown_jty;
 	is_arg = true;
 }
-
 
 
 Line::~Line()
@@ -62,7 +60,7 @@ bool Line::isArg() {
 
 void Line::assignValue(Variable* var) {
 	assignedVal = var;
-	type = var->type;
+	type = var->getType();
 }
 
 bool Line::haveTargetName(std::string name)
@@ -117,13 +115,3 @@ void Line::visitExit(stack<std::string>* varStack)
 	varStack->push( names[0] + "." + typeToStr(type));
 }
 
-//dangerous functions . recursive call is used
-Variable* Line::generate()
-{
-	return nullptr;
-}
-
-std::string Line::Print()
-{
-	return names[0] + "." + typeToStr(type);
-}

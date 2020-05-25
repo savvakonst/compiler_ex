@@ -13,8 +13,9 @@ func calc_new(i, j):
    ;
 
 x, y, z =param("1000","1000","1000") #asfafasdfs
-X=range (100,12*10)
+X=range (0,12*10+1)
+x=convolve(X,x)
+x=shift(x,5)
+x=convolve(X,x)
 
-v=10*(1?y:z)
-k=convolve(X,x)*v
-return k,v
+return x
