@@ -250,8 +250,12 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 	for (auto& value : lines) {
 		if (value->isArg()) {
 			//std::string postfix = (!hideUnusedLines || !value->isUnused()) ? "" : " \t\t#unused";
-			if (!hideUnusedLines || !value->isUnused())
-				result += value->getName() + "=arg()" +"\n";
+			if (!hideUnusedLines || !value->isUnused()) {
+				txtLine     = value->getName() + "=arg()" ;
+				txtShifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
+				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
+				result     += txtLine + txtSkip + txtShifts + "\n";
+			}
 		}
 		else {
 			visitorStack.push(value->assignedVal);
@@ -267,16 +271,11 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 			//std::cout << tab << value->getName()+"."+ value->getTxtDSType()<< "=" << stringStack.pop()  << "\n";
 			if (!hideUnusedLines || !value->isUnused()){
 				txtLine     = tab + value->getName() + DST_postfix + "=" + stringStack.pop() ;
-				txtShifts   = std::to_string(value->getLeftShift())+" : "+ std::to_string(value->getRightShift()) + " : " + std::to_string(value->getLength());
-				txtUsaaage  =std::to_string(value->getUsageCounter());
+				txtShifts   = std::to_string(value->getLeftBufferLen())+" : "+ std::to_string(value->getRightBufferLen()) + " : " + std::to_string(value->getLength());
+				txtUsaaage  = std::to_string(value->getUsageCounter());
 				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
 				result     += txtLine + txtSkip + txtShifts + "\n";
 			}
-
-
-
-
-
 		}
 	}
 	
@@ -294,7 +293,7 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 
 		txtLine     = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
-		txtShifts   = std::to_string(value->getLeftShift()) + " : " + std::to_string(value->getRightShift());
+		txtShifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
 		txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
 		result     += txtLine + txtSkip + txtShifts + "\n";
 
@@ -361,10 +360,57 @@ void Body::symplyfy()
         do {
             auto var = visitorStack.pop();
             var->markUnusedVisitEnter(&visitorStack);
-			//if (var->isTermialLargeArray()) {
-            //    var->setBufferLength(value->getLeftShift(), value->getRightShift());
-            //}
+
         } while (!visitorStack.empty());
     }
 }
 
+void Body::genBlocks()
+{
+	stack<Variable*> visitorStack;
+	stack<std::string> stringStack;
+
+	const size_t max_line_length=90;
+
+	std::string result = " " + getName() + "\n";
+	std::string txtLine, txtSkip, txtShifts, txtUsaaage;
+
+	for (auto& value : lines) {
+		if (value->isArg()) {
+			if (!value->isUnused()) {
+				
+			}
+		}
+		else {
+			visitorStack.push(value->assignedVal);
+			do {
+				auto var = visitorStack.pop();
+				if (var->isVisited())
+					var->visitExit(&stringStack);
+				else
+					var->visitEnter(&visitorStack);
+			} while (!visitorStack.empty());
+
+			if (!value->isUnused()) {
+				//code
+			}
+		}
+	}
+
+	for (auto& value : returnStack) {
+		visitorStack.push(value->assignedVal);
+		do {
+			auto var = visitorStack.pop();
+			if (var->isVisited())
+				var->visitExit(&stringStack);
+			else
+				var->visitEnter(&visitorStack);
+		} while (!visitorStack.empty());
+
+		//code
+
+	}
+
+
+	std::cout << result << "\n";
+}

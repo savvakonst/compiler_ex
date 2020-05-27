@@ -3,35 +3,14 @@
 #include <iostream>
 #include <string>
 #include "types_jty.h"
+#include "common.h"
+#include "table.h"
 
-void print_error(std::string content);
 
-class Variable;
-bool isLargeArr (Variable * );
-bool isInteger  (Variable * );
-bool isConst    (Variable * );
-
-template< typename T > class stack :public  std::vector<T> {
-public:
-    T pop() {
-        if (std::vector<T> ::size() == 0) {
-            std::cout << "Error : stack is empty\n";
-            return NULL;
-        }
-        T res = std::vector<T> ::back();
-        std::vector<T> ::pop_back();
-
-        return res;
-    }
-    void push(T var) { std::vector<T> ::push_back(var); }
-};
-
-class Line;
 
 
 class Variable
 {
-
 public:
     Variable() {
     };
@@ -42,28 +21,18 @@ public:
 
         binaryValue = 0;
 
-        if (type_ == TypeEn::Double_jty) {
-            *((double*)(&binaryValue)) = stod(textValue);
-        }else if (type_ == TypeEn::Float_jty) {
-            *((float* )(&binaryValue)) = stof(textValue);
+        switch (type_)
+        {
+            case TypeEn::Int1_jty:   *((bool   *)(&binaryValue)) = (bool)stoi(textValue); break;
+            case TypeEn::Int8_jty:   *((int8_t *)(&binaryValue)) = stoi(textValue); break;
+            case TypeEn::Int16_jty:  *((int16_t*)(&binaryValue)) = stoi(textValue); break;
+            case TypeEn::Int32_jty:  *((int32_t*)(&binaryValue)) = stoi(textValue); break;
+            case TypeEn::Int64_jty:  *((int64_t*)(&binaryValue)) = stol(textValue); break;
+            case TypeEn::Float_jty:  *((float  *)(&binaryValue)) = stof(textValue); break;
+            case TypeEn::Double_jty: *((double *)(&binaryValue)) = stod(textValue); break;
+            case TypeEn::Unknown_jty:                                               break;
+            default: print_error("constant reading error");                         break;
         }
-        else if (type_ == TypeEn::Int64_jty) {
-            *((int64_t*)(&binaryValue)) = stol(textValue);
-        }
-        else if (type_ == TypeEn::Int32_jty) {
-            *((int32_t*)(&binaryValue)) = stoi(textValue);
-        }
-        else if (type_ == TypeEn::Int16_jty) {
-            *((int16_t*)(&binaryValue)) = stoi(textValue);
-        }
-        else if (type_ == TypeEn::Int8_jty) {
-            *((int8_t*)(&binaryValue)) = stoi(textValue);
-        }
-        else if (type_ == TypeEn::Int1_jty) {
-            *((bool*)(&binaryValue)) = (bool)stoi(textValue);
-        }
-        else
-            print_error("constant reading error");
 
     };
 
@@ -71,30 +40,18 @@ public:
         binaryValue = value;
         type = type_;
 
-        if (type_ == TypeEn::Double_jty) {
-            textValue =std::to_string(*((double*)(&binaryValue)));
+        switch (type_)
+        {
+            case TypeEn::Int1_jty:   textValue = std::to_string(*((bool   *)(&binaryValue))); break;
+            case TypeEn::Int8_jty:   textValue = std::to_string(*((int8_t *)(&binaryValue))); break;
+            case TypeEn::Int16_jty:  textValue = std::to_string(*((int16_t*)(&binaryValue))); break;
+            case TypeEn::Int32_jty:  textValue = std::to_string(*((int32_t*)(&binaryValue))); break;
+            case TypeEn::Int64_jty:  textValue = std::to_string(*((int64_t*)(&binaryValue))); break;
+            case TypeEn::Float_jty:  textValue = std::to_string(*((float  *)(&binaryValue))); break;
+            case TypeEn::Double_jty: textValue = std::to_string(*((double *)(&binaryValue))); break;
+            case TypeEn::Unknown_jty:                                                         break;
+            default: print_error("constant calc error");                                      break;
         }
-        else if (type_ == TypeEn::Float_jty) {
-            textValue = std::to_string(*((float*)(&binaryValue)));
-        }
-        else if (type_ == TypeEn::Int64_jty) {
-            textValue = std::to_string(*((int64_t*)(&binaryValue)));
-        }
-        else if (type_ == TypeEn::Int32_jty) {
-            textValue = std::to_string(*((int32_t*)(&binaryValue)));
-        }
-        else if (type_ == TypeEn::Int16_jty) {
-            textValue = std::to_string(*((int16_t*)(&binaryValue)));
-        }
-        else if (type_ == TypeEn::Int8_jty) {
-            textValue = std::to_string(*((int8_t*)(&binaryValue)));
-        }
-        else if (type_ == TypeEn::Int1_jty) {
-            textValue = std::to_string(*((bool*)(&binaryValue)));
-        }
-        else
-            print_error("constant calc error");
-
     };
 
     Variable(Variable* arg1, Variable* arg2, Variable* arg3) {
@@ -145,6 +102,11 @@ public:
         #undef ENUM2STR
     }
 
+    void setBuffered(){
+        if (isLargeArr(this)) {
+            is_buffered=true;
+        }
+    }
 
     void setBufferLength(uint64_t left, uint64_t right) {
         if (isLargeArr(this)) {
@@ -166,9 +128,8 @@ public:
     std::string  getTextValue     () { return textValue; }
     int64_t      getUsageCounter  () { return usageCounter; }
     int64_t      getLength        () { return length; }
+    int64_t      getLevel         () { return level; }
     int64_t      getDecimation    () { return decimation; }
-    int64_t      getLeftShift     () { return leftShift; }
-    int64_t      getRightShift    () { return rightShift; }
     int64_t      getLeftBufferLen () { return leftBufferLength; }
     int64_t      getRightBufferLen() { return rightBufferLength; }
     NodeTypeEn   getNodeType      () { return NodeTypeEn::TerminalLine; }
@@ -183,16 +144,26 @@ public:
     bool         isVisited              () { return is_visited; }
     bool         isBuffered             () { return is_buffered; }
 
+
     //safe functions .external stack is used
-    void         commonVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) { commonVisitEnter(visitorStack);  is_unused = false;  };
-    
-    virtual void visitEnter  (stack<Variable *>  *visitorStack) { visitorStack->push(this); is_visited = true; };
-    virtual void visitExit   (stack<Variable *>  *Stack, std::vector<Line *> *namespace_ptr = NULL) { Stack->push(new Variable(textValue, type)); is_visited = false; };
-    virtual void visitExit   (stack<std::string> *Stack) { Stack->push(textValue); is_visited = false; };
+    void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
+
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) { commoMmarkUnusedVisitEnter(visitorStack); is_unused = false; };
+    virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true;  };
+    virtual void genBlocksVisitExit  (stack<Variable*>* visitorStack) {   };
+
+    virtual void visitEnter          (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true; };
+    virtual void visitExit           (stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { Stack->push(new Variable(textValue, type)); is_visited = false; };
+    virtual void visitExit           (stack<std::string> *Stack) { Stack->push(textValue); is_visited = false; };
 
 protected:
 
+    std::string checkBuffer(std::string arg) {
+        if (is_buffered)
+            return "storeToBuffer(" + arg + ")";
+        else
+            return arg;
+    }
 
     bool is_unused   = true;
     bool is_visited  = false;
@@ -201,23 +172,21 @@ protected:
     DataStructTypeEn    dstype = DataStructTypeEn::constant_dsty;
     TypeEn              type   = TypeEn::DEFAULT_JTY;
 
-
     std::string textValue;
 
-    uint64_t    length = 1;
-    //int64_t     shift = 0;
-    int64_t     decimation=0;
+    uint64_t    length     = 1;
+    int64_t     decimation = 0;
+    int64_t     level      = 0;
 
-    uint64_t    leftBufferLength  =0;
-    uint64_t    rightBufferLength =0;
-
-    uint64_t    leftShift    = 0;
-    uint64_t    rightShift   = 0;
+    uint64_t    leftBufferLength  = 0;
+    uint64_t    rightBufferLength = 0;
 
     uint64_t    binaryValue  = 0;
     uint64_t    usageCounter = 0;
 
 };
+
+
 
 
 
@@ -230,7 +199,7 @@ inline bool operator<   (Variable* var1, TypeEn    var2) { return  var1->getType
 inline bool isConst     (Variable* var1) { return var1 == DataStructTypeEn::constant_dsty; }
 inline bool isSmallArr  (Variable* var1) { return var1 == DataStructTypeEn::smallArr_dsty; }
 inline bool isLargeArr  (Variable* var1) { return var1 == DataStructTypeEn::largeArr_dsty; }
-inline bool isSimilar   (Variable* var1,Variable* var2) {return  (var1->getDSType() == var2->getDSType() && (var1->getLength() == var2->getLength())); }
+inline bool isSimilar   (Variable* var1, Variable* var2) { return  (var1->getDSType() == var2->getDSType() && (var1->getLength() == var2->getLength())); }
 inline bool isÑompatible(Variable* var1, Variable* var2) { return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
 
 
@@ -244,29 +213,12 @@ inline bool isFloating  (Variable* var) { return var->getType() >= TypeEn::Float
 inline bool isInteger   (Variable* var) { return var->getType() <= TypeEn::Int64_jty; }
 inline bool isUInteger  (Variable* var) { return false; }
 
-inline Variable*    max     (Variable* var1, Variable* var2) { return var1->getType() < var2->getType() ? var2 : var1; }
-inline Variable*    maxDS   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
+
 inline int64_t      maxInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var1; }
-
-
-
-
-inline std::string getTxtType(TypeEn type) {
-    std::string t = "pass";
-#define ENUM2STR(x) case (TypeEn::x):t=#x;   break
-    switch (type)
-    {
-        ENUM2STR(Int1_jty);
-        ENUM2STR(Int8_jty);
-        ENUM2STR(Int16_jty);
-        ENUM2STR(Int32_jty);
-        ENUM2STR(Float_jty);
-        ENUM2STR(Double_jty);
-        ENUM2STR(Unknown_jty);
-    }
-    return  t;
-#undef ENUM2STR
-}
+inline Variable*    max     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var2 : var1; }
+inline Variable*    maxDS   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
+inline Variable*    maxLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
+inline Variable*    minLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }
 
 
 

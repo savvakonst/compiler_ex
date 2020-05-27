@@ -8,9 +8,6 @@
 #include "operations.h"
 
 
-
-
-
 class Body
 {
 public:
@@ -62,8 +59,8 @@ public:
     // tree walker methods
     void  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Variable*> args = {});
-    void symplyfy();
-    void genBlocks();
+    void  symplyfy();
+    void  genBlocks();
 
 private:
 
@@ -95,33 +92,40 @@ public:
 
         auto ret = body->getRet()[0];
 
+        level       = ret->getLevel();
         type        = ret->getType();
         dstype      = ret->getDSType();
         length      = ret->getLength();
-        leftShift   = ret->getLeftShift ();
-        rightShift  = ret->getRightShift();
 
         if (isConst(ret)) {
-
             binaryValue = ret->getBinaryValue();
             textValue   = ret->getTextValue();
         }
 
-
     }
     ~Call() {}
 
-
-
     //safe functions .external stack is used
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override {
-        commonVisitEnter(visitorStack);
+        commoMmarkUnusedVisitEnter(visitorStack);
         for (int i = (args.size() - 1); i >= 0; i--) {
             visitorStack->push(args[i]);
+            args[i]->setBufferLength(this);
         }
         is_unused = false;
     }
 
+    virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) override {
+        visitorStack->push(this);
+        for (int i= (args.size() - 1); i >= 0; i--) {
+            visitorStack->push(args[i]);
+        }
+        is_visited = true;
+    }
+
+    virtual void genBlocksVisitExit  (stack<Variable*>* varStack) override {
+
+    };
 
     virtual void visitEnter(stack<Variable*>* visitorStack) override {
         visitorStack->push(this);
@@ -144,9 +148,8 @@ public:
         is_visited = false;
     }
 
-
     virtual void visitExit(stack<std::string>* Stack) override {
-        std::cout << "  call." << body->getName() <<"\n";
+        std::cout <<"  call." << body->getName() <<"\n";
         body->print("    ");
         for (auto& i : args) {
             auto x=Stack->pop();

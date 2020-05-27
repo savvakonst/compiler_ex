@@ -15,7 +15,8 @@ func calc_new(i, j):
 x, y, z =param("1000","1000","1000") #asfafasdfs
 X=range (0,12*10+1)
 x=convolve(X,x)
-x=shift(x,5)
+x=calc(x,y)
+x=shift(x*2,5)
 x=convolve(X,x)
 
 return x

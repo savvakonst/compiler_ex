@@ -202,56 +202,15 @@ inline std::string typeToStr(TypeEn type)
 }
 
 
-/*
-enum class inv_op {
-    NEG = 0,
-    FNEG,
+class genContext
+{
+public:
+    genContext();
+    ~genContext();
+
+private:
+
 };
 
-enum class arithetic_op {
-    ADD = (int)inv_op::FNEG + 1,
-    FADD,
-    SUB,
-    FSUB,
-    MUL,
-    FMUL,
-    UDIV,
-    SDIV,
-    FDIV,
-    UREM,
-    SREM,
-    FREM,
-    POW,
-    FPOW
-};
-
-enum class bitwise_op {
-    LSHL = (int)arithetic_op::FPOW + 1,
-    LSHR,
-    ASHR,
-    AND,
-    OR,
-    XOR
-};
-
-enum class typeConv_op {
-    trunc = (int)bitwise_op::XOR + 1,
-    zext,
-    sext,
-    fptrunc,
-    fpext,
-    fptoi,
-    fptosi,
-    uitofp,
-    sitofp
-};
-
-
-enum convolve_op {
-    convolve = (int)typeConv_op::sitofp + 1,
-    convolve_f,
-    NONE_op
-};
-*/
 
 #endif // !1

@@ -5,17 +5,46 @@
 #include "variable.h"
 
 
-
-
 class Line : public Variable
 {
 public:
 
-    Line(std::string name_, Variable* var,int index=-1);
-    Line(std::string name_, TypeEn, DataStructTypeEn, uint64_t, int index = -1);
-    Line(std::string name_, int index = -1);
-    ~Line();
+    Line(std::string name_, Variable* var, int index=-1) {
+        names.push_back(name_);
 
+        if (isConst(var)) {
+            binaryValue = var->getBinaryValue();
+            textValue   = var->getTextValue();
+        }
+
+        assignedVal = var;
+        level       = var->getLevel();
+        dstype      = var->getDSType();
+        type        = var->getType();
+        length      = var->getLength();
+    }
+
+
+    Line(std::string name_, TypeEn ty, DataStructTypeEn dsty, uint64_t len, int index=-1) {
+        names.push_back(name_);
+
+        dstype = dsty;
+        type   = ty;
+        length = len;
+        is_arg = true;
+    }
+
+
+    Line(std::string name_, int ind = -1) {
+        names.push_back(name_);
+
+        type = TypeEn::Unknown_jty;
+        is_arg = true;
+    }
+
+
+    ~Line() {
+    }
 
     void assignValue(Variable* var);
     int  getUnicleIndex();
@@ -24,14 +53,16 @@ public:
     bool haveTargetName(std::string);
     bool isTermialLargeArray() { return isArg(); }
 
-    std::string getName() { return names[0]; }
+    std::string getName() { return checkBuffer(names[0]); }
 
     //safe functions .external stack is used
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override;
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)                               override;
+    virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                               override;
+    //virtual void genBlocksVisitExit  (stack<Variable*>* varStack)                                   override;
 
-    virtual void visitEnter(stack<Variable*>* visitorStack )override;
-    virtual void visitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)override;
-    virtual void visitExit(stack<std::string>* varStack )override;
+    virtual void visitEnter (stack<Variable*>* visitorStack)                                        override;
+    virtual void visitExit  (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)    override;
+    virtual void visitExit  (stack<std::string>* varStack)                                          override;
 
     //virtual Variable* getAssignedVal() { assignedVal; };
     Variable* assignedVal=NULL;

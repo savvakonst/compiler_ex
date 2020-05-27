@@ -18,7 +18,7 @@ void print_error(std::string content);
 //	}
 //}
 
-void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack) {
+void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 	if (isConvolve(opCode)) {
 		auto smallArray = operand[1];
 		auto shift = shiftParameter;
@@ -27,22 +27,25 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack) {
 		int64_t le  = len / 2;
 		int64_t ri  = (len - 1) / 2;
 
-		auto left   =this->getLeftShift() + ((shift < 0) ? 0 : shift) + le;
-		auto right  =this->getRightShift() + ((shift > 0) ? 0 : -shift) + ri;
+		auto left   =this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) + le;
+		auto right  =this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) + ri;
 
+		operand[0]->setBuffered();
 		operand[0]->setBufferLength(left, right);
 	}
 	else if (isShift(opCode)) {
 		auto shift = shiftParameter;
 
-		auto left   =this->getLeftShift() + ((shift < 0) ? 0 : shift);
-		auto right  =this->getRightShift() + ((shift > 0) ? 0 : -shift);
+		auto left   =this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) ;
+		auto right  =this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) ;
 
+		operand[0]->setBuffered();
 		operand[0]->setBufferLength(left, right);
-		operand[0]->setBufferLength(this);
 	}
 	else if (isDecimation(opCode)) {
-		print_error("convolve_f operation is not supported yet");
+		print_error("decimation operation is not supported yet");
+
+		operand[0]->setBuffered();
 		operand[0]->setBufferLength(this);
 	}
 	else {
@@ -50,14 +53,12 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack) {
 			i->setBufferLength(this);
 		}
 	}
-
 }
 
 
 
 
-void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ) {
-
+void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
 	if (isArithetic(opCode)) {
 		visitorStack->push(operand[1]);
 		visitorStack->push(operand[0]);
@@ -89,25 +90,27 @@ void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ) {
 }
 
 
-void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack) {
-	commonVisitEnter(visitorStack);
+void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack){
+	commoMmarkUnusedVisitEnter(visitorStack);
 	visitEnterSetupBuffer(visitorStack);
 	visitEnterStackUpdate(visitorStack);
 	is_unused = false;
-
-
 }
 
-void Operation::visitEnter(stack<Variable*>* visitorStack)
-{
+void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
+	is_visited = true;
+	visitorStack->push(this);
+	visitEnterStackUpdate(visitorStack);
+}
+
+void Operation::visitEnter(stack<Variable*>* visitorStack){
 	is_visited = true;
 	visitorStack->push(this);
 	visitEnterStackUpdate(visitorStack);
 }
 
 
-void Operation::visitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr )
-{
+void Operation::visitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr ){
 
 	is_visited = false;
 	Variable* ret = NULL;
@@ -170,45 +173,46 @@ void Operation::visitExit( stack<Variable*>* Stack, std::vector<Line*>* namespac
 	Stack->push(ret);
 }
 
-void Operation::visitExit(stack<std::string>* Stack)
-{
+
+
+void Operation::visitExit(stack<std::string>* Stack){
 	is_visited = false;
 	std::string txtOperation = "";
 	if (isArithetic(opCode)) {
 		txtOperation = arSym[((int)opCode - (int)typeOpCodeEn::arithetic)];
 		auto op2 = Stack->pop();
 		auto op1 = Stack->pop();
-		Stack->push( "(" + op1 + txtOperation + op2 + ")" );
+		Stack->push(checkBuffer("(" + op1 + txtOperation + op2 + ")" ));
 	}
 	else if (isInv(opCode)) {
-		Stack->push("(-" + Stack->pop() + ")");
+		Stack->push(checkBuffer( "(-" + Stack->pop() + ")" ));
 	}
 	else if (isTypeConv(opCode)) {
 		txtOperation = arTConv[((int)opCode - (int)typeOpCodeEn::typeConv)];
-		Stack->push(txtOperation + "(" + Stack->pop() + ")");
+		Stack->push(checkBuffer(txtOperation + "(" + Stack->pop() + ")"));
 	}
 	else if (isBuiltInFunc(opCode)) {
 		txtOperation = arBuiltIn[((int)opCode - (int)typeOpCodeEn::builtInFunc)];
-		Stack->push(txtOperation + "(" + Stack->pop() + ")");
+		Stack->push(checkBuffer(txtOperation + "(" + Stack->pop() + ")"));
 	}
 	else if (isSelect(opCode)) {
 		auto op3 = Stack->pop();
 		auto op2 = Stack->pop();
 		auto op1 = Stack->pop();
-		Stack->push("(" + op1 +"? "+ op2 + ": "+ op3 + ")");
+		Stack->push(checkBuffer("(" + op1 +"? "+ op2 + ": "+ op3 + ")"));
 	}
 	else if (isConvolve(opCode)) {
 		auto op2 = Stack->pop();
 		auto op1 = Stack->pop();
-		Stack->push("convolve(" + op1 + ", " + op2 + "," + std::to_string(shiftParameter) + ")");
+		Stack->push(checkBuffer("convolve(" + op1 + ", " + op2 + "," + std::to_string(shiftParameter) + ")"));
 		//print_error("visitExitTxt convolve operation is unsupported");
 	}
 	else if (isSlice(opCode)) {
 		auto op1 = Stack->pop();
 		if (opCode == opCodeEn::shift)
-			Stack->push("shift(" + op1 + ", "  + std::to_string(getSliceParameter()) + ")");
+			Stack->push(checkBuffer("shift(" + op1 + ", "  + std::to_string(getSliceParameter()) + ")"));
 		else if (opCode == opCodeEn::decimation)
-			Stack->push("decimation(" + op1 + ", " + std::to_string(getSliceParameter()) + ")");
+			Stack->push(checkBuffer("decimation(" + op1 + ", " + std::to_string(getSliceParameter()) + ")"));
 		else
 			print_error("visitExitTxt unknown command .");
 	}
