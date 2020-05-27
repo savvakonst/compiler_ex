@@ -9,9 +9,6 @@ template <class T> inline const T& max(const T& a, const T& b) {
 	return (a < b) ? b : a;     // or: return comp(a,b)?b:a; for version (2)
 }
 
-
-
-
 bool Line::isArg() {
 	return is_arg;
 }
@@ -43,6 +40,14 @@ void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 	is_unused = false;
 }
 
+void Line::genBlocksVisitExit(TableGenContext * context)
+{
+	//uniqueName = (isLargeArr(this) ? "vl." : "vs.") + std::to_string(context->getUniqueIndex());
+	//context->setUint(this);
+	is_visited = false;
+}
+
+/*
 void Line::genBlocksVisitEnter(stack<Variable*>* visitorStack){
 	visitorStack->push(this);
 	if (!is_arg) {
@@ -50,13 +55,14 @@ void Line::genBlocksVisitEnter(stack<Variable*>* visitorStack){
 	}
 	is_visited = true;
 }
+*/
 
 void Line::visitEnter(stack<Variable*>* visitorStack){
 	visitorStack->push(this);
 	is_visited = true;
 }
 
-void Line::visitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr ){
+void Line::genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr ){
 	is_visited = false;
 	auto namespace_ = *namespace_ptr;
 
@@ -71,7 +77,7 @@ void Line::visitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_p
 
 }
 
-void Line::visitExit(stack<std::string>* varStack){
+void Line::printVisitExit(stack<std::string>* varStack){
 	is_visited = false;
 	varStack->push( names[0] + "." + typeToStr(type));
 }

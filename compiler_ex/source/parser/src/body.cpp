@@ -262,7 +262,7 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
-					var->visitExit(&stringStack);
+					var->printVisitExit(&stringStack);
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
@@ -284,7 +284,7 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
-				var->visitExit(&stringStack);
+				var->printVisitExit(&stringStack);
 			else
 				var->visitEnter(&visitorStack);
 		} while (!visitorStack.empty());
@@ -325,7 +325,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
-					var->visitExit(&varStack, &(body->lines));
+					var->genBodyVisitExit(&varStack, &(body->lines));
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
@@ -339,14 +339,12 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
-				var->visitExit(&varStack, &(body->lines));
+				var->genBodyVisitExit(&varStack, &(body->lines));
 			else
 				var->visitEnter(&visitorStack);
 		} while (!visitorStack.empty());
 		body->addReturn(returnStack[0]->getName(), varStack.pop());
 	}
-
-
 	return body;
 }
 
@@ -365,35 +363,26 @@ void Body::symplyfy()
     }
 }
 
-void Body::genBlocks()
+
+void Body::genTable(TableGenContext * context)
 {
-	stack<Variable*> visitorStack;
-	stack<std::string> stringStack;
-
-	const size_t max_line_length=90;
-
-	std::string result = " " + getName() + "\n";
-	std::string txtLine, txtSkip, txtShifts, txtUsaaage;
+	stack<Variable*>  visitorStack;
 
 	for (auto& value : lines) {
-		if (value->isArg()) {
-			if (!value->isUnused()) {
-				
-			}
+		if (value->isArg() && (!value->isUnused())) {
+			context->setUint(value);
 		}
-		else {
+		else if (!value->isUnused()) {
+
 			visitorStack.push(value->assignedVal);
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
-					var->visitExit(&stringStack);
+					var->genBlocksVisitExit(context);
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
-
-			if (!value->isUnused()) {
-				//code
-			}
+			context->setUint(value);
 		}
 	}
 
@@ -402,15 +391,12 @@ void Body::genBlocks()
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
-				var->visitExit(&stringStack);
+				var->genBlocksVisitExit(context);
 			else
 				var->visitEnter(&visitorStack);
+
 		} while (!visitorStack.empty());
-
 		//code
-
 	}
 
-
-	std::cout << result << "\n";
 }

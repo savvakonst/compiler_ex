@@ -19,8 +19,6 @@ public:
         CommonSetup(op, var);
         type = targetType;
 
-        
-
         if (op == opCodeEn::shift){
             shiftParameter=shiftOrDecimation;
             level = var->getLevel() + 1;
@@ -32,7 +30,6 @@ public:
         else {
             level = var->getLevel();
         }
-
 
         operand.push_back(var); 
     }
@@ -103,13 +100,16 @@ public:
     void         visitEnterSetupBuffer(stack<Variable*>* visitorStack);
     void         visitEnterStackUpdate(stack<Variable*>* visitorStack);
 
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)								override;
-    virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                               override;
-    //virtual void genBlocksVisitExit  (stack<Variable*>* varStack)                                   override;
 
-    virtual void visitEnter(stack<Variable*>* visitorStack )										override;
-    virtual void visitExit( stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr = NULL)	override;
-    virtual void visitExit( stack<std::string>* Stack)												override;
+
+    virtual void visitEnter(stack<Variable*>* visitorStack)										         override;
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)								     override;
+    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                                  override;
+
+
+    virtual void genBodyVisitExit( stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr = NULL) override;
+    virtual void printVisitExit( stack<std::string>* Stack)										         override;
+    virtual void genBlocksVisitExit  (TableGenContext*  context)                                         override;
 
     
 

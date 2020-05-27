@@ -7,7 +7,7 @@
 #include "table.h"
 
 
-
+using std::string;
 
 class Variable
 {
@@ -15,7 +15,7 @@ public:
     Variable() {
     };
 
-    Variable(std::string text, TypeEn type_) {
+    Variable(string text, TypeEn type_) {
         textValue = text;
         type = type_;
 
@@ -89,19 +89,6 @@ public:
     };
 
 
-    std::string  getTxtDSType() {
-        std::string t = "pass";
-        #define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
-        switch (dstype)
-        {
-            ENUM2STR(constant_dsty);
-            ENUM2STR(smallArr_dsty);
-            ENUM2STR(largeArr_dsty);
-        }
-        return  t;
-        #undef ENUM2STR
-    }
-
     void setBuffered(){
         if (isLargeArr(this)) {
             is_buffered=true;
@@ -122,10 +109,25 @@ public:
         }
     }
 
+    string  getTxtDSType() {
+        string t = "pass";
+#define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
+        switch (dstype)
+        {
+            ENUM2STR(constant_dsty);
+            ENUM2STR(smallArr_dsty);
+            ENUM2STR(largeArr_dsty);
+        }
+        return  t;
+#undef ENUM2STR
+    }
+
+
+
     template< typename T >
     T            getConvTypeVal   () { return *((T*)(&binaryValue)); }
     int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue)); }
-    std::string  getTextValue     () { return textValue; }
+    string       getTextValue     () { return textValue; }
     int64_t      getUsageCounter  () { return usageCounter; }
     int64_t      getLength        () { return length; }
     int64_t      getLevel         () { return level; }
@@ -148,17 +150,23 @@ public:
     //safe functions .external stack is used
     void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
 
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) { commoMmarkUnusedVisitEnter(visitorStack); is_unused = false; };
-    virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true;  };
-    virtual void genBlocksVisitExit  (stack<Variable*>* visitorStack) {   };
 
     virtual void visitEnter          (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true; };
-    virtual void visitExit           (stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { Stack->push(new Variable(textValue, type)); is_visited = false; };
-    virtual void visitExit           (stack<std::string> *Stack) { Stack->push(textValue); is_visited = false; };
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) { commoMmarkUnusedVisitEnter(visitorStack); is_unused = false; };
+    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true;  };
+
+
+    virtual void genBodyVisitExit    (stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { Stack->push(new Variable(textValue, type)); is_visited = false; };
+    virtual void printVisitExit      (stack<string> *Stack) { Stack->push(textValue); is_visited = false; };
+    virtual void genBlocksVisitExit  (TableGenContext*  context) {
+        uniqueName ="c" + std::to_string(context->getUniqueIndex());
+        context->setUint(this);
+        is_visited = false;
+    };
 
 protected:
 
-    std::string checkBuffer(std::string arg) {
+    string checkBuffer(string arg) {
         if (is_buffered)
             return "storeToBuffer(" + arg + ")";
         else
@@ -172,17 +180,18 @@ protected:
     DataStructTypeEn    dstype = DataStructTypeEn::constant_dsty;
     TypeEn              type   = TypeEn::DEFAULT_JTY;
 
-    std::string textValue;
+    string   textValue="";
+    string   uniqueName="";
 
-    uint64_t    length     = 1;
-    int64_t     decimation = 0;
-    int64_t     level      = 0;
+    uint64_t length     = 1;
+    int64_t  decimation = 0;
+    int64_t  level      = 0;
 
-    uint64_t    leftBufferLength  = 0;
-    uint64_t    rightBufferLength = 0;
+    uint64_t leftBufferLength  = 0;
+    uint64_t rightBufferLength = 0;
 
-    uint64_t    binaryValue  = 0;
-    uint64_t    usageCounter = 0;
+    uint64_t binaryValue  = 0;
+    uint64_t usageCounter = 0;
 
 };
 

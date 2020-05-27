@@ -209,11 +209,13 @@ public:
 
     virtual void exitShift(EGrammarParser::ShiftContext * ctx) override {
         errLine = ctx->getStart()->getLine(); errContext = ctx;
+
         activBody->addShiftOp();
     }
 
     virtual void exitDecimation(EGrammarParser::DecimationContext * ctx) override {
         errLine = ctx->getStart()->getLine(); errContext = ctx;
+
         activBody->addDecimationOp();
     }
 

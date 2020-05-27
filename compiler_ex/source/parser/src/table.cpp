@@ -28,5 +28,5 @@ void Table::setUint(Variable * var)
             i->setUint(var);
             return;
         }
-    columnList.push();
+    columnList.push(new TableColumn(var));
 }

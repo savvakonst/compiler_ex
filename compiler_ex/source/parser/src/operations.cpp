@@ -97,12 +97,19 @@ void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 	is_unused = false;
 }
 
+void Operation::genBlocksVisitExit(TableGenContext * context)
+{
+	uniqueName =(isLargeArr(this)?"vl" :"vs") + std::to_string(context->getUniqueIndex());
+	context->setUint(this);
+	is_visited = false;
+}
+/*
 void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
 	is_visited = true;
 	visitorStack->push(this);
 	visitEnterStackUpdate(visitorStack);
 }
-
+*/
 void Operation::visitEnter(stack<Variable*>* visitorStack){
 	is_visited = true;
 	visitorStack->push(this);
@@ -110,7 +117,7 @@ void Operation::visitEnter(stack<Variable*>* visitorStack){
 }
 
 
-void Operation::visitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr ){
+void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr ){
 
 	is_visited = false;
 	Variable* ret = NULL;
@@ -175,7 +182,7 @@ void Operation::visitExit( stack<Variable*>* Stack, std::vector<Line*>* namespac
 
 
 
-void Operation::visitExit(stack<std::string>* Stack){
+void Operation::printVisitExit(stack<std::string>* Stack) {
 	is_visited = false;
 	std::string txtOperation = "";
 	if (isArithetic(opCode)) {

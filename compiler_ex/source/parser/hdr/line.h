@@ -34,14 +34,12 @@ public:
         is_arg = true;
     }
 
-
     Line(std::string name_, int ind = -1) {
         names.push_back(name_);
 
         type = TypeEn::Unknown_jty;
         is_arg = true;
     }
-
 
     ~Line() {
     }
@@ -56,13 +54,13 @@ public:
     std::string getName() { return checkBuffer(names[0]); }
 
     //safe functions .external stack is used
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)                               override;
-    virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                               override;
-    //virtual void genBlocksVisitExit  (stack<Variable*>* varStack)                                   override;
+    virtual void visitEnter (stack<Variable*>* visitorStack)                                            override;
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)                                   override;
+    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                                 override;
 
-    virtual void visitEnter (stack<Variable*>* visitorStack)                                        override;
-    virtual void visitExit  (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)    override;
-    virtual void visitExit  (stack<std::string>* varStack)                                          override;
+    virtual void genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)   override;
+    virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
+    virtual void genBlocksVisitExit  (TableGenContext*  context)                                        override;
 
     //virtual Variable* getAssignedVal() { assignedVal; };
     Variable* assignedVal=NULL;

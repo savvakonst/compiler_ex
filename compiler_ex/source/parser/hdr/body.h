@@ -60,7 +60,7 @@ public:
     void  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Variable*> args = {});
     void  symplyfy();
-    void  genBlocks();
+    void  genTable(TableGenContext * tableGenContext);
 
 private:
 
@@ -115,6 +115,7 @@ public:
         is_unused = false;
     }
 
+    /*
     virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) override {
         visitorStack->push(this);
         for (int i= (args.size() - 1); i >= 0; i--) {
@@ -122,9 +123,12 @@ public:
         }
         is_visited = true;
     }
+    */
+    virtual void genBlocksVisitExit  (TableGenContext*  context) override {
 
-    virtual void genBlocksVisitExit  (stack<Variable*>* varStack) override {
-
+         uniqueName =(isLargeArr(this) ? "fl" : "fs") + std::to_string(context->getUniqueIndex());
+         context->setUint(this);
+         is_visited = false;
     };
 
     virtual void visitEnter(stack<Variable*>* visitorStack) override {
@@ -135,12 +139,11 @@ public:
         is_visited = true; 
     };
 
-    virtual void visitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) override {
+    virtual void genBodyVisitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) override {
         stack<Variable*> a;
 
-        for (auto &i : args) {
+        for (auto &i : args) 
             a.push(Stack->pop());
-        }
 
         auto b=body->genBodyByPrototype(a);
 
@@ -148,12 +151,12 @@ public:
         is_visited = false;
     }
 
-    virtual void visitExit(stack<std::string>* Stack) override {
+    virtual void printVisitExit(stack<std::string>* Stack) override {
         std::cout <<"  call." << body->getName() <<"\n";
         body->print("    ");
-        for (auto& i : args) {
+        for (auto& i : args) 
             auto x=Stack->pop();
-        }
+
         Stack->push( body->getName()+".ret."+ typeToStr(type));
         is_visited = false;
     };

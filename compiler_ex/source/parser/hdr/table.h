@@ -40,6 +40,10 @@ class TableColumn
 {
 public:
     TableColumn (uint64_t len) { length =len; }
+    TableColumn (Variable* var) {
+        length =var->getLength;
+        setUint(var);
+    }
     ~TableColumn() {}
     uint64_t    getLength(){ return length; }
     void        setUint(Variable * var);
@@ -82,8 +86,8 @@ public:
 
     void setUint(Variable * var);
 
-
 private:
+    uint64_t *maxColumnDepth=0;
     stack<TableColumn *> columnList;
 };
 
@@ -91,11 +95,15 @@ private:
 class TableGenContext
 {
 public:
-    TableGenContext () {}
+    TableGenContext (Table *arg, stack<Variable*>* visitorStack) { table =arg; }
     ~TableGenContext() {}
+    
+    uint64_t          getUniqueIndex () { uniqueNameCounter++; return (uniqueNameCounter -1); }
+    void              setUint(Variable * var) { table->setUint(var);};
 
 private:
-
+    Table * table;
+    uint64_t uniqueNameCounter=0;
 };
 
 
