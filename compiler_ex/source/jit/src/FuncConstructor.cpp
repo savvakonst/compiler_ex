@@ -52,7 +52,7 @@ uint32_t getFunctionRetSize(Header_ptr* header) {
 }
 
 
-extern Function* CreateMainFunction(Module* M, LLVMContext& Context, Header_ptr*header) {
+extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr*header) {
 
     std::vector<Type*> FArgsList;
 

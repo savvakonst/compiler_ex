@@ -46,6 +46,7 @@ public:
 
     void assignValue(Variable* var);
     int  getUnicleIndex();
+    Variable* getAssignedVal() { return assignedVal; }
 
     bool isArg();
     bool haveTargetName(std::string);
@@ -62,11 +63,15 @@ public:
     virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
     virtual void genBlocksVisitExit  (TableGenContext*  context)                                        override;
 
+
+    virtual string printUint() { return uniqueName + (is_arg?" = arg()"  :" = assign(" + assignedVal->getUniqueName()+")"); }
     //virtual Variable* getAssignedVal() { assignedVal; };
-    Variable* assignedVal=NULL;
+    
 
 
 private:
+
+    Variable* assignedVal=NULL;
     std::vector<std::string> names;
 
     bool is_arg = false;

@@ -1,7 +1,6 @@
 
 
 func calc(i, j):
-   a = 0*1
    v=i+j**i
    return v
    ;
@@ -12,11 +11,12 @@ func calc_new(i, j):
    return a
    ;
 
-x, y, z =param("1000","1000","1000") #asfafasdfs
+x, y, z =param("1000","2000","1000") #asfafasdfs
 X=range (0,12*10+1)
 x=convolve(X,x)
-x=calc(x,y)
+x=calc(x,z)
+f=convolve(y,X^22)
 x=shift(x*2,5)
 x=convolve(X,x)
 
-return x
+return x,f

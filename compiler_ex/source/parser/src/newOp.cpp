@@ -27,7 +27,7 @@ Variable* newTypeConvOp(TypeEn targetType, Variable* arg1)
 		CONV_OP(TypeEn::Int1_jty,   OP_LV2(T,bool)     ); \
 	} 
 
-	if (isConst(arg1) && !isUnknownTy(targetType)) {
+	if (!isUnknownTy(arg1) && isConst(arg1)  ) {
 		uint64_t V = 0;
 		switch (targetType)
 		{
@@ -61,14 +61,17 @@ Variable* newTypeConvOp(TypeEn targetType, Variable* arg1)
 	else if (isInteger(targetType) && isFloating(arg1)) {
 		return new Operation(opCodeEn::fptosi, arg1, targetType);
 	}
-	else //if (isInteger(targetType) && isFloating(arg1)) 
+	else if (isInteger(targetType) && isFloating(arg1)) 
 	{
 
 		if (targetType < arg1)
 			return new Operation(opCodeEn::trunc, arg1, targetType);
 		else
 			return new Operation(opCodeEn::sext, arg1, targetType);
+
 	}
+	else print_error("newTypeConvOp");
+
 }
 
 Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg1, opCodeEn uTypeOp) {

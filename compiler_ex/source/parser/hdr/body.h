@@ -108,11 +108,16 @@ public:
     //safe functions .external stack is used
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override {
         commoMmarkUnusedVisitEnter(visitorStack);
-        for (int i = (args.size() - 1); i >= 0; i--) {
-            visitorStack->push(args[i]);
-            args[i]->setBufferLength(this);
-        }
+        //for (int i = (args.size() - 1); i >= 0; i--) {
+        //    visitorStack->push(args[i]);
+        //    //args[i]->setBufferLength(this);
+        //}
+        auto ret = body->getRet()[0];
+        visitorStack->push(ret);
+        ret->setBufferLength(this);
+
         is_unused = false;
+        
     }
 
     /*
@@ -126,7 +131,8 @@ public:
     */
     virtual void genBlocksVisitExit  (TableGenContext*  context) override {
 
-         uniqueName =(isLargeArr(this) ? "fl" : "fs") + std::to_string(context->getUniqueIndex());
+         body->genTable(context);
+         uniqueName =(isLargeArr(this) ? "fb" : "fs") + std::to_string(context->getUniqueIndex());
          context->setUint(this);
          is_visited = false;
     };
@@ -160,6 +166,8 @@ public:
         Stack->push( body->getName()+".ret."+ typeToStr(type));
         is_visited = false;
     };
+
+    virtual string printUint() { return uniqueName + " = assignCall(" + body->getRet()[0]->getUniqueName() + ")"; }
 
     //dangerous functions . recursive call is used
     virtual std::string Print() { return textValue; };

@@ -18,6 +18,7 @@ void print_error(std::string content);
 //	}
 //}
 
+
 void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 	if (isConvolve(opCode)) {
 		auto smallArray = operand[1];
@@ -34,16 +35,16 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 		operand[0]->setBufferLength(left, right);
 	}
 	else if (isShift(opCode)) {
-		auto shift = shiftParameter;
+		auto shift  = shiftParameter;
 
-		auto left   =this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) ;
-		auto right  =this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) ;
+		auto left   = this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) ;
+		auto right  = this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) ;
 
 		operand[0]->setBuffered();
 		operand[0]->setBufferLength(left, right);
 	}
 	else if (isDecimation(opCode)) {
-		print_error("decimation operation is not supported yet");
+		//print_error("decimation operation is not supported yet");
 
 		operand[0]->setBuffered();
 		operand[0]->setBufferLength(this);
@@ -99,7 +100,7 @@ void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 
 void Operation::genBlocksVisitExit(TableGenContext * context)
 {
-	uniqueName =(isLargeArr(this)?"vl" :"vs") + std::to_string(context->getUniqueIndex());
+	uniqueName =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
 	context->setUint(this);
 	is_visited = false;
 }
@@ -185,43 +186,32 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 void Operation::printVisitExit(stack<std::string>* Stack) {
 	is_visited = false;
 	std::string txtOperation = "";
+#define OP(i) (operand[(i)]->getUniqueName() )
+
 	if (isArithetic(opCode)) {
-		txtOperation = arSym[((int)opCode - (int)typeOpCodeEn::arithetic)];
-		auto op2 = Stack->pop();
-		auto op1 = Stack->pop();
-		Stack->push(checkBuffer("(" + op1 + txtOperation + op2 + ")" ));
+		auto op2 = Stack->pop();auto op1 = Stack->pop();
+		Stack->push(checkBuffer("(" + op1 + txtArOp(opCode) + op2 + ")" ));
 	}
 	else if (isInv(opCode)) {
-		Stack->push(checkBuffer( "(-" + Stack->pop() + ")" ));
+		Stack->push(checkBuffer("(-" + Stack->pop() + ")"));
 	}
 	else if (isTypeConv(opCode)) {
-		txtOperation = arTConv[((int)opCode - (int)typeOpCodeEn::typeConv)];
-		Stack->push(checkBuffer(txtOperation + "(" + Stack->pop() + ")"));
+		Stack->push(checkBuffer(txtTConOp(opCode) + "(" + Stack->pop() + ")"));
 	}
 	else if (isBuiltInFunc(opCode)) {
 		txtOperation = arBuiltIn[((int)opCode - (int)typeOpCodeEn::builtInFunc)];
-		Stack->push(checkBuffer(txtOperation + "(" + Stack->pop() + ")"));
+		Stack->push(checkBuffer(txtBuiltInOp(opCode) + "(" + Stack->pop() + ")"));
 	}
 	else if (isSelect(opCode)) {
-		auto op3 = Stack->pop();
-		auto op2 = Stack->pop();
-		auto op1 = Stack->pop();
+		auto op3 = Stack->pop();auto op2 = Stack->pop();auto op1 = Stack->pop();
 		Stack->push(checkBuffer("(" + op1 +"? "+ op2 + ": "+ op3 + ")"));
 	}
 	else if (isConvolve(opCode)) {
-		auto op2 = Stack->pop();
-		auto op1 = Stack->pop();
+		auto op2 = Stack->pop();auto op1 = Stack->pop();
 		Stack->push(checkBuffer("convolve(" + op1 + ", " + op2 + "," + std::to_string(shiftParameter) + ")"));
-		//print_error("visitExitTxt convolve operation is unsupported");
 	}
 	else if (isSlice(opCode)) {
-		auto op1 = Stack->pop();
-		if (opCode == opCodeEn::shift)
-			Stack->push(checkBuffer("shift(" + op1 + ", "  + std::to_string(getSliceParameter()) + ")"));
-		else if (opCode == opCodeEn::decimation)
-			Stack->push(checkBuffer("decimation(" + op1 + ", " + std::to_string(getSliceParameter()) + ")"));
-		else
-			print_error("visitExitTxt unknown command .");
+		Stack->push(checkBuffer(txtSliceOp(opCode) +"(" + Stack->pop() + ", " + std::to_string(getSliceParameter()) + ")"));
 	}
 	else if (isStoreToBuffer(opCode)) {
 		print_error("visitExitTxt StoreToBuffer unknown command .");
@@ -229,6 +219,27 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 	else {
 		print_error("visitExitTxt unknown command .");
 	}
+#undef OP
 }
 
 
+
+string Operation::printUint() {
+	is_visited = false;
+	std::string txtOperation = "";
+	std::string uName = getUniqueName();
+#define OP(i) (operand[(i)]->getUniqueName() )
+
+	if (isArithetic(opCode))          return uName + " = " + OP(0) + txtArOp(opCode) + OP(1);
+	else if (isInv(opCode))           return uName + " = " + "( -" + OP(0) + ")";
+	else if (isTypeConv(opCode))      return uName + " = " + txtTConOp(opCode) + "( " + OP(0) + ")";
+	else if (isBuiltInFunc(opCode))   return uName + " = " + txtBuiltInOp(opCode) + "( " + OP(0) + ")";
+	else if (isSelect(opCode))        return uName + " = " + OP(0) + "? " + OP(1) + ": " + OP(2);
+	else if (isConvolve(opCode))      return uName + " = convolve( " + OP(0) + ", " + OP(1) + ", " + std::to_string(shiftParameter) + ")";
+	else if (isSlice(opCode))         return uName + " = " + txtSliceOp(opCode) + "( " + OP(0) + ", " + std::to_string(getSliceParameter()) + ")";
+	else if (isStoreToBuffer(opCode))
+		print_error("visitExitTxt StoreToBuffer unknown command .");
+	else print_error("visitExitTxt unknown command .");
+
+#undef OP
+}

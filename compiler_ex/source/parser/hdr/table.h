@@ -5,27 +5,27 @@
 #include <vector>
 #include "common.h"
 
-
+using std::string;
 class Variable;
+class Module;
+class LLVMContext;
+
+
+
 
 class Block
 {
 public:
 
-    Block (uint64_t l) { 
-        level =l; 
-    }
-
-    Block (Variable* var) {
-        level=var->getLevel(); 
-        setUint(var);
-    }
+    Block (uint64_t l) {level =l; }
+    Block (Variable* var);
 
     ~Block() {}
 
     uint64_t getLevel () { return level;  };
     uint64_t getLength() { return length; };
     void     setUint(Variable * var);
+    string  print();
 
 private:
     stack<Variable*> unitList;
@@ -40,10 +40,8 @@ class TableColumn
 {
 public:
     TableColumn (uint64_t len) { length =len; }
-    TableColumn (Variable* var) {
-        length =var->getLength;
-        setUint(var);
-    }
+    TableColumn (Variable* var);
+
     ~TableColumn() {}
     uint64_t    getLength(){ return length; }
     void        setUint(Variable * var);
@@ -54,6 +52,9 @@ public:
             }
         return NULL;
     }
+
+    string  print();
+
 
 private:
     uint64_t      length;
@@ -84,9 +85,17 @@ public:
         return NULL;
     }
 
+    string  print();
+
     void setUint(Variable * var);
 
 private:
+    Module* M, 
+    LLVMContext& Context
+
+
+    stack<Variable *> constList;
+    stack<Variable *> smallArrayList;
     uint64_t *maxColumnDepth=0;
     stack<TableColumn *> columnList;
 };
@@ -95,7 +104,7 @@ private:
 class TableGenContext
 {
 public:
-    TableGenContext (Table *arg, stack<Variable*>* visitorStack) { table =arg; }
+    TableGenContext (Table *arg) { table =arg; }
     ~TableGenContext() {}
     
     uint64_t          getUniqueIndex () { uniqueNameCounter++; return (uniqueNameCounter -1); }

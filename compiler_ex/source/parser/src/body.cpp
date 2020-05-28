@@ -238,7 +238,7 @@ void Body::addCall(Body* body_)
 // tree walker methods
 void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
-
+	hideUnusedLines =true;
 	stack<Variable*> visitorStack;
 	stack<std::string> stringStack;
 
@@ -258,7 +258,7 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 			}
 		}
 		else {
-			visitorStack.push(value->assignedVal);
+			visitorStack.push(value->getAssignedVal());
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
@@ -280,7 +280,7 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 	}
 	
 	for (auto& value : returnStack) {
-		visitorStack.push(value->assignedVal);
+		visitorStack.push(value->getAssignedVal());
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
@@ -321,7 +321,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 			body->addLine(value->getName(), *(arg++));// in line 
 		}
 		else{
-			visitorStack.push(value->assignedVal);
+			visitorStack.push(value->getAssignedVal());
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
@@ -335,7 +335,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 
 
 	for (auto& value : returnStack) {
-		visitorStack.push(value->assignedVal);
+		visitorStack.push(value->getAssignedVal());
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
@@ -354,7 +354,7 @@ void Body::symplyfy()
 {
     stack<Variable*> visitorStack;
     for (auto& value : returnStack) {
-        visitorStack.push(value->assignedVal);
+        visitorStack.push(value->getAssignedVal());
         do {
             auto var = visitorStack.pop();
             var->markUnusedVisitEnter(&visitorStack);
@@ -374,7 +374,7 @@ void Body::genTable(TableGenContext * context)
 		}
 		else if (!value->isUnused()) {
 
-			visitorStack.push(value->assignedVal);
+			visitorStack.push(value->getAssignedVal());
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
@@ -387,7 +387,7 @@ void Body::genTable(TableGenContext * context)
 	}
 
 	for (auto& value : returnStack) {
-		visitorStack.push(value->assignedVal);
+		visitorStack.push(value->getAssignedVal());
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())

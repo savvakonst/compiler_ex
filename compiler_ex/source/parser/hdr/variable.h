@@ -128,6 +128,7 @@ public:
     T            getConvTypeVal   () { return *((T*)(&binaryValue)); }
     int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue)); }
     string       getTextValue     () { return textValue; }
+    string       getUniqueName    () { return uniqueName; }
     int64_t      getUsageCounter  () { return usageCounter; }
     int64_t      getLength        () { return length; }
     int64_t      getLevel         () { return level; }
@@ -163,6 +164,8 @@ public:
         context->setUint(this);
         is_visited = false;
     };
+
+    virtual string printUint() { return uniqueName+"="+textValue; }
 
 protected:
 

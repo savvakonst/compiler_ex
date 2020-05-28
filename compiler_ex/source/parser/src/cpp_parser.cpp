@@ -310,23 +310,33 @@ class EErrorListener : public BaseErrorListener
 };
 
 
-
+//#define PreRelise
 int main(int argc, const char* argv[]) {
-    
+
 #ifdef PreRelise
+
     std::string content(
-        "x, y, z = param() #asfafasdfs\n"
-        "a = x + 0\n"
-        "func calc_new(i, j) :\n"
-        "    a = 0 * 1\n"
-        "    v = i + j **i\n"
-        "    return v;\n"
-        "b = a + 0\n"
-        "v = (3.0 ? 100 : b + 90 ** 1.0)\n"
-        "b = float(a) * (3 ? 100 : 90 ** 1)\n"
-        "g = calc_new(b , 1.0)\n"
-        "b = calc_new(b , 2.0)\n"
-        "b = float(b)\n\n");
+    "func calc(i, j):\n"
+        "a = 0 * 1\n"
+        "v=i+j**i\n"
+        "return v\n"
+        ";\n"
+        "\n"
+    "func calc_new(i, j) :\n"
+        "a = 0 * 1\n"
+        "v=i + j**i + 1\n"
+        "return a\n"
+        ";\n"
+        "\n"
+    "x, y, z =param(\"1000\", \"1000\", \"1000\") #asfafasdfs\n"
+        "X=range (0, 12 * 10 + 1)\n"
+        "x=convolve(X, x)\n"
+        "x=calc(x, y)\n"
+        "x=shift(x * 2, 5)\n"
+        "x=convolve(X, x)\n"
+        "\n"
+        "return x\n");
+
 
     ANTLRInputStream input(
         content);
@@ -365,6 +375,11 @@ int main(int argc, const char* argv[]) {
         listener.activBody->symplyfy();
         std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         listener.activBody->print("", false, true);
+        Table* table = new Table();
+        TableGenContext context= TableGenContext(table);
+        listener.activBody->genTable(&context);
+        std::cout << "~~print~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        table->print();
     }catch(size_t k)
     {
         

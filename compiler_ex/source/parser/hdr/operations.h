@@ -9,9 +9,7 @@
 class Operation :public Variable
 {
 public:
-    std::string arSym[14] = { "+","+.","-","-.","*","*.","/","/","/.","%","%","%.","**","**." };
-    std::string arTConv[9] = { "trunc","zext","sext","fptrunc","fpext","fptoi","fptosi","uitofp","sitofp" };
-    std::string arBuiltIn[5] = { "log" , "log10" , "cos" ,"sin" , "exp" };
+
 
     Operation() { opCode = opCodeEn::NONE_op;  }
 
@@ -109,8 +107,10 @@ public:
 
     virtual void genBodyVisitExit( stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr = NULL) override;
     virtual void printVisitExit( stack<std::string>* Stack)										         override;
-    virtual void genBlocksVisitExit  (TableGenContext*  context)                                         override;
+    virtual void genBlocksVisitExit(TableGenContext*  context)                                           override;
 
+
+    virtual string printUint();
     
 
 private:
@@ -120,6 +120,17 @@ private:
     // convolve params
     int64_t shiftParameter = 0; 
     int64_t decimationParameter = 0;
+
+
+    std::string arSym[14] ={ "+","+.","-","-.","*","*.","/","/","/.","%","%","%.","**","**." };
+    std::string arTConv[9] ={ "trunc","zext","sext","fptrunc","fpext","fptoi","fptosi","uitofp","sitofp" };
+    std::string arBuiltIn[5] ={ "log" , "log10" , "cos" ,"sin" , "exp" };
+    std::string arSlice[2] ={ "decimation", "shift" };
+
+    std::string txtArOp(opCodeEn opCode) { return arSym[((int)opCode - (int)typeOpCodeEn::arithetic)]; }
+    std::string txtTConOp(opCodeEn opCode) { return arTConv[((int)opCode - (int)typeOpCodeEn::typeConv)]; }
+    std::string txtBuiltInOp(opCodeEn opCode) { return arBuiltIn[((int)opCode - (int)typeOpCodeEn::builtInFunc)]; }
+    std::string txtSliceOp(opCodeEn opCode) { return arSlice[((int)opCode - (int)typeOpCodeEn::slice_op)]; }
 };
 
 
