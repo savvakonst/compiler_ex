@@ -12,7 +12,6 @@ enum class unknownTypeOpEn {
     uPOW
 };
 
-
 enum class TypeEn {
     Int1_jty = 0,
     Int8_jty,
@@ -40,13 +39,8 @@ enum class DataStructTypeEn
 //	simpleArray
 //};
  
-
-
 ///////////////////////////////////////////////////
 
-
-
- 
 enum class opCodeEn {
     NEG = 0,
     FNEG,
@@ -97,6 +91,7 @@ enum class opCodeEn {
     call,
 
     LOG , 
+    LOG2 ,
     LOG10 , 
     COS , 
     SIN , 

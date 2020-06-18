@@ -168,10 +168,7 @@ public:
     };
 
     virtual string printUint() { return uniqueName + " = assignCall(" + body->getRet()[0]->getUniqueName() + ")"; }
-
-    //dangerous functions . recursive call is used
-    virtual std::string Print() { return textValue; };
-    virtual Variable* generate() { return new Variable(textValue, type); };
+    virtual void setupIR(IRGenerator & builder)override;
 
 private:
     stack<Variable*> args;

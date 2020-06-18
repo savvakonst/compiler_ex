@@ -4,13 +4,27 @@
 #include <iostream>
 #include <vector>
 #include "common.h"
+#include <map> 
+
 
 using std::string;
 class Variable;
-class Module;
-class LLVMContext;
 
+namespace llvm {
+    class ConstantFolder;
+    class IRBuilderDefaultInserter;
 
+    class Module;
+    class LLVMContext;
+    class Function;
+    class Type;
+    class Value;
+    template <typename T = ConstantFolder,
+        typename Inserter = IRBuilderDefaultInserter> class IRBuilder;
+}
+class IRGenerator;
+
+typedef std::map<opCodeEn, llvm:: Function*>  BuiltInFuncMap;
 
 
 class Block
@@ -26,6 +40,8 @@ public:
     uint64_t getLength() { return length; };
     void     setUint(Variable * var);
     string  print();
+
+    void generateIR(IRGenerator &builder);
 
 private:
     stack<Variable*> unitList;
@@ -55,6 +71,8 @@ public:
 
     string  print();
 
+    void generateIR(IRGenerator &builder);
+
 
 private:
     uint64_t      length;
@@ -67,7 +85,8 @@ private:
 class Table
 {
 public:
-    Table () {}
+
+    Table (llvm::Module * M_) { M=M_; declareFunctions();  }
     ~Table() {}
 
     bool containsColumn(uint64_t length) {
@@ -85,19 +104,29 @@ public:
         return NULL;
     }
 
+    BuiltInFuncMap* getFloatBIFuncMap() { return &floatBIFuncMap; }
+    BuiltInFuncMap* getDoubleBIFuncMap() { return &doubleBIFuncMap; }
+
     string  print();
+    void generateIR();
 
     void setUint(Variable * var);
 
 private:
-    Module* M, 
-    LLVMContext& Context
+    void declareFunctions();
+    llvm ::Module* M;
+    //LLVMContext* Context;
+    BuiltInFuncMap floatBIFuncMap;
+    BuiltInFuncMap doubleBIFuncMap;
 
+    llvm::Type * fTy = NULL;
+    llvm::Type * dTy = NULL;
 
     stack<Variable *> constList;
     stack<Variable *> smallArrayList;
     uint64_t *maxColumnDepth=0;
     stack<TableColumn *> columnList;
+
 };
 
 
@@ -111,6 +140,7 @@ public:
     void              setUint(Variable * var) { table->setUint(var);};
 
 private:
+
     Table * table;
     uint64_t uniqueNameCounter=0;
 };

@@ -52,7 +52,7 @@ uint32_t getFunctionRetSize(Header_ptr* header) {
 }
 
 
-extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr*header) {
+extern Function* CreateMainFunction(Module * M, LLVMContext & Context, Header_ptr*header) {
 
     std::vector<Type*> FArgsList;
 
@@ -66,6 +66,7 @@ extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr
         Type::getFloatTy(Context),
         { Type::getFloatTy(Context), Type::getFloatTy(Context) }, false);
 
+    auto & context_r = M->getContext();
 
     //Declaration of f32 functions
     Function* Powi32 = Intrinsic::getDeclaration(M, Intrinsic::pow, Type::getFloatTy(Context));
@@ -86,21 +87,19 @@ extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr
         Function::ExternalLinkage, "MainF", M);
 
 
-
-
     BasicBlock** BB = new BasicBlock * [header->BasicBlock_N + 1];
     for (int i = 0; i < header->BasicBlock_N + 1; i++) {
         BB[i] =
             BasicBlock::Create(Context, "EntryBlock_" + std::to_string(i), MainF);
     }
-
+    
     IRBuilder<> builder(Context);
 
     assert(MainF->arg_begin() != MainF->arg_end());
 
     Value** ConstVars = new Value * [header->len_val];
      
-    Value** Vars = new Value * [header->len_var];
+    Value** Vars      = new Value * [header->len_var];
 
     // FunctionType *fdefinition_sqrt = FunctionType::get(FType, def_args, false);
     // Function *func_sqrt = Function::Create(fdefinition_sqrt,
@@ -132,14 +131,18 @@ extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr
             }
         }
     }
-    auto UpdateBufferF = builder.CreateIntToPtr(
-        ConstantInt::get(builder.getInt64Ty(), uintptr_t(update_buffer)),
-        PointerType::getUnqual(FunctionType::get(builder.getInt32Ty(),
-            { builder.getInt32Ty() }, false)));
+    auto UpdateBufferF = builder.CreateIntToPtr(ConstantInt::get(builder.getInt64Ty(),
+        uintptr_t(update_buffer)),
+        PointerType::getUnqual(
+            FunctionType::get(builder.getInt32Ty(),
+                { builder.getInt32Ty() },
+                false
+            )
+        ));
 
     Value* AOperand,* BOperand;
     Value** Ret;
-
+    /*
     for (int i = 0; i < header->len_com; i++) {
         l = header->commands[i];
 
@@ -235,7 +238,7 @@ extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr
             builder.CreateCondBr(AOperand, BB[l.val2.V],BB[l.val3.V]);
             break;
         case GoC::UpdateBuffer: 
-            builder.CreateCall(UpdateBufferF, ConstVars[0]);
+            builder.CreateCall( UpdateBufferF, ConstVars[0]);
             break;
         case GoC::newBlock: 
             builder.SetInsertPoint(BB[l.val1.V]);
@@ -251,17 +254,23 @@ extern Function* CreateMainFunction(Module* M, LLVMContext & Context, Header_ptr
     // KnownFunction = (Function *)UpdateBufferF;
     //llvm::outs() << "\n Create Main Function successfull :\n ---------\n";
     return MainF;
+    */
+    return NULL;
 }
 
 extern Function* CreateCallFunction(Module* M, LLVMContext& Context) {
     
 
     Function* CallFunction =
-        Function::Create(FunctionType::get(Type::getInt32Ty(Context), {Type::getInt32PtrTy(Context)->getPointerTo() }, false),
-            Function::ExternalLinkage, "CallFunction", M);
+        Function::Create(
+            FunctionType::get(
+                Type::getInt32Ty(Context), {
+                    Type::getInt32PtrTy(Context)->getPointerTo() }, 
+                false),
+            Function::ExternalLinkage, 
+            "CallFunction",
+            M);
 
-
-    
     BasicBlock* BB = BasicBlock::Create(Context, "EntryBlock", CallFunction);
     //IRBuilder<> builder(Context);
     IRBuilder<> builder(BB);

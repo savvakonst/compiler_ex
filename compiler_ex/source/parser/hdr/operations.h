@@ -6,6 +6,9 @@
 #include "types_jty.h"
 
 
+
+
+
 class Operation :public Variable
 {
 public:
@@ -111,7 +114,7 @@ public:
 
 
     virtual string printUint();
-    
+    virtual void setupIR(IRGenerator & builder)                                                    override;
 
 private:
     std::vector<Variable*> operand;
@@ -122,10 +125,10 @@ private:
     int64_t decimationParameter = 0;
 
 
-    std::string arSym[14] ={ "+","+.","-","-.","*","*.","/","/","/.","%","%","%.","**","**." };
-    std::string arTConv[9] ={ "trunc","zext","sext","fptrunc","fpext","fptoi","fptosi","uitofp","sitofp" };
-    std::string arBuiltIn[5] ={ "log" , "log10" , "cos" ,"sin" , "exp" };
-    std::string arSlice[2] ={ "decimation", "shift" };
+    std::string arSym[14]       ={ "+","+.","-","-.","*","*.","/","/","/.","%","%","%.","**","**." };
+    std::string arTConv[9]      ={ "trunc","zext","sext","fptrunc","fpext","fptoi","fptosi","uitofp","sitofp" };
+    std::string arBuiltIn[6]    ={ "log" ,"log2", "log10" , "cos" ,"sin" , "exp" };
+    std::string arSlice[2]      ={ "decimation", "shift" };
 
     std::string txtArOp(opCodeEn opCode) { return arSym[((int)opCode - (int)typeOpCodeEn::arithetic)]; }
     std::string txtTConOp(opCodeEn opCode) { return arTConv[((int)opCode - (int)typeOpCodeEn::typeConv)]; }

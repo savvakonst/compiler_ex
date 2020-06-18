@@ -1,0 +1,24 @@
+ 
+function calc(i, j)
+  v=i+j**i
+  return v
+  end
+
+
+function calc_new(i, j)
+  a = 0*1
+  v=i+j**i+1
+  return a
+  end
+
+
+x, y, z = param( "1000", "2000", "1000")  #вызов
+X = range (0,12*10+1)
+c = exp(z)
+x = convolve(sin(X),x)
+x = calc(x,z)
+f = convolve(y,X^22)
+x = shift(x*2,5)
+x = convolve(X,x)
+
+return x,f,c

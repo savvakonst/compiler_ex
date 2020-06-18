@@ -62,7 +62,7 @@ public:
     virtual void genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)   override;
     virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
     virtual void genBlocksVisitExit  (TableGenContext*  context)                                        override;
-
+    virtual void setupIR(IRGenerator & builder)                                                   override;
 
     virtual string printUint() { return uniqueName + (is_arg?" = arg()"  :" = assign(" + assignedVal->getUniqueName()+")"); }
     //virtual Variable* getAssignedVal() { assignedVal; };
