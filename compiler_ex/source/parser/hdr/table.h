@@ -115,7 +115,8 @@ public:
 private:
     void declareFunctions();
     llvm ::Module* M;
-    //LLVMContext* Context;
+    llvm::Function* currentFunction;
+
     BuiltInFuncMap floatBIFuncMap;
     BuiltInFuncMap doubleBIFuncMap;
 

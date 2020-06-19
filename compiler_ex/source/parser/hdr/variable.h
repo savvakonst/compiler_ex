@@ -140,7 +140,8 @@ public:
     NodeTypeEn   getNodeType      () { return NodeTypeEn::TerminalLine; }
     TypeEn       getType          () { return type; }
     DataStructTypeEn getDSType    () { return dstype; }
-    llvm::Value* getIRValue       () { return IRValue; }
+    llvm::Value* getIRValue       () { return isBuffered ()? IRValueBuffer :IRValue; }
+
 
 
 
@@ -200,7 +201,8 @@ protected:
     uint64_t binaryValue  = 0;
     uint64_t usageCounter = 0;
 
-    llvm::Value * IRValue = NULL;
+    llvm::Value * IRValue       = NULL;
+    llvm::Value * IRValueBuffer = NULL;
 };
 
 

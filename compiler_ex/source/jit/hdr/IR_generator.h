@@ -17,9 +17,7 @@ class IRGenerator : public llvm::IRBuilder <>
 public:
     IRGenerator(llvm::LLVMContext & context, Table * table_=NULL);
 
-    ~IRGenerator()
-    {
-    }
+    ~IRGenerator();
 
     llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, std::string name);
     llvm::Value * CreateConst(uint64_t & binaryValue, TypeEn targetTy, std::string name);

@@ -91,6 +91,7 @@ int main(int argc, const char* argv[]) {
         table->print();
         std::cout << "~~~~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
+        //table->generateIR();
     }catch(size_t )
     {
         

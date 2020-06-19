@@ -33,14 +33,11 @@ using namespace llvm;
 
 
 
-IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context)
-    {
-        
+IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context){
         table=table_;
     }
 
-IRGenerator::~IRGenerator()
-    {
+IRGenerator::~IRGenerator(){
     }
 
 

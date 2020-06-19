@@ -4,17 +4,22 @@
 #include "Body.h"
 #include "llvmHdrs.h"
 
-//using llvm::Module;
-using namespace llvm;
-//using namespace Intrinsic;
 
+using namespace llvm;
+
+
+//Table::Block section 
+//
+//
+//
+//
+//
 Block::Block (Variable* var) {
     level=var->getLevel();
     setUint(var);
 }
 
-void    Block::setUint(Variable * var)
-{
+void    Block::setUint(Variable * var){
     unitList.push(var);
 }
 
@@ -28,19 +33,27 @@ string  Block::print() {
 
 
 void Block::generateIR(IRGenerator &builder) {
-    BasicBlock* bb= BasicBlock::Create(builder.getContext(), "calc_block");
+
+    LLVMContext & context = builder.getContext();
+
+    BasicBlock* bb= BasicBlock::Create(context, "calc_values");
+    //builder.CreateAlloca(getType(l.ret, Context), 0, "buffer");
+    builder.SetInsertPoint(bb);
     for (auto i : unitList)
         i->setupIR(builder);
 }
 
-
-//TableColumn::TableColumn section 
+//TableColumn:: column section 
+//
+//
+//
 //
 //
 TableColumn::TableColumn (Variable* var) {
     length =var->getLength();
     setUint(var);
 }
+
 void    TableColumn::setUint(Variable * var){
     auto  varlevel= var->getLevel();
     for (auto i : blockList) 
@@ -65,7 +78,10 @@ void    TableColumn::generateIR(IRGenerator &builder) {
 }
 
 
-//Table::Table section 
+//Table:: Table section 
+//
+//
+//
 //
 //
 void    Table::setUint(Variable * var)
@@ -109,19 +125,15 @@ string  Table::print() {
 }
 
 
-//typedef  MapVector<opCodeEn, Function*>  BuiltInFuncMap;
-
-
 void    declareUnaryBuiltInFunctions(Module * M, BuiltInFuncMap *UBIFMap, Type * Ty) {
-   (*UBIFMap)[opCodeEn::POW] = getDeclaration(M, Intrinsic::pow, Ty);
-   (*UBIFMap)[opCodeEn::COS] = getDeclaration(M, Intrinsic::cos, Ty);
-   (*UBIFMap)[opCodeEn::SUB] = getDeclaration(M, Intrinsic::sin, Ty);
-   (*UBIFMap)[opCodeEn::EXP] = getDeclaration(M, Intrinsic::exp, Ty);
-   (*UBIFMap)[opCodeEn::LOG] = getDeclaration(M, Intrinsic::log, Ty);
-   (*UBIFMap)[opCodeEn::LOG2] = getDeclaration(M, Intrinsic::log2, Ty);
-   (*UBIFMap)[opCodeEn::LOG10] = getDeclaration(M, Intrinsic::log10, Ty);
+    (*UBIFMap)[opCodeEn::POW] =      getDeclaration(M, Intrinsic::pow, Ty);
+    (*UBIFMap)[opCodeEn::COS] =      getDeclaration(M, Intrinsic::cos, Ty);
+    (*UBIFMap)[opCodeEn::SUB] =      getDeclaration(M, Intrinsic::sin, Ty);
+    (*UBIFMap)[opCodeEn::EXP] =      getDeclaration(M, Intrinsic::exp, Ty);
+    (*UBIFMap)[opCodeEn::LOG] =      getDeclaration(M, Intrinsic::log, Ty);
+    (*UBIFMap)[opCodeEn::LOG2] =     getDeclaration(M, Intrinsic::log2, Ty);
+    (*UBIFMap)[opCodeEn::LOG10] =    getDeclaration(M, Intrinsic::log10, Ty);
 }
-
 
 
 void    Table::declareFunctions() {
@@ -136,15 +148,19 @@ void    Table::declareFunctions() {
 }
 
   
-
 void    Table::generateIR(){
     LLVMContext & context = M->getContext();
     IRGenerator builder(context,this);
 
-    Function* currentFunction = Function::Create(
+     currentFunction = Function::Create(
         FunctionType::get(Type::getInt32Ty(context), {Type::getInt32PtrTy(context)->getPointerTo()}, false),
-        Function::ExternalLinkage, "main", M);
+        Function::ExternalLinkage,
+        "main", 
+        M
+     );
 
+    BasicBlock* bb= BasicBlock::Create(context, "calc_block", currentFunction);
+    builder.SetInsertPoint(bb);
 
     for (auto i : constList)
        i->setupIR(builder);
@@ -154,7 +170,8 @@ void    Table::generateIR(){
 
     for (auto i : columnList) 
        i->generateIR(builder);
-
+    llvm::outs() << "We just constructed this LLVM module:\n";
+    llvm::outs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
 }
 
 void  Variable::setupIR(IRGenerator & builder){
@@ -195,15 +212,31 @@ void  Operation::setupIR(IRGenerator & builder){
         print_error("visitExitTxt unknown command .");
     }
 
+    if (isBuffered ()) {// it may be unsafe and dangerous 
+        IRValueBuffer=builder.CreateAlloca(IRValue->getType(), 0, "buffer");
+    }
 #undef OP
 }
 
 void  Line::setupIR(IRGenerator & builder) {
     if (!is_arg) {
         IRValue=getAssignedVal()->getIRValue();
+        if (isBuffered ()) {// it may be unsafe and dangerous 
+            std::string name ="buffer" + getAssignedVal()->getUniqueName();
+            IRValueBuffer=builder.CreateAlloca(IRValue->getType(), 0, name);
+        }
     }
+    else {
+        setBuffered();
+        IRValueBuffer=builder.CreateAlloca(IRValue->getType(), 0, "buffer");
+    }
+
+
 }
 
 void  Call::setupIR(IRGenerator & builder) {
     IRValue =body->getRet()[0]->getIRValue();
+    if (isBuffered ()) {// it may be unsafe and dangerous 
+        IRValueBuffer=builder.CreateAlloca(IRValue->getType(), 0, "buffer");
+    }
 }
