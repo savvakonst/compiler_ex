@@ -66,7 +66,7 @@ int main(int argc, const char* argv[]) {
     EErrorListener errorListner;
     parser.addErrorListener(&errorListner);
 
-    tree::ParseTree* tree = parser.start();
+    tree::ParseTree*  tree = parser.start();
     TreeShapeListener listener;
 
     LLVMContext* context = new LLVMContext() ;
@@ -75,23 +75,23 @@ int main(int argc, const char* argv[]) {
 
     try
     {
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
         //listener.activBody->print();
         listener.activBody->symplyfy();
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-        listener.activBody->print("", false, true);
-
+        llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        llvm::outs()<<listener.activBody->print("", false, true);
+        //listener.activBody->reduce();
 
 
         Table* table = new Table(M);
         TableGenContext context= TableGenContext(table);
         listener.activBody->genTable(&context);
-        std::cout << "~~print~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        llvm::outs() << "~~print~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         table->print();
-        std::cout << "~~~~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        llvm::outs() << "~~~~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
-        //table->generateIR();
+        table->generateIR();
     }catch(size_t )
     {
         

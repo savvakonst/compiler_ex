@@ -104,6 +104,14 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 	context->setUint(this);
 	is_visited = false;
 }
+
+void Operation::reduceLinksVisitExit()
+{
+	for (size_t i=0; i<operand.size();i++)
+		simplified_operand[i]=operand[i]->getAssignedVal(true);
+
+	is_visited = false;
+}
 /*
 void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
 	is_visited = true;
@@ -152,7 +160,7 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		if (TypeEn::Float_jty > op1->getType())
 			op1 = newTypeConvOp(TypeEn::Float_jty, op1);
 		TypeEn targetType = op1->getType();
-		ret = newBuiltInFuncOperation(type, op1 , opCode);
+		ret = newBuiltInFuncOperation(targetType, op1 , opCode);
 	}
 	else if (isSelect(opCode)) {
 		auto op3 = Stack->pop();
@@ -228,7 +236,10 @@ string Operation::printUint() {
 	is_visited = false;
 	std::string txtOperation = "";
 	std::string uName = getUniqueName();
-#define OP(i) (operand[(i)]->getUniqueName() )
+	//operand[1]->getAssignedVal()
+	//this->simplified_operand;
+	//getAssignedVal(true)
+#define OP(i) (operand[(i)]->getAssignedVal(true)->getUniqueName() )
 
 	if (isArithetic(opCode))          return uName + " = " + OP(0) + txtArOp(opCode) + OP(1);
 	else if (isInv(opCode))           return uName + " = " + "( -" + OP(0) + ")";

@@ -101,23 +101,25 @@ public:
     void         visitEnterSetupBuffer(stack<Variable*>* visitorStack);
     void         visitEnterStackUpdate(stack<Variable*>* visitorStack);
 
-
-
     virtual void visitEnter(stack<Variable*>* visitorStack)										         override;
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)								     override;
     //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                                  override;
 
-
     virtual void genBodyVisitExit( stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr = NULL) override;
     virtual void printVisitExit( stack<std::string>* Stack)										         override;
     virtual void genBlocksVisitExit(TableGenContext*  context)                                           override;
+    virtual void reduceLinksVisitExit()                                                                  override;
 
+
+    virtual Variable* getAssignedVal(bool deep = false)  override { return this; }
 
     virtual string printUint();
     virtual void setupIR(IRGenerator & builder)                                                    override;
 
 private:
     std::vector<Variable*> operand;
+    std::vector<Variable*> simplified_operand;
+
     opCodeEn opCode = opCodeEn::NONE_op;
 
     // convolve params
@@ -135,11 +137,6 @@ private:
     std::string txtBuiltInOp(opCodeEn opCode) { return arBuiltIn[((int)opCode - (int)typeOpCodeEn::builtInFunc)]; }
     std::string txtSliceOp(opCodeEn opCode) { return arSlice[((int)opCode - (int)typeOpCodeEn::slice_op)]; }
 };
-
-
-
-
-
 
 Variable* newInvOperation(Variable* arg1);
 Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg1, opCodeEn uTypeOp);

@@ -34,20 +34,21 @@ using namespace llvm;
 
 
 IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context){
-        table=table_;
-    }
+    table=table_;
+}
 
 IRGenerator::~IRGenerator(){
-    }
+}
 
 
 
 Value * IRGenerator::CreateFPow(Value *AOperand, Value *BOperand, std::string name) {
     if (table == NULL) return NULL;
+
     if (AOperand->getType() == getFloatTy())
-        return (*table->getFloatBIFuncMap())[opCodeEn::FPOW];
+        return CreateCall(table->getFloatBIFunc(opCodeEn::FPOW), { AOperand, BOperand }, name);
     else
-        return (*table->getDoubleBIFuncMap())[opCodeEn::FPOW];
+        return CreateCall(table->getDoubleBIFunc(opCodeEn::FPOW), { AOperand, BOperand }, name);
 }
 
 
@@ -105,19 +106,7 @@ Value * IRGenerator::CreateInv(Value *AOperand, opCodeEn opCode, std::string nam
 
 Value * IRGenerator::CreateTypeConv(llvm::Value * AOperand, opCodeEn opCode, TypeEn targetTy, std::string name)
 {
-    Type* destTy = NULL;
-
-    switch (targetTy)
-    {
-    case TypeEn::Int1_jty:      destTy=getInt1Ty();  break;
-    case TypeEn::Int8_jty:      destTy=getInt8Ty();  break;
-    case TypeEn::Int16_jty:     destTy=getInt16Ty(); break;
-    case TypeEn::Int32_jty:     destTy=getInt32Ty(); break;
-    case TypeEn::Int64_jty:     destTy=getInt64Ty(); break;
-    case TypeEn::Float_jty:     destTy=getFloatTy(); break;
-    case TypeEn::Double_jty:    destTy=getDoubleTy();break;
-    default:break;
-    }
+    Type* destTy = getLLVMType(targetTy);
 
     Value * ret=NULL;
     switch (opCode)
@@ -134,19 +123,107 @@ Value * IRGenerator::CreateTypeConv(llvm::Value * AOperand, opCodeEn opCode, Typ
 
 Value * IRGenerator::CreateBuiltInFunc(llvm::Value * AOperand, opCodeEn opCode, std::string name)
 {
+    
     if (table == NULL) return NULL;
-    if (AOperand->getType() == getFloatTy())
-        return (*table->getFloatBIFuncMap())[opCode];
-    else
-        return (*table->getDoubleBIFuncMap())[opCode];
+    if (AOperand->getType() == getFloatTy()) {
+        return CreateCall(table->getFloatBIFunc(opCode), { AOperand }, name);
+    }
+    else {
+        return CreateCall(table->getDoubleBIFunc(opCode), { AOperand }, name);
+    }
 
+}
+
+Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty,unsigned int i, std::string name)
+{
+    SetInitInsertPoint();
+    Value* ret = CreateAlloca(ty, 0, name);
+    SetCalcInsertPoint();
+    return ret;
+}
+
+llvm::Value * IRGenerator::CreatePositionalLoad(llvm::Value * AOperand, const std::string name)
+{
+    SetLoadInsertPoint();
+    Value* ret = CreateLoad(AOperand, name);
+    SetCalcInsertPoint();
+    return ret;
+}
+
+llvm::Value * IRGenerator::CreatePositionalLoad(llvm::Value * AOperand, bool isVolatile, std::string name)
+{
+    SetLoadInsertPoint();
+    Value* ret = CreateLoad(AOperand, isVolatile, name);
+    SetCalcInsertPoint();
+    return ret;
+}
+
+Value * IRGenerator::CreateConvolve(Value * AOperand, Value * BOperand, std::string name)
+{
+    Value * ret =NULL,* convolveFunction=NULL;
+    Type * type=AOperand->getType()->getPointerElementType();
+
+    if (type == getDoubleTy())
+        convolveFunction=convolveDoubleFunction;
+    else if (type == getFloatTy())
+        convolveFunction=convolveFloatFunction;
+    else if (type == getInt64Ty())
+        convolveFunction=convolveI64Function;
+    else if (type == getInt32Ty())
+        convolveFunction=convolveI32Function;
+    else
+        return ret;
+
+
+    //if (ret == NULL) print_error("CreateConvolve :" );
+
+    return CreateCall(convolveFunction, { AOperand ,BOperand }, name);
 }
 
 
 
+void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr)
+{
+    typedef Value * (*lambla_ty)(llvm::Type * type, uintptr_t addr);
 
+    auto  lambda =[this](llvm::Type * type, uintptr_t addr) {
+        return CreateIntToPtr(
+            ConstantInt::get(getInt64Ty(),
+                uintptr_t(addr)),
+            PointerType::getUnqual(
+                FunctionType::get(type,
+                    { type->getPointerTo(), type->getPointerTo() },
+                    false
+                )
+            ));
+    };
 
+    if (type == getDoubleTy())
+        convolveDoubleFunction=lambda(type, addr);
+    else if (type == getFloatTy())
+        convolveFloatFunction=lambda(type, addr);
+    else if (type == getInt64Ty())
+        convolveI64Function=lambda(type, addr);
+    else if (type == getInt32Ty())
+        convolveI32Function=lambda(type, addr);
+    
+}
 
-
-
-
+llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
+    Type * ret = NULL;
+    //this->SetInsertPoint
+    switch (targetTy)
+    {
+    case TypeEn::Int1_jty:   ret = getInt1Ty();   break;
+    case TypeEn::Int8_jty:   ret = getInt8Ty();   break;
+    case TypeEn::Int16_jty:  ret = getInt16Ty();  break;
+    case TypeEn::Int32_jty:  ret = getInt32Ty();  break;
+    case TypeEn::Int64_jty:  ret = getInt64Ty();  break;
+    case TypeEn::Float_jty:  ret = getFloatTy();  break;
+    case TypeEn::Double_jty: ret = getDoubleTy(); break;
+    case TypeEn::Unknown_jty:ret = NULL;          break;
+    default:                 ret = NULL;          break;
+    }
+    
+    return ret;
+}

@@ -9,8 +9,6 @@
 
 using std::string;
 
-
-
 class Variable
 {
 public:
@@ -124,8 +122,6 @@ public:
 #undef ENUM2STR
     }
 
-
-
     template< typename T >
     T            getConvTypeVal   () { return *((T*)(&binaryValue)); }
     int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue)); }
@@ -140,9 +136,16 @@ public:
     NodeTypeEn   getNodeType      () { return NodeTypeEn::TerminalLine; }
     TypeEn       getType          () { return type; }
     DataStructTypeEn getDSType    () { return dstype; }
-    llvm::Value* getIRValue       () { return isBuffered ()? IRValueBuffer :IRValue; }
-
-
+    llvm::Value* getIRValue       () { 
+        auto ret =isBuffered ()? IRValueBuffer :IRValue; 
+        if (ret==NULL) print_error("IRValue - is NULL :"+ getUniqueName());
+        return ret;
+    }
+    llvm::Value* getIRValuePtr    () {
+        auto ret =isBuffered () ? IRValueBufferPtr : NULL;
+        if (ret == NULL) print_error("getIRValuePtr - is NULL :" + getUniqueName());
+        return ret;
+    }
 
 
     virtual bool isTermialLargeArray    () { return false; }
@@ -150,7 +153,6 @@ public:
     bool         isArray                () { return dstype != DataStructTypeEn::constant_dsty; }
     bool         isVisited              () { return is_visited; }
     bool         isBuffered             () { return is_buffered; }
-
 
     //safe functions .external stack is used
     void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
@@ -168,9 +170,15 @@ public:
         context->setUint(this);
         is_visited = false;
     };
+    virtual void reduceLinksVisitExit() {
+        is_visited = false;
+    };
+
 
     virtual string printUint() { return uniqueName+"="+textValue; }
     virtual void   setupIR(IRGenerator & builder);
+    virtual Variable* getAssignedVal(bool deep = false) { return this; }
+
 
 protected:
 
@@ -185,11 +193,12 @@ protected:
     bool is_visited  = false;
     bool is_buffered = false;
 
+
     DataStructTypeEn    dstype = DataStructTypeEn::constant_dsty;
     TypeEn              type   = TypeEn::DEFAULT_JTY;
 
-    string   textValue="";
-    string   uniqueName="";
+    string   textValue  = "" ;
+    string   uniqueName = "" ;
 
     uint64_t length     = 1;
     int64_t  decimation = 0;
@@ -203,6 +212,7 @@ protected:
 
     llvm::Value * IRValue       = NULL;
     llvm::Value * IRValueBuffer = NULL;
+    llvm::Value * IRValueBufferPtr = NULL;
 };
 
 

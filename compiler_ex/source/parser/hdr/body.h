@@ -57,9 +57,10 @@ public:
     int           getArgCount() { return argCount; }
 
     // tree walker methods
-    void  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
+    std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Variable*> args = {});
     void  symplyfy();
+    void  reduce();
     void  genTable(TableGenContext * tableGenContext);
 
 private:
@@ -152,8 +153,8 @@ public:
             a.push(Stack->pop());
 
         auto b=body->genBodyByPrototype(a);
-
-        Stack->push(new Call(b,a)); 
+        auto call =new Call(b, a);
+        Stack->push(call);
         is_visited = false;
     }
 
@@ -167,9 +168,28 @@ public:
         is_visited = false;
     };
 
-    virtual string printUint() { return uniqueName + " = assignCall(" + body->getRet()[0]->getUniqueName() + ")"; }
+    virtual void reduceLinksVisitExit() override { 
+        is_visited = false; 
+    }
+
+
+    virtual string printUint() { 
+        if (is_buffered || body->getRet()[0]->isBuffered())
+            body->getRet()[0]->getAssignedVal()->setBuffered();
+
+        return ""; uniqueName + " = assignCall(" + body->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
+    }
     virtual void setupIR(IRGenerator & builder)override;
 
+    virtual Variable*   getAssignedVal(bool deep = false)  override { 
+        if (is_buffered ) {
+            body->getRet()[0]->getAssignedVal(true)->setBuffered();
+            body->getRet()[0]->setBuffered();
+        }
+
+        return body->getRet()[0]->getAssignedVal(true); 
+    }
+    //virtual Variable*   getAssignedVal(bool deep = false)  override { return this; }
 private:
     stack<Variable*> args;
     Body* body = NULL;
@@ -181,4 +201,4 @@ private:
 
 
 
-#endif
+#endif // !BODY_H

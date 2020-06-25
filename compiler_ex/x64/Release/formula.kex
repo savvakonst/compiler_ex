@@ -11,16 +11,15 @@ function calc_new(i, j)
   return a
   end
 
-
-x, y, z = param( "1000", "2000", "1000")  #вызов
+x, y, z = param( "1000", "2000", "1000")  #вызов 
 X = range (0,12*10+1)
 c = exp(z)
 
-x = convolve(sin(X),x)
-VV=x
+x = convolve(X,sin(x))
+VV=x 
 x = calc(x,z)
 f = convolve(y,X^22)
-x = shift(x*2,5)
+#x = shift(x*2,5)
 x = convolve(X,x)*VV
 
-return x,f
+return x#,f

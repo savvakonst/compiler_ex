@@ -46,7 +46,9 @@ public:
 
     void assignValue(Variable* var);
     int  getUnicleIndex();
-    Variable* getAssignedVal() { return assignedVal; }
+    //Variable* getAssignedVal() { return assignedVal; }
+    virtual Variable* getAssignedVal(bool deep = false)  override;
+
 
     bool isArg();
     bool haveTargetName(std::string);
@@ -62,7 +64,8 @@ public:
     virtual void genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)   override;
     virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
     virtual void genBlocksVisitExit  (TableGenContext*  context)                                        override;
-    virtual void setupIR(IRGenerator & builder)                                                   override;
+    virtual void setupIR(IRGenerator & builder)                                                         override;
+    virtual void reduceLinksVisitExit() override { is_visited = false; }
 
     virtual string printUint() { return uniqueName + (is_arg?" = arg()"  :" = assign(" + assignedVal->getUniqueName()+")"); }
     //virtual Variable* getAssignedVal() { assignedVal; };

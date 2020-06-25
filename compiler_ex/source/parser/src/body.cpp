@@ -236,7 +236,7 @@ void Body::addCall(Body* body_)
 
 
 // tree walker methods
-void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
+std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 	hideUnusedLines =true;
 	stack<Variable*> visitorStack;
@@ -300,7 +300,7 @@ void Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 	}
 
 
-	std::cout  << result << "\n";
+	return   result ;
 }
 
 
@@ -364,6 +364,41 @@ void Body::symplyfy()
 }
 
 
+void Body::reduce()
+{
+	stack<Variable*>  visitorStack;
+
+	for (auto& value : lines) {
+		if (value->isArg() && (!value->isUnused())) {
+			//code
+		}
+		else if (!value->isUnused()) {
+
+			visitorStack.push(value->getAssignedVal());
+			do {
+				auto var = visitorStack.pop();
+				if (var->isVisited())
+					var->reduceLinksVisitExit();
+				else
+					var->visitEnter(&visitorStack);
+			} while (!visitorStack.empty());
+		}
+	}
+
+	for (auto& value : returnStack) {
+		visitorStack.push(value->getAssignedVal());
+		do {
+			auto var = visitorStack.pop();
+			if (var->isVisited())
+				var->reduceLinksVisitExit();
+			else
+				var->visitEnter(&visitorStack);
+		} while (!visitorStack.empty());
+		//code
+	}
+}
+
+
 void Body::genTable(TableGenContext * context)
 {
 	stack<Variable*>  visitorStack;
@@ -382,7 +417,7 @@ void Body::genTable(TableGenContext * context)
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
-			context->setUint(value);
+			//context->setUint(value);
 		}
 	}
 

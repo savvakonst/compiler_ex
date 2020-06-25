@@ -29,6 +29,20 @@ int Line::getUnicleIndex(){
 	return unicle_index;
 }
 
+Variable * Line::getAssignedVal(bool deep)
+{
+	if (is_arg)
+		return this;
+	else if (deep){
+		if (is_buffered)
+			getAssignedVal()->setBuffered();
+		return assignedVal->getAssignedVal(true);
+	}
+	else {
+		return assignedVal;
+	}
+}
+
 //safe functions .external stack is used
 
 void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){

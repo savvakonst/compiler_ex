@@ -86,6 +86,8 @@ class Table
 {
 public:
 
+
+
     Table (llvm::Module * M_) { M=M_; declareFunctions();  }
     ~Table() {}
 
@@ -104,10 +106,13 @@ public:
         return NULL;
     }
 
-    BuiltInFuncMap* getFloatBIFuncMap() { return &floatBIFuncMap; }
-    BuiltInFuncMap* getDoubleBIFuncMap() { return &doubleBIFuncMap; }
+    llvm::Function* getFloatBIFunc(opCodeEn op);
+    llvm::Function* getDoubleBIFunc(opCodeEn op);
+    llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, opCodeEn op, llvm::Type * Ty);
 
     string  print();
+    void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
+
     void generateIR();
 
     void setUint(Variable * var);
@@ -127,6 +132,9 @@ private:
     stack<Variable *> smallArrayList;
     uint64_t *maxColumnDepth=0;
     stack<TableColumn *> columnList;
+
+
+    std::map<opCodeEn, int> BIF2LLVMmap;
 
 };
 
