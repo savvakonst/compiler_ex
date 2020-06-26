@@ -29,7 +29,7 @@ public:
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, std::string name="");
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, bool isVolatile, const std::string name="");
     llvm::Value * CreateConvolve(llvm::Value *AOperand, llvm::Value *BOperand, std::string name="");
-
+    void          CreatePositionalStore(llvm::Value * AOperand, llvm::Value * BOperand, bool isVolatile = false);
 
     void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };

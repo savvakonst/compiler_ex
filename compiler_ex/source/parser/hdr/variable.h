@@ -15,112 +15,19 @@ public:
     Variable() {
     };
 
-    Variable(string text, TypeEn type_) {
-        textValue = text;
-        type = type_;
+    Variable(string text, TypeEn type_);
+    Variable(int64_t value, TypeEn type_);
+    Variable(Variable* arg1, Variable* arg2, Variable* arg3);
+    Variable(Variable* arg1, Variable* arg2);
+    Variable(Variable* arg1);
 
-        binaryValue = 0;
+    virtual void setBuffered();
 
-        switch (type_)
-        {
-            case TypeEn::Int1_jty:   *((bool   *)(&binaryValue)) = (bool)stoi(textValue); break;
-            case TypeEn::Int8_jty:   *((int8_t *)(&binaryValue)) = stoi(textValue); break;
-            case TypeEn::Int16_jty:  *((int16_t*)(&binaryValue)) = stoi(textValue); break;
-            case TypeEn::Int32_jty:  *((int32_t*)(&binaryValue)) = stoi(textValue); break;
-            case TypeEn::Int64_jty:  *((int64_t*)(&binaryValue)) = stol(textValue); break;
-            case TypeEn::Float_jty:  *((float  *)(&binaryValue)) = stof(textValue); break;
-            case TypeEn::Double_jty: *((double *)(&binaryValue)) = stod(textValue); break;
-            case TypeEn::Unknown_jty:                                               break;
-            default: print_error("constant reading error");                         break;
-        }
+    void setBufferLength(uint64_t left, uint64_t right);
+    void setBufferLength(Variable * var);
+    void setLevel(int64_t var);
 
-    };
-
-    Variable(int64_t value, TypeEn type_) {
-        binaryValue = value;
-        type = type_;
-
-        switch (type_)
-        {
-            case TypeEn::Int1_jty:   textValue = std::to_string(*((bool   *)(&binaryValue))); break;
-            case TypeEn::Int8_jty:   textValue = std::to_string(*((int8_t *)(&binaryValue))); break;
-            case TypeEn::Int16_jty:  textValue = std::to_string(*((int16_t*)(&binaryValue))); break;
-            case TypeEn::Int32_jty:  textValue = std::to_string(*((int32_t*)(&binaryValue))); break;
-            case TypeEn::Int64_jty:  textValue = std::to_string(*((int64_t*)(&binaryValue))); break;
-            case TypeEn::Float_jty:  textValue = std::to_string(*((float  *)(&binaryValue))); break;
-            case TypeEn::Double_jty: textValue = std::to_string(*((double *)(&binaryValue))); break;
-            case TypeEn::Unknown_jty:                                                         break;
-            default: print_error("constant calc error");                                      break;
-        }
-    };
-
-    Variable(Variable* arg1, Variable* arg2, Variable* arg3) {
-        if (!(isConst(arg1) && isConst(arg2) && isConst(arg3))) {
-            print_error("range args must be a constant"); 
-            return;
-        }
-        else {
-            print_error("range(start_num,stop_num,step) -signature is not supported yet");
-            return;
-        }
-    };
-
-    Variable(Variable* arg1, Variable* arg2) {
-        if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2) ) {
-            length    = arg2->getBinaryValue() - arg1->getBinaryValue();
-            dstype    = DataStructTypeEn::smallArr_dsty;
-            type      = TypeEn::Double_jty;
-            textValue = "range(" + std::to_string(arg1->getBinaryValue()) + "," + std::to_string(arg2->getBinaryValue()) + ")";
-        }else {
-            print_error("range(start_num,stop_num) - arg must be integer consant");
-        }
-    };
-
-    Variable(Variable* arg1) {
-        if (isConst(arg1)&& isInteger(arg1) ) {
-            length    = arg1->getBinaryValue();
-            dstype    = DataStructTypeEn::smallArr_dsty;
-            type      = TypeEn::Double_jty;
-            textValue = "range(" + std::to_string(arg1->getBinaryValue()) + ")";
-        }
-        else {
-            print_error("range(len) - arg must be integer consant");
-        }
-    };
-
-
-    void setBuffered(){
-        if (isLargeArr(this)) {
-            is_buffered=true;
-        }
-    }
-
-    void setBufferLength(uint64_t left, uint64_t right) {
-        if (isLargeArr(this)) {
-            leftBufferLength=maxInt(leftBufferLength, left);
-            rightBufferLength=maxInt(rightBufferLength, right);
-        }
-    }
-
-    void setBufferLength(Variable * var) {
-        if(isLargeArr(this)){
-            leftBufferLength =maxInt(leftBufferLength, var->getLeftBufferLen());
-            rightBufferLength =maxInt(rightBufferLength, var->getRightBufferLen());
-        }
-    }
-
-    string  getTxtDSType() {
-        string t = "pass";
-#define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
-        switch (dstype)
-        {
-            ENUM2STR(constant_dsty);
-            ENUM2STR(smallArr_dsty);
-            ENUM2STR(largeArr_dsty);
-        }
-        return  t;
-#undef ENUM2STR
-    }
+    string  getTxtDSType();
 
     template< typename T >
     T            getConvTypeVal   () { return *((T*)(&binaryValue)); }
@@ -136,16 +43,11 @@ public:
     NodeTypeEn   getNodeType      () { return NodeTypeEn::TerminalLine; }
     TypeEn       getType          () { return type; }
     DataStructTypeEn getDSType    () { return dstype; }
-    llvm::Value* getIRValue       () { 
-        auto ret =isBuffered ()? IRValueBuffer :IRValue; 
-        if (ret==NULL) print_error("IRValue - is NULL :"+ getUniqueName());
-        return ret;
-    }
-    llvm::Value* getIRValuePtr    () {
-        auto ret =isBuffered () ? IRValueBufferPtr : NULL;
-        if (ret == NULL) print_error("getIRValuePtr - is NULL :" + getUniqueName());
-        return ret;
-    }
+
+    virtual Variable* getAssignedVal(bool deep = false) { return this; }
+
+    llvm::Value* getIRValue       (IRGenerator & builder, int64_t parentLevel);
+    llvm::Value* getIRValuePtr    (IRGenerator & builder, int64_t parentLevel);
 
 
     virtual bool isTermialLargeArray    () { return false; }
@@ -157,29 +59,37 @@ public:
     //safe functions .external stack is used
     void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
 
+    virtual void visitEnter          (stack<Variable*>* visitorStack) { 
+        visitorStack->push(this); 
+        is_visited = true; 
+    };
 
-    virtual void visitEnter          (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true; };
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) { commoMmarkUnusedVisitEnter(visitorStack); is_unused = false; };
-    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) { visitorStack->push(this); is_visited = true;  };
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) {
+        commoMmarkUnusedVisitEnter(visitorStack); 
+        is_unused = false; 
+    };
 
+    virtual void genBodyVisitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { 
+        Stack->push(new Variable(textValue, type)); is_visited = false; 
+    };
 
-    virtual void genBodyVisitExit    (stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { Stack->push(new Variable(textValue, type)); is_visited = false; };
-    virtual void printVisitExit      (stack<string> *Stack) { Stack->push(textValue); is_visited = false; };
-    virtual void genBlocksVisitExit  (TableGenContext*  context) {
+    virtual void genBlocksVisitExit(TableGenContext*  context) {
         uniqueName ="c" + std::to_string(context->getUniqueIndex());
         context->setUint(this);
         is_visited = false;
     };
-    virtual void reduceLinksVisitExit() {
+
+    virtual void reduceLinksVisitExit(){
         is_visited = false;
+    };
+
+    virtual void printVisitExit(stack<string> *Stack) {
+        Stack->push(textValue); is_visited = false;
     };
 
 
     virtual string printUint() { return uniqueName+"="+textValue; }
     virtual void   setupIR(IRGenerator & builder);
-    virtual Variable* getAssignedVal(bool deep = false) { return this; }
-
-
 protected:
 
     string checkBuffer(string arg) {

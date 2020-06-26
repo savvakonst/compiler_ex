@@ -1,5 +1,4 @@
- 
-function calc(i, j)
+ function calc(i, j)
   v=i+j**i
   return v
   end
@@ -15,11 +14,11 @@ x, y, z = param( "1000", "2000", "1000")  #вызов
 X = range (0,12*10+1)
 c = exp(z)
 
-x = convolve(X,sin(x))
+x = convolve(X,x**9)+convolve(X,cos(x))
 VV=x 
 x = calc(x,z)
 f = convolve(y,X^22)
 #x = shift(x*2,5)
 x = convolve(X,x)*VV
 
-return x#,f
+return x # ,f

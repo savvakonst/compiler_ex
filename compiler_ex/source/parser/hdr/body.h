@@ -174,20 +174,17 @@ public:
 
 
     virtual string printUint() { 
-        if (is_buffered || body->getRet()[0]->isBuffered())
-            body->getRet()[0]->getAssignedVal()->setBuffered();
 
         return ""; uniqueName + " = assignCall(" + body->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
     }
     virtual void setupIR(IRGenerator & builder)override;
 
     virtual Variable*   getAssignedVal(bool deep = false)  override { 
-        if (is_buffered ) {
+        if (is_buffered & deep) {
             body->getRet()[0]->getAssignedVal(true)->setBuffered();
-            body->getRet()[0]->setBuffered();
         }
 
-        return body->getRet()[0]->getAssignedVal(true); 
+        return body->getRet()[0]->getAssignedVal(deep);
     }
     //virtual Variable*   getAssignedVal(bool deep = false)  override { return this; }
 private:

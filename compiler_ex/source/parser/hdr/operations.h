@@ -63,7 +63,7 @@ public:
         operand.push_back(var2);
 
         for (auto i : operand)
-            if (i->getLevel() < level) i->setBuffered();
+            if (i->getLevel() < level) i->getAssignedVal(true)->setBuffered();
     }
 
     Operation(opCodeEn op, Variable* var1, Variable* var2, Variable* var3, TypeEn targetType) {
@@ -77,7 +77,7 @@ public:
         operand.push_back(var3);
 
         for (auto i : operand)
-            if (i->getLevel() < level) i->setBuffered();
+            if (i->getLevel() < level) i->getAssignedVal(true)->setBuffered();
     }
 
 

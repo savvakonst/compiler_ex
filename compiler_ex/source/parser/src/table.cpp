@@ -36,12 +36,19 @@ string  Block::print() {
 
 
 void Block::generateIR(IRGenerator &builder) {
-
     LLVMContext & context = builder.getContext();
-    BasicBlock* bbLoad= BasicBlock::Create(context, "load_values", builder.getCurrentFunction());
-    BasicBlock* bbCalc= BasicBlock::Create(context, "calc_values", builder.getCurrentFunction());
+
+    std::string  levelTxt=std::to_string(level);
+
+    BasicBlock* bbLoad  = BasicBlock::Create(context, "load_" + levelTxt, builder.getCurrentFunction());
+    BasicBlock* bbCalc  = BasicBlock::Create(context, "calc_" + levelTxt, builder.getCurrentFunction());
+    BasicBlock* bbStore = BasicBlock::Create(context, "store_" + levelTxt, builder.getCurrentFunction());
+
     builder.SetLoadInsertPoint(bbLoad);
     builder.SetCalcInsertPoint(bbCalc);
+    builder.SetStoreInsertPoint(bbStore);
+    builder.SetCalcInsertPoint();
+
     for (auto i : unitList)
         i->setupIR(builder);
 }
@@ -226,14 +233,11 @@ void    Table::generateIR() {
     );
 
 
-
     builder.SetDeclareConvolve(builder.getInt16Ty(), uintptr_t(convolveTemplate<int16_t>));
     builder.SetDeclareConvolve(builder.getInt32Ty(), uintptr_t(convolveTemplate<int32_t>));
     builder.SetDeclareConvolve(builder.getInt64Ty(),  uintptr_t(convolveTemplate<int64_t>));
     builder.SetDeclareConvolve(builder.getDoubleTy(), uintptr_t(convolveTemplate<double>));
     builder.SetDeclareConvolve(builder.getFloatTy(),  uintptr_t(convolveTemplate<float>));
-
-
 
     builder.SetCurrentFunction(currentFunction);
     BasicBlock* bb= BasicBlock::Create(context, "init_block", currentFunction);
@@ -251,14 +255,37 @@ void    Table::generateIR() {
     llvm::outs() << "\n\n---------\nWe just constructed this LLVM module:\n\n---------\n" << *M;
 }
 
+// Implementation of Value, Operation, Line and Call  members, 
+// which provide llvm IR generation.
+//
+//
+Value* Variable::getIRValue(IRGenerator & builder, int64_t parentLevel) {
+    Value * ret=NULL;
+    if (isBuffered() & (parentLevel != level)) {
+        IRValueBuffer=builder.CreatePositionalLoad(IRValueBufferPtr, "buffer_");
+        ret=IRValueBuffer;
+    }
+    else ret=IRValue;
+
+    if (ret == NULL) print_error("IRValue - is NULL :" + getUniqueName());
+    return ret;
+}
+
+Value* Variable::getIRValuePtr(IRGenerator & builder, int64_t parentLevel) {
+    auto ret =isBuffered () ? IRValueBufferPtr : NULL;
+    if (ret == NULL) print_error("getIRValuePtr - is NULL :" + getUniqueName());
+    return ret;
+}
+
 void  Variable::setupIR(IRGenerator & builder){
     IRValue=builder.CreateConst(binaryValue, type, "");
 }
 
 void  Operation::setupIR(IRGenerator & builder){
+#define OP_VAL(i)     (operand[(i)]->getAssignedVal(true) )
+#define OP(i)     (operand[(i)]->getAssignedVal(true)->getIRValue(builder,level) )
+#define OP_PTR(i) (operand[(i)]->getAssignedVal(true)->getIRValuePtr(builder,level) )
 
-#define OP(i) (operand[(i)]->getAssignedVal(true)->getIRValue() )
-#define OP_PTR(i) (operand[(i)]->getAssignedVal(true)->getIRValuePtr() )
     if (isArithetic(opCode)) {
         IRValue =builder.CreateArithmetic(OP(0), OP(1), opCode, getUniqueName());
     }
@@ -286,26 +313,22 @@ void  Operation::setupIR(IRGenerator & builder){
     else {
         print_error("visitExitTxt unknown command .");
     }
-
     if (isBuffered ()) {// it may be unsafe and dangerous 
         IRValueBufferPtr=builder.CreatePositionalAlloca(IRValue->getType(), 0, "alloca_");
-        IRValueBuffer=builder.CreatePositionalLoad(IRValueBufferPtr, "buffer_");
+        builder.CreatePositionalStore(IRValue, IRValueBufferPtr);
     }
+
 #undef OP_PTR
 #undef OP
+#undef OP_VAL
 }
 
 void  Line::setupIR(IRGenerator & builder) {
     if (!is_arg) {
-        IRValue=getAssignedVal()->getIRValue();
-        if (isBuffered ()) {// it may be unsafe and dangerous 
-            std::string name ="line_alloc_" + getAssignedVal(true)->getUniqueName();
-            IRValueBufferPtr=builder.CreatePositionalAlloca(IRValue->getType(), 0, name);
-            IRValueBuffer=builder.CreatePositionalLoad(IRValueBufferPtr, "line_buffer_");
-        }
+        //pass
     }
     else {
-        setBuffered();
+        //setBuffered();
         Type * volatile t= builder.getLLVMType(type);
         IRValueBufferPtr =builder.CreatePositionalAlloca(t,0, "arg_alloca_");
         IRValue=builder.CreatePositionalLoad(IRValueBufferPtr, "arg_buffer_");
@@ -314,12 +337,5 @@ void  Line::setupIR(IRGenerator & builder) {
 }
 
 void  Call::setupIR(IRGenerator & builder) {
-    /*
-    IRValue =body->getRet()[0]->getAssignedVal(true)->getIRValue();
-    if (isBuffered ()) {// it may be unsafe and dangerous 
-
-        IRValueBufferPtr = builder.CreatePositionalAlloca(IRValue->getType(), 0, "call_alloca_");
-        IRValueBuffer=builder.CreatePositionalLoad(IRValueBufferPtr, "call_buffer_");
-    }
-    */
+    //pass
 }

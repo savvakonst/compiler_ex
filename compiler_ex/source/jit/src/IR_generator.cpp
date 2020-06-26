@@ -42,13 +42,13 @@ IRGenerator::~IRGenerator(){
 
 
 
-Value * IRGenerator::CreateFPow(Value *AOperand, Value *BOperand, std::string name) {
+Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, std::string name) {
     if (table == NULL) return NULL;
 
-    if (AOperand->getType() == getFloatTy())
-        return CreateCall(table->getFloatBIFunc(opCodeEn::FPOW), { AOperand, BOperand }, name);
+    if (aOperand->getType() == getFloatTy())
+        return CreateCall(table->getFloatBIFunc(opCodeEn::FPOW), { aOperand, bOperand }, name);
     else
-        return CreateCall(table->getDoubleBIFunc(opCodeEn::FPOW), { AOperand, BOperand }, name);
+        return CreateCall(table->getDoubleBIFunc(opCodeEn::FPOW), { aOperand, bOperand }, name);
 }
 
 
@@ -72,64 +72,64 @@ Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, std::st
     return ret;
 }
 
-Value * IRGenerator::CreateArithmetic(Value *AOperand, Value *BOperand, opCodeEn opCode, std::string name) {
+Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, opCodeEn opCode, std::string name) {
     Value * ret = NULL;
     switch (opCode)
     {
-    case opCodeEn::ADD:  ret = CreateAdd(AOperand, BOperand, name);  break;
-    case opCodeEn::SUB:  ret = CreateSub(AOperand, BOperand, name);  break;
-    case opCodeEn::MUL:  ret = CreateMul(AOperand, BOperand, name);  break;
-    case opCodeEn::SDIV: ret = CreateSDiv(AOperand, BOperand, name); break;
-    case opCodeEn::SREM: ret = CreateSRem(AOperand, BOperand, name); break;
+    case opCodeEn::ADD:  ret = CreateAdd(aOperand, bOperand, name);  break;
+    case opCodeEn::SUB:  ret = CreateSub(aOperand, bOperand, name);  break;
+    case opCodeEn::MUL:  ret = CreateMul(aOperand, bOperand, name);  break;
+    case opCodeEn::SDIV: ret = CreateSDiv(aOperand, bOperand, name); break;
+    case opCodeEn::SREM: ret = CreateSRem(aOperand, bOperand, name); break;
     case opCodeEn::POW:  ret = NULL; break;
 
-    case opCodeEn::FADD: ret = CreateFAdd(AOperand, BOperand, name); break;
-    case opCodeEn::FSUB: ret = CreateFSub(AOperand, BOperand, name); break;
-    case opCodeEn::FMUL: ret = CreateFMul(AOperand, BOperand, name); break;
-    case opCodeEn::FDIV: ret = CreateFDiv(AOperand, BOperand, name); break;
-    case opCodeEn::FREM: ret = CreateFRem(AOperand, BOperand, name); break;
-    case opCodeEn::FPOW: ret = CreateFPow(AOperand, BOperand, name); break;
+    case opCodeEn::FADD: ret = CreateFAdd(aOperand, bOperand, name); break;
+    case opCodeEn::FSUB: ret = CreateFSub(aOperand, bOperand, name); break;
+    case opCodeEn::FMUL: ret = CreateFMul(aOperand, bOperand, name); break;
+    case opCodeEn::FDIV: ret = CreateFDiv(aOperand, bOperand, name); break;
+    case opCodeEn::FREM: ret = CreateFRem(aOperand, bOperand, name); break;
+    case opCodeEn::FPOW: ret = CreateFPow(aOperand, bOperand, name); break;
     }
     return ret;
 
 
 }
 
-Value * IRGenerator::CreateInv(Value *AOperand, opCodeEn opCode, std::string name) {
+Value * IRGenerator::CreateInv(Value *aOperand, opCodeEn opCode, std::string name) {
     Value * ret = NULL;
 
     if (opCode == opCodeEn::NEG)
-        return CreateNeg(AOperand, name);
+        return CreateNeg(aOperand, name);
     else
-        return CreateFNeg(AOperand,name);
+        return CreateFNeg(aOperand,name);
 }
 
-Value * IRGenerator::CreateTypeConv(llvm::Value * AOperand, opCodeEn opCode, TypeEn targetTy, std::string name)
+Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, opCodeEn opCode, TypeEn targetTy, std::string name)
 {
     Type* destTy = getLLVMType(targetTy);
 
     Value * ret=NULL;
     switch (opCode)
     {
-    case opCodeEn::fptrunc: ret = CreateFPTrunc(AOperand, destTy, name);  break;
-    case opCodeEn::fpext:   ret = CreateFPExt(AOperand, destTy, name);    break;
-    case opCodeEn::sitofp:  ret = CreateSIToFP(AOperand, destTy, name);   break;
-    case opCodeEn::fptosi:  ret = CreateFPToSI(AOperand, destTy, name);   break;
-    case opCodeEn::trunc:   ret = CreateTrunc(AOperand, destTy, name);    break;
-    case opCodeEn::sext:    ret = CreateSExt(AOperand, destTy, name);     break;
+    case opCodeEn::fptrunc: ret = CreateFPTrunc(aOperand, destTy, name);  break;
+    case opCodeEn::fpext:   ret = CreateFPExt(aOperand, destTy, name);    break;
+    case opCodeEn::sitofp:  ret = CreateSIToFP(aOperand, destTy, name);   break;
+    case opCodeEn::fptosi:  ret = CreateFPToSI(aOperand, destTy, name);   break;
+    case opCodeEn::trunc:   ret = CreateTrunc(aOperand, destTy, name);    break;
+    case opCodeEn::sext:    ret = CreateSExt(aOperand, destTy, name);     break;
     }
     return ret;
 }
 
-Value * IRGenerator::CreateBuiltInFunc(llvm::Value * AOperand, opCodeEn opCode, std::string name)
+Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, opCodeEn opCode, std::string name)
 {
     
     if (table == NULL) return NULL;
-    if (AOperand->getType() == getFloatTy()) {
-        return CreateCall(table->getFloatBIFunc(opCode), { AOperand }, name);
+    if (aOperand->getType() == getFloatTy()) {
+        return CreateCall(table->getFloatBIFunc(opCode), { aOperand }, name);
     }
     else {
-        return CreateCall(table->getDoubleBIFunc(opCode), { AOperand }, name);
+        return CreateCall(table->getDoubleBIFunc(opCode), { aOperand }, name);
     }
 
 }
@@ -142,26 +142,36 @@ Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty,unsigned int i, std:
     return ret;
 }
 
-llvm::Value * IRGenerator::CreatePositionalLoad(llvm::Value * AOperand, const std::string name)
+
+
+Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, const std::string name)
 {
     SetLoadInsertPoint();
-    Value* ret = CreateLoad(AOperand, name);
+    Value* ret = CreateLoad(aOperand, name);
     SetCalcInsertPoint();
     return ret;
 }
 
-llvm::Value * IRGenerator::CreatePositionalLoad(llvm::Value * AOperand, bool isVolatile, std::string name)
+Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, bool isVolatile, std::string name)
 {
     SetLoadInsertPoint();
-    Value* ret = CreateLoad(AOperand, isVolatile, name);
+    Value* ret = CreateLoad(aOperand, isVolatile, name);
     SetCalcInsertPoint();
     return ret;
 }
 
-Value * IRGenerator::CreateConvolve(Value * AOperand, Value * BOperand, std::string name)
+void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * ptr, bool isVolatile )
+{
+    SetStoreInsertPoint();
+    CreateStore(value, ptr, isVolatile);
+    SetCalcInsertPoint();
+}
+
+
+Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, std::string name)
 {
     Value * ret =NULL,* convolveFunction=NULL;
-    Type * type=AOperand->getType()->getPointerElementType();
+    Type * type=aOperand->getType()->getPointerElementType();
 
     if (type == getDoubleTy())
         convolveFunction=convolveDoubleFunction;
@@ -177,7 +187,7 @@ Value * IRGenerator::CreateConvolve(Value * AOperand, Value * BOperand, std::str
 
     //if (ret == NULL) print_error("CreateConvolve :" );
 
-    return CreateCall(convolveFunction, { AOperand ,BOperand }, name);
+    return CreateCall(convolveFunction, { aOperand ,bOperand }, name);
 }
 
 

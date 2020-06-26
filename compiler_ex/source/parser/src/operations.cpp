@@ -31,7 +31,8 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 		auto left   =this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) + le;
 		auto right  =this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) + ri;
 
-		operand[0]->setBuffered();
+
+		operand[0]->getAssignedVal(true)->setBuffered();
 		operand[0]->setBufferLength(left, right);
 	}
 	else if (isShift(opCode)) {
@@ -40,13 +41,13 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 		auto left   = this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) ;
 		auto right  = this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) ;
 
-		operand[0]->setBuffered();
+		operand[0]->getAssignedVal(true)->setBuffered();
 		operand[0]->setBufferLength(left, right);
 	}
 	else if (isDecimation(opCode)) {
 		//print_error("decimation operation is not supported yet");
 
-		operand[0]->setBuffered();
+		operand[0]->getAssignedVal(true)->setBuffered();
 		operand[0]->setBufferLength(this);
 	}
 	else {
@@ -107,8 +108,8 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 
 void Operation::reduceLinksVisitExit()
 {
-	for (size_t i=0; i<operand.size();i++)
-		simplified_operand[i]=operand[i]->getAssignedVal(true);
+	//for (size_t i=0; i<operand.size();i++)
+	//	operand[i]->getAssignedVal(true);
 
 	is_visited = false;
 }

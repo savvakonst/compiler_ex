@@ -44,6 +44,7 @@ public:
     ~Line() {
     }
 
+
     void assignValue(Variable* var);
     int  getUnicleIndex();
     //Variable* getAssignedVal() { return assignedVal; }
@@ -55,6 +56,7 @@ public:
     bool isTermialLargeArray() { return isArg(); }
 
     std::string getName() { return checkBuffer(names[0]); }
+
 
     //safe functions .external stack is used
     virtual void visitEnter (stack<Variable*>* visitorStack)                                            override;

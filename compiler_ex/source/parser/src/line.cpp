@@ -34,8 +34,6 @@ Variable * Line::getAssignedVal(bool deep)
 	if (is_arg)
 		return this;
 	else if (deep){
-		if (is_buffered)
-			getAssignedVal()->setBuffered();
 		return assignedVal->getAssignedVal(true);
 	}
 	else {
@@ -60,6 +58,7 @@ void Line::genBlocksVisitExit(TableGenContext * context)
 	//context->setUint(this);
 	is_visited = false;
 }
+
 
 /*
 void Line::genBlocksVisitEnter(stack<Variable*>* visitorStack){

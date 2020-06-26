@@ -81,7 +81,7 @@ int main(int argc, const char* argv[]) {
         listener.activBody->symplyfy();
         llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         llvm::outs()<<listener.activBody->print("", false, true);
-        //listener.activBody->reduce();
+        listener.activBody->reduce();
 
 
         Table* table = new Table(M);
