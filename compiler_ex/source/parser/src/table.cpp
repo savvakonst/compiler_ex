@@ -58,7 +58,7 @@ void Block::setUintToSubtable(Variable * var)
 {
     auto  leftBufferLen= var->getLeftBufferLen();
     auto  rightBufferLen= var->getRightBufferLen();
-
+     
     for (auto i : subBlockList)
         if ((i->getLeftLength() == leftBufferLen) && (i->getRightLength() == rightBufferLen)) {
             i->setUint(var);
