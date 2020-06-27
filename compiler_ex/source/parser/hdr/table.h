@@ -25,7 +25,32 @@ namespace llvm {
 class IRGenerator;
 
 typedef std::map<opCodeEn, llvm:: Function*>  BuiltInFuncMap;
+class SubBlock
+{
+public:
 
+    SubBlock (uint64_t leftLength_, uint64_t rightLength_) {
+        leftLength=leftLength_;
+        rightLength=rightLength_;
+    }
+    SubBlock (Variable* var);
+
+    ~SubBlock() {}
+
+    uint64_t getLevel () { return 0; };
+    uint64_t getLeftLength() { return leftLength; };
+    uint64_t getRightLength() { return rightLength; };
+    void     setUint(Variable * var);
+    string   print();
+
+    void generateIR(IRGenerator &builder);
+
+private:
+    stack<Variable*> unitList;
+
+    uint64_t leftLength;
+    uint64_t rightLength;
+};
 
 class Block
 {
@@ -44,7 +69,10 @@ public:
     void generateIR(IRGenerator &builder);
 
 private:
+    void setUintToSubtable(Variable * var);
+
     stack<Variable*> unitList;
+    stack<SubBlock*> subBlockList;
     uint64_t level;
     uint64_t length;
 

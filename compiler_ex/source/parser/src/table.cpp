@@ -7,6 +7,38 @@
 
 using namespace llvm;
 
+SubBlock::SubBlock(Variable * var)
+{
+    leftLength=var->getLeftBufferLen();
+    rightLength=var->getRightBufferLen();
+    setUint(var);
+}
+
+void SubBlock::setUint(Variable * var)
+{
+    unitList.push(var);
+}
+
+string SubBlock::print()
+{
+    const size_t max_line_length=90;
+    string out="\t\tL,R: " + std::to_string(leftLength) + "," + std::to_string(rightLength) + "\n";
+    for (auto i : unitList) {
+        std::string txt       = i->printUint() + ";" + (i->isBuffered() ? " store" : "");
+        std::string txtShifts = std::to_string(i->getLeftBufferLen()) + " : " + std::to_string(i->getRightBufferLen());
+        std::string txtSkip   = std::string(max_line_length - ((txt.length() > max_line_length) ? 0 : txt.length()), ' ');
+
+        out+="\t\t\t" + txt + txtSkip + txtShifts + "\n";
+    }
+    return out;
+}
+
+void SubBlock::generateIR(IRGenerator & builder)
+{
+}
+
+
+
 
 //Table::Block section 
 //
@@ -19,11 +51,29 @@ Block::Block (Variable* var) {
 
 void    Block::setUint(Variable * var){
     unitList.push(var);
+    setUintToSubtable(var);
+}
+
+void Block::setUintToSubtable(Variable * var)
+{
+    auto  leftBufferLen= var->getLeftBufferLen();
+    auto  rightBufferLen= var->getRightBufferLen();
+
+    for (auto i : subBlockList)
+        if ((i->getLeftLength() == leftBufferLen) && (i->getRightLength() == rightBufferLen)) {
+            i->setUint(var);
+            return;
+        }
+    subBlockList.push(new SubBlock(var));
 }
 
 string  Block::print() {
     const size_t max_line_length=90;
     string out="\tlevel: " + std::to_string(level) + "\n";
+    for (auto i : subBlockList) {
+        out+=i->print();
+    }
+    /*
     for (auto i : unitList) {
         std::string txt       = i->printUint() + ";" + (i->isBuffered() ? " store" : "");
         std::string txtShifts = std::to_string(i->getLeftBufferLen()) + " : " + std::to_string(i->getRightBufferLen());
@@ -31,6 +81,7 @@ string  Block::print() {
 
         out+="\t\t" + txt+ txtSkip+ txtShifts+ "\n";
     }
+    */
     return out;
 }
 
