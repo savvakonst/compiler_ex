@@ -60,7 +60,7 @@ public:
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Variable*> args = {});
     void  symplyfy();
-    void  reduce();
+    void  reduce();// this function doesn't work correctly
     void  genTable(TableGenContext * tableGenContext);
 
 private:

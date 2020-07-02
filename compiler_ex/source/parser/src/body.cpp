@@ -253,7 +253,7 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 			if (!hideUnusedLines || !value->isUnused()) {
 				txtLine     = value->getName() + "=arg()" ;
 				txtShifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
+				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), ' ');
 				result     += txtLine + txtSkip + txtShifts + "\n";
 			}
 		}
@@ -273,7 +273,7 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 				txtLine     = tab + value->getName() + DST_postfix + "=" + stringStack.pop() ;
 				txtShifts   = std::to_string(value->getLeftBufferLen())+" : "+ std::to_string(value->getRightBufferLen()) + " : " + std::to_string(value->getLength());
 				txtUsaaage  = std::to_string(value->getUsageCounter());
-				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
+				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? max_line_length-2 : txtLine.length()), ' ');
 				result     += txtLine + txtSkip + txtShifts + "\n";
 			}
 		}
@@ -294,7 +294,7 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 		txtLine     = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
 		txtShifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-		txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), '-');
+		txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), ' ');
 		result     += txtLine + txtSkip + txtShifts + "\n";
 
 	}
@@ -363,7 +363,7 @@ void Body::symplyfy()
     }
 }
 
-
+// this function doesn't work correctly
 void Body::reduce()
 {
 	stack<Variable*>  visitorStack;
@@ -422,16 +422,19 @@ void Body::genTable(TableGenContext * context)
 	}
 
 	for (auto& value : returnStack) {
+
 		visitorStack.push(value->getAssignedVal());
+
+		if (name == "main")
+			value->getAssignedVal(true)->setReturned();
+
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
 				var->genBlocksVisitExit(context);
 			else
 				var->visitEnter(&visitorStack);
-
 		} while (!visitorStack.empty());
 		//code
 	}
-
 }

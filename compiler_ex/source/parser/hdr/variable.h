@@ -22,10 +22,14 @@ public:
     Variable(Variable* arg1);
 
     virtual void setBuffered();
+    void         setReturned() { is_returned=true; }
 
     void setBufferLength(uint64_t left, uint64_t right);
     void setBufferLength(Variable * var);
     void setLevel(int64_t var);
+
+
+
 
     string  getTxtDSType();
 
@@ -55,6 +59,7 @@ public:
     bool         isArray                () { return dstype != DataStructTypeEn::constant_dsty; }
     bool         isVisited              () { return is_visited; }
     bool         isBuffered             () { return is_buffered; }
+    bool         isReturned             () { return is_returned; }
 
     //safe functions .external stack is used
     void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
@@ -103,6 +108,8 @@ protected:
     bool is_visited  = false;
     bool is_buffered = false;
 
+    bool is_returned = false;
+    bool is_initialized = false;
 
     DataStructTypeEn    dstype = DataStructTypeEn::constant_dsty;
     TypeEn              type   = TypeEn::DEFAULT_JTY;
@@ -120,9 +127,12 @@ protected:
     uint64_t binaryValue  = 0;
     uint64_t usageCounter = 0;
 
+    uint64_t bufferNum    = 0;
+
     llvm::Value * IRValue       = NULL;
-    llvm::Value * IRValueBuffer = NULL;
-    llvm::Value * IRValueBufferPtr = NULL;
+    llvm::Value * IRLoadedBufferValue = NULL;
+    llvm::Value * IRBufferRefPtr = NULL;
+
 };
 
 

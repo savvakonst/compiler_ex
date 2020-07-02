@@ -1,3 +1,4 @@
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -295,7 +296,6 @@ extern Function* CreateCallFunction(Module* M, LLVMContext& Context) {
         Var = builder.CreateBitCast(Var, x, "VPointer");
         FArgsList.push_back(Var);
         ArgI2Ptr = builder.CreateInBoundsGEP(Type::getInt32PtrTy(Context), ArgI2Ptr, builder.getInt32(1), "Var.2ptr");
-
     }
     
     CallInst* Add1CallRes = builder.CreateCall(MainF, FArgsList);

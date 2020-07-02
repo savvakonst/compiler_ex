@@ -10,11 +10,12 @@ function calc_new(i, j)
   return a
   end
 
-x, y, z = param( "1000", "2000", "1000")  #вызов 
+x, y, z = param( "1000", "2000", "1000") 
+
 X = range (0,12*10+1)
 c = exp(z)
-
-x = convolve(X,x**9)+convolve(X,cos(x))
+l = cos(x)
+x = convolve(X,x**9)+convolve(X,l)+l+x+x
 VV=x 
 x = calc(x,z)
 f = convolve(y,X^22)

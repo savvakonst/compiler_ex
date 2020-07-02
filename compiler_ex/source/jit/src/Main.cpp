@@ -133,7 +133,7 @@ int main2(int argc, char** argv) {
     Header_ptr* header = Lib->CallCalcFunction(IO->BufferSize, FInfo->dataSize, FInfo->iTypes);
 
     IO->OTypeSize= getFunctionRetSize(header);
-    Function* FooF = CreateMainFunction(M, Context, header);
+    Function* FooF  = CreateMainFunction(M, Context, header);
     Function* CallF = CreateCallFunction(M, Context);
 
     TheFPM->run(*CallF);

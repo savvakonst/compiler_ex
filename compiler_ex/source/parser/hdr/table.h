@@ -10,6 +10,13 @@
 using std::string;
 class Variable;
 
+enum class CycleStageEn
+{
+    start,
+    midle,
+    end
+};
+
 namespace llvm {
     class ConstantFolder;
     class IRBuilderDefaultInserter;
@@ -22,6 +29,7 @@ namespace llvm {
     template <typename T = ConstantFolder,
         typename Inserter = IRBuilderDefaultInserter> class IRBuilder;
 }
+
 class IRGenerator;
 
 typedef std::map<opCodeEn, llvm:: Function*>  BuiltInFuncMap;
@@ -29,34 +37,39 @@ class SubBlock
 {
 public:
 
-    SubBlock (uint64_t leftLength_, uint64_t rightLength_) {
+    SubBlock (uint64_t leftLength_, uint64_t rightLength_, uint64_t length_) {
         leftLength=leftLength_;
         rightLength=rightLength_;
+        length=length_;
     }
     SubBlock (Variable* var);
 
     ~SubBlock() {}
 
     uint64_t getLevel () { return 0; };
+    uint64_t getLength() { return length; };
     uint64_t getLeftLength() { return leftLength; };
     uint64_t getRightLength() { return rightLength; };
     void     setUint(Variable * var);
     string   print();
 
-    void generateIR(IRGenerator &builder);
+    void generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, 
+        std::string basicBlockPrefix="", std::string basicBlockPostfix="");
 
 private:
     stack<Variable*> unitList;
 
     uint64_t leftLength;
     uint64_t rightLength;
+    uint64_t length;
+    uint64_t bufferLength;
 };
 
 class Block
 {
 public:
 
-    Block (uint64_t l) {level =l; }
+    //Block (uint64_t l) {level =l; }
     Block (Variable* var);
 
     ~Block() {}
@@ -66,7 +79,7 @@ public:
     void     setUint(Variable * var);
     string  print();
 
-    void generateIR(IRGenerator &builder);
+    void generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
 
 private:
     void setUintToSubtable(Variable * var);
@@ -75,7 +88,7 @@ private:
     stack<SubBlock*> subBlockList;
     uint64_t level;
     uint64_t length;
-
+    uint64_t bufferLength;
 };
 
 
@@ -99,8 +112,7 @@ public:
 
     string  print();
 
-    void generateIR(IRGenerator &builder);
-
+    void generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
 
 private:
     uint64_t      length;
@@ -116,7 +128,13 @@ public:
 
 
 
-    Table (llvm::Module * M_) { M=M_; declareFunctions();  }
+    Table (llvm::Module * M_ , int maxBufferLength_=(1<<20),int minBufferLength_=0) {
+        M=M_; 
+        declareFunctions();  
+        maxBufferLength=maxBufferLength_;
+        minBufferLength=minBufferLength_;
+
+    }
     ~Table() {}
 
     bool containsColumn(uint64_t length) {
@@ -138,10 +156,12 @@ public:
     llvm::Function* getDoubleBIFunc(opCodeEn op);
     llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, opCodeEn op, llvm::Type * Ty);
 
-    string  print();
+
     void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
 
-    void generateIR();
+    string  print();
+    void calculateBufferLength(std::string basicBlockPrefix="");
+    void generateIR(std::string basicBlockPrefix="");
 
     void setUint(Variable * var);
 
@@ -164,6 +184,8 @@ private:
 
     std::map<opCodeEn, int> BIF2LLVMmap;
 
+    int minBufferLength;
+    int maxBufferLength;
 };
 
 
