@@ -113,6 +113,7 @@ void Operation::reduceLinksVisitExit()
 
 	is_visited = false;
 }
+
 /*
 void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
 	is_visited = true;
@@ -232,7 +233,6 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 }
 
 
-
 string Operation::printUint() {
 	is_visited = false;
 	std::string txtOperation = "";
@@ -254,4 +254,46 @@ string Operation::printUint() {
 	else print_error("visitExitTxt unknown command .");
 
 #undef OP
+}
+
+
+template <typename T>
+T convolveTemplate(T * i, T * j) {
+	return (T)100;
+	for 
+
+}
+
+template <typename T>
+T aritheticTemplate(opCodeEn op,T * ret, T * a, T * b,int n) {
+	for (int i=0; i < n, i++) ret[i]=a[i] + b;
+}
+
+template <typename T>
+T aritheticConstTemplate(opCodeEn op,T * ret, T * a, T  b, int n) {
+	for (int i=0; i < n, i++) ret[i]=a[i] + b;
+}
+
+template <typename T>
+T aritheticConstTemplate(opCodeEn op,T * ret, T  a, T * b, int n) {
+	for (int i=0; i < n, i++) ret[i]=a[i] + b;
+}
+
+
+
+void Operation::calculate()
+{
+	#define OP(i) (operand[(i)]->getAssignedVal(true)-> )
+
+	if (isArithetic(opCode)) {
+		OP(0)  OP(1)
+
+	}
+	else if (isInv(opCode))           return ;
+	else if (isTypeConv(opCode))      return ;
+	else if (isBuiltInFunc(opCode))   return ;
+	else if (isSelect(opCode))        return ;
+	else if (isConvolve(opCode))      return ;
+	else if (isSlice(opCode))         return ;
+	else if (isStoreToBuffer(opCode)) return ;
 }

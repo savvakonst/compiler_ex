@@ -1,6 +1,6 @@
 #include <iostream>
 #include "parser.h"
-
+#include "llvm/Support/raw_ostream.h"
 
 namespace WinNs {
     //#include <windows.h>
@@ -15,21 +15,26 @@ void print_error(std::string content) {
     auto errLine  = errContext->getStart()->getLine();
     auto startPos = errContext->getStart()->getCharPositionInLine();
     auto stopPos  = errContext->getStop()->getCharPositionInLine();
-    std::cout << "line " << errLine << "; pos " << startPos << ":" << stopPos << ". ";
+    llvm::outs() << "line " << errLine << "; pos " << startPos << ":" << stopPos << ". ";
 
 
     //WinNs::SetConsoleTextAttribute(hConsole, (TextAttribute.wAttributes & 0xfff0) | 0x0004);
-    std::cout << "error: ";
+    llvm::outs() << "error: ";
     //WinNs::SetConsoleTextAttribute(hConsole, TextAttribute.wAttributes);
-    std::cout << content << ".\n";
+    llvm::outs() << content << ".\n";
 
 
     //WinNs::SetConsoleTextAttribute(hConsole, (TextAttribute.wAttributes & 0xfff0) | 0x0102);
-    std::cout << "\t" << errContext->getText() << "\n";
+    llvm::outs() << "    " << errContext->getText() << "\n";
     //WinNs::SetConsoleTextAttribute(hConsole, TextAttribute.wAttributes);
 
 
     throw  errLine;
+}
+
+void print_IR_error(std::string content) {
+    llvm::outs() << "IR generation error: \n    "<< content <<"\n";
+    throw  content.length();
 }
 
 
@@ -38,13 +43,13 @@ void EErrorListener::syntaxError(Recognizer* recognizer, Token* offendingSymbol,
     //WinNs::HANDLE  hConsole = WinNs::GetStdHandle(((unsigned long)(-11)));
     //WinNs::CONSOLE_SCREEN_BUFFER_INFO TextAttribute;
     //WinNs::GetConsoleScreenBufferInfo(hConsole, &TextAttribute);
-    std::cout << "line " << line << "; pos " << charPositionInLine << ":" << "_" << ". ";
+    llvm::outs() << "line " << line << "; pos " << charPositionInLine << ":" << "_" << ". ";
     //WinNs::SetConsoleTextAttribute(hConsole, (TextAttribute.wAttributes & 0xfff0) | 0x0004);
-    std::cout << "error: ";
+    llvm::outs() << "error: ";
     //WinNs::SetConsoleTextAttribute(hConsole, TextAttribute.wAttributes);
-    std::cout << msg << ".\n";
+    llvm::outs() << msg << ".\n";
     //WinNs::SetConsoleTextAttribute(hConsole, (TextAttribute.wAttributes & 0xfff0) | 0x0102);
-    std::cout << "\t" << offendingSymbol->getText() << "\n";
+    llvm::outs() << "\t" << offendingSymbol->getText() << "\n";
     //WinNs::SetConsoleTextAttribute(hConsole, TextAttribute.wAttributes);
 }
 

@@ -110,11 +110,18 @@ public:
     virtual void genBlocksVisitExit(TableGenContext*  context)                                           override;
     virtual void reduceLinksVisitExit()                                                                  override;
 
+   
 
     virtual Variable* getAssignedVal(bool deep = false)  override { return this; }
 
+
+
     virtual string printUint();
     virtual void setupIR(IRGenerator & builder)                                                    override;
+
+
+    virtual void calculate() override;
+
 
 private:
     std::vector<Variable*> operand;

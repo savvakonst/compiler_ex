@@ -3,9 +3,13 @@
 #include "variable.h"
 #include "Body.h"
 #include "llvmHdrs.h"
+#include <sstream>
 
 
 using namespace llvm;
+void print_IR_error(std::string content);
+
+
 
 SubBlock::SubBlock(Variable * var)
 {
@@ -23,18 +27,18 @@ void SubBlock::setUint(Variable * var)
 string SubBlock::print()
 {
     const size_t max_line_length=90;
-    string out="\t\tL,R: " + std::to_string(leftLength) + "," + std::to_string(rightLength) + "\n";
+    string out=std::string(4, ' ')+"L,R: " + std::to_string(leftLength) + "," + std::to_string(rightLength) + "\n";
     for (auto i : unitList) {
         std::string txt       = i->printUint() + ";" + (i->isBuffered() ? " store" : "");
         std::string txtShifts = std::to_string(i->getLeftBufferLen()) + " : " + std::to_string(i->getRightBufferLen());
         std::string txtSkip   = std::string(max_line_length - ((txt.length() > max_line_length) ? 0 : txt.length()), ' ');
 
-        out+="\t\t\t" + txt + txtSkip + txtShifts + "\n";
+        out+=std::string(6, ' ') + txt + txtSkip + txtShifts + "\n";
     }
     return out;
 }
 
-void SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string basicBlockPrefix, std::string basicBlockPostfix)
+bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string basicBlockPrefix, std::string basicBlockPostfix)
 {
     LLVMContext & context = builder.getContext();
 
@@ -48,15 +52,8 @@ void SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
 
     if (NULL != bbLastStore)
     {
-        builder.SetLoadInsertPoint();
-        builder.CreateBr(builder.getCalcBlock());
-        builder.SetCalcInsertPoint();
-        builder.CreateBr(builder.getStoreBlock());
-        builder.SetStoreInsertPoint();
-
-        //auto condRes=builder.CreateICmpULT(builder.getCurrentOffsetValue(), builder.getInt64(length+rightLength));
+        builder.CreateStartBRs();
         builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbLoad);
-        //builder.CreateBr(bbLoad);
     }
 
     builder.ClearInitializedVariablesList();
@@ -68,30 +65,34 @@ void SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     builder.SetCalcInsertPoint();
 
 
-    Value* alloc =builder.CreatePositionalOffsetAlloca(basicBlockPrefix + levelTxt, -leftLength);
+    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + levelTxt, -leftLength);
     builder.SetStoreInsertPoint();
     Value* nextOffset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
     builder.CreateStore(nextOffset, alloc);
     builder.SetCurrentCMPRes(
         builder.CreateICmpULT(
             nextOffset,
-            builder.getInt64(length + rightLength)));
+            builder.getInt64(bufferLength + rightLength)));
     builder.SetCalcInsertPoint();
 
     for (auto i : unitList)
         i->setupIR(builder);
+
+
+    return true;
 }
 
 //Table::Block section 
 //
 //
 //
-Block::Block (Variable* var) {
+Block::Block(Variable* var) {
     level=var->getLevel();
+    length=var->getLength();
     setUint(var);
 }
 
-void    Block::setUint(Variable * var){
+void Block::setUint(Variable * var){
     unitList.push(var);
     setUintToSubtable(var);
 }
@@ -106,12 +107,13 @@ void Block::setUintToSubtable(Variable * var)
             i->setUint(var);
             return;
         }
+
     subBlockList.push(new SubBlock(var));
 }
 
 string  Block::print() {
     const size_t max_line_length=90;
-    string out="\tlevel: " + std::to_string(level) + "\n";
+    string out=std::string(2, ' ')+"level: " + std::to_string(level) + "\n";
     for (auto i : subBlockList) {
         out+=i->print();
     }
@@ -128,49 +130,95 @@ string  Block::print() {
 }
 
 
-void Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix)
+bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix)
 {
     LLVMContext & context = builder.getContext();
 
     std::string  levelTxt=std::to_string(level);
 
-    if (type == CycleStageEn::midle){
+    if ( (type == CycleStageEn::midle) || (type == CycleStageEn::end) ){
+        
+        if ((type == CycleStageEn::end) & (0 == ( length % bufferLength )))
+            return false;
+
+
+        BasicBlock* bbIntermediate  = BasicBlock::Create(context, "intermediate_" + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
         BasicBlock* bbLoad  = BasicBlock::Create(context, "load_" + basicBlockPrefix+ levelTxt, builder.getCurrentFunction());
         BasicBlock* bbCalc  = BasicBlock::Create(context, "calc_" + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
         BasicBlock* bbStore = BasicBlock::Create(context, "store_" + basicBlockPrefix +  levelTxt, builder.getCurrentFunction());
 
+
+        BasicBlock* bbLastStore=builder.getStoreBlock();
+
+        if (NULL != bbLastStore)
+        {
+            builder.CreateMidleBRs();
+            builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbIntermediate);
+  
+        }
+        else {
+            builder.SetLoopEnterInsertPoint();
+            builder.CreateBr(bbIntermediate);
+        }
+
+        builder.ClearInitializedVariablesList();
+
+        builder.SetIntermediateInsertPoint(bbIntermediate);
+        builder.SetOffsetToZero();
+
         builder.SetLoadInsertPoint(bbLoad);
         builder.SetCalcInsertPoint(bbCalc);
         builder.SetStoreInsertPoint(bbStore);
+
+
+        
+        builder.SetLoadInsertPoint();
+
+        Value* offsetAlloc = builder.getCurrentOffsetValueAlloca();
+        Value* offset= builder.CreateLoadOffset();
+
+        builder.SetStoreInsertPoint();
+
+        Value* nextOffset =builder.CreateAdd(offset, builder.getInt64(1));
+        builder.CreateStore(nextOffset, offsetAlloc);
+
+        int len=(type == CycleStageEn::midle) ? bufferLength : length % bufferLength ;
+        builder.SetCurrentCMPRes(
+            builder.CreateICmpULT(
+                nextOffset,
+                builder.getInt64(len)));
         builder.SetCalcInsertPoint();
+
 
         for (auto i : unitList)
             i->setupIR(builder);
 
-    }else if(type== CycleStageEn::start){
+    }else if(type == CycleStageEn::start){
         std::string  levelTxt=std::to_string(level);
         size_t sub_level=0;
         for (auto i : subBlockList) {
             i->generateIR(builder, type, basicBlockPrefix, levelTxt+"_"+std::to_string(sub_level));
             sub_level++;
         }
+
     }
+    return true;
 }
 
 
 //TableColumn:: column section 
 //
 //
-//
 TableColumn::TableColumn (Variable* var) {
     length =var->getLength();
+
     setUint(var);
 }
 
 void    TableColumn::setUint(Variable * var){
     auto  varlevel= var->getLevel();
     for (auto i : blockList) 
-        if (i->getLevel() == varlevel) {
+        if (i->getLevel() == varlevel){
             i->setUint(var);
             return;
         }
@@ -178,6 +226,7 @@ void    TableColumn::setUint(Variable * var){
 }
 
 string  TableColumn::print(){
+
     string out="length: " + std::to_string(length) + "\n";
     for (auto i : blockList) {
         out+= i->print();
@@ -185,37 +234,37 @@ string  TableColumn::print(){
     return out;
 }
 
-void    TableColumn::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix) {
-    
-    for (auto i : blockList)
-        i->generateIR(builder, type, basicBlockPrefix+"block_" + std::to_string(length) + "_level_");
+bool    TableColumn::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix) {
+    std::stringstream hex();
+    bool res=false;
+    for (auto i : blockList) {
+        std::stringstream ss;
+        ss<< std::hex <<length;
+
+        res|=i->generateIR(builder, type, basicBlockPrefix + "block_" +"0x" +ss.str() + "_level_");
+    }
+    return res;
 }
 
 
 
 template <typename T>
-T convolveTemplate(T * i, T * j)
-{
+T convolveTemplate(T * i, T * j){
     return (T)100;
 }
-
 //convolveTemplate<int64_t>
 int64_t convolveI64(int64_t * i, int64_t * j) {
     return 100;
 }
-
 int32_t convolveI32(int32_t * i, int32_t * j) {
     return 100;
 }
-
 int16_t convolveI16(int16_t * i, int16_t * j) {
     return 100;
 }
-
 double convolveDouble(double * i, double * j) {
     return 100.0;
 }
-
 float convolveFloat(float * i, float * j) {
     return 100.0;
 }
@@ -239,8 +288,8 @@ Value * genConvolve(IRGenerator & builder, llvm::Type* type, uintptr_t addr) {
 //
 //
 //
-void    Table::setUint(Variable * var)
-{
+void    Table::setUint(Variable * var){
+
     auto  varLength= var->getLength();
     if (isConst(var)) {
         constList.push(var);
@@ -257,8 +306,6 @@ void    Table::setUint(Variable * var)
         }
     columnList.push(new TableColumn(var));
 }
-
-
 
 llvm::Function * Table::getFloatBIFunc(opCodeEn op) { 
     //return floatBIFuncMap[op];
@@ -322,21 +369,22 @@ llvm:outs() << out;
     return out;
 }
 
-void Table::calculateBufferLength(std::string basicBlockPrefix)
-{   int maxLength=0;
+void Table::calculateBufferLength(std::string basicBlockPrefix){
+
+    int maxLength=0;
     int minLength=columnList[0]->getLength();
 
     typedef struct {
         int maxLength;
         int minLength;
+        int iterations;
         stack<TableColumn *> columnList;
     } group;
 
     std::vector<group> groupList;
 
-
     for (auto  i : columnList){
-        int length=i->getLength();
+        uint64_t length=i->getLength();
         bool exist=false;
        
         for (auto &j : groupList) {
@@ -350,24 +398,41 @@ void Table::calculateBufferLength(std::string basicBlockPrefix)
             }
         }
 
+
         if (!exist) {
-            group g={ maxLength ,minLength };
+            group g={ length ,length };
             g.columnList.push_back(i);
             groupList.push_back(g);
         }
     }
 
-    if (maxLength % minLength != 0)
-        print_error("maxLength%minLength!=0");
+    for (auto &j : groupList) {
+        int subMaxBufferLength = minBufferLength * j.maxLength / j.minLength;
+        if (subMaxBufferLength > maxBufferLength) {
+            llvm::outs() << "maxBufferLength = subMaxBufferLength;\n";
+            maxBufferLength = subMaxBufferLength;
+        }
+        
+        iterations =  j.maxLength / maxBufferLength;
 
-    int subMaxBufferLength=minBufferLength * maxLength / minLength;
+        j.iterations =  j.maxLength / maxBufferLength;
 
-    if (subMaxBufferLength > maxBufferLength)
-        maxBufferLength=subMaxBufferLength;
+        for (auto i : j.columnList){
+            i->setBufferLength(
+                maxBufferLength / (j.maxLength / i->getLength())
+            );
+        }
+    }
+    if (groupList.size() !=1)
+        print_IR_error("non multiple large array lengths is not supported yet\n");
 
+    //iterations=groupList[0].columnList[0]->getLength()/ groupList[0].columnList[0]->get();
 }
 
-void    Table::generateIR(std::string basicBlockPrefix) {
+
+
+
+bool    Table::generateIR(std::string basicBlockPrefix) {
     LLVMContext & context = M->getContext();
     IRGenerator builder(context, this);
 
@@ -378,41 +443,85 @@ void    Table::generateIR(std::string basicBlockPrefix) {
         M
     );
 
-    builder.SetDeclareConvolve(builder.getInt16Ty(), uintptr_t(convolveTemplate<int16_t>));
-    builder.SetDeclareConvolve(builder.getInt32Ty(), uintptr_t(convolveTemplate<int32_t>));
+    builder.SetDeclareConvolve(builder.getInt16Ty(),  uintptr_t(convolveTemplate<int16_t>));
+    builder.SetDeclareConvolve(builder.getInt32Ty(),  uintptr_t(convolveTemplate<int32_t>));
     builder.SetDeclareConvolve(builder.getInt64Ty(),  uintptr_t(convolveTemplate<int64_t>));
     builder.SetDeclareConvolve(builder.getDoubleTy(), uintptr_t(convolveTemplate<double>));
     builder.SetDeclareConvolve(builder.getFloatTy(),  uintptr_t(convolveTemplate<float>));
 
+    for (auto i : constList)
+       i->setupIR(builder);
+
+    for (auto i : smallArrayList)
+        //i.
+       //i->setupIR(builder);
+
+
+
+
+    //the main "For loop"
+    // creating jump commands for init cycle
     builder.SetCurrentFunction(currentFunction);
     BasicBlock* bb= BasicBlock::Create(context, "init_block", currentFunction);
     builder.SetInitInsertPoint(bb);
 
-    for (auto i : constList)
-       i->setupIR(builder);
-
-    //for (auto i : smallArrayList)
-    //   i->setupIR(builder);
-
     for (auto i : columnList) 
        i->generateIR(builder,CycleStageEn::start);
 
-    auto bblocks=builder.GetInsertPoint();
+    // creating jump commands for init cycle
+    builder.CreateStartBRs();
+    //cond jump to Main Cycle Enter
+    BasicBlock* bbLoopEnter = BasicBlock::Create(context, "loop_enter_block", builder.getCurrentFunction());
+    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbLoopEnter);
+    builder.SetLoopEnterInsertPoint(bbLoopEnter);
+    builder.DropBaseInsertPoint();
 
-    builder.SetLoadInsertPoint();
-    builder.CreateBr(builder.getCalcBlock());
-    builder.SetCalcInsertPoint();
-    builder.CreateBr(builder.getStoreBlock());
+    Value* globIndexAlloca=builder.CreatePositionalOffsetAlloca("glob_index_alloca",0);
+    builder.CreatePositionalOffsetAlloca("common_offset_alloca", 0);
 
 
+    builder.SetLoopEnterInsertPoint(bbLoopEnter);
+    Value* globIndex=builder.CreateLoad(globIndexAlloca, "glob_index");
+
+    for (auto i : columnList)
+        i->generateIR(builder, CycleStageEn::midle);
+   
+    builder.CreateMidleBRs();
+    BasicBlock* bbCycleExit = BasicBlock::Create(context, "cycle_exit_block", builder.getCurrentFunction());
+    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbCycleExit);
+    builder.SetCycleExitInsertPoint(bbCycleExit);
+
+    //global index increment, and index comparsion with max iteration number
+    //increasing the global index and comparing the index with the max iteration number
+    Value* nextGlobIndex =builder.CreateAdd(globIndex, builder.getInt64(1));
+    builder.CreateStore(nextGlobIndex, globIndexAlloca);
+    builder.SetCurrentCMPRes(
+        builder.CreateICmpULT(
+            nextGlobIndex,
+            builder.getInt64( (iterations-1) )));
+
+
+    BasicBlock* bbTerminalLoopEnter = BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
+    builder.CreateCondBr(builder.getCurrentCMPRes(), bbLoopEnter, bbTerminalLoopEnter);
+    builder.SetLoopEnterInsertPoint(bbTerminalLoopEnter);
+    builder.DropBaseInsertPoint();
+    
+    bool  isNotIdle = false;
+    for (auto i : columnList)
+        isNotIdle |= i->generateIR(builder, CycleStageEn::end);
+   
+    if (isNotIdle) {
+        builder.CreateMidleBRs();
+        BasicBlock* bbExit = BasicBlock::Create(context, "exit_block", builder.getCurrentFunction());
+        builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbExit);
+        builder.SetExitInsertPoint(bbExit);
+    }
+   
+    builder.CreateRet(builder.getInt32(1));
+
+    //create jump from init block to the next
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
-    builder.SetLastInsertPoint();
-
-
-    auto kRetSuccessful=builder.getInt32(1);
-    builder.CreateRet(kRetSuccessful);
-    //llvm::outs() << "\n\n---------\nWe just constructed this LLVM module:\n\n---------\n" << *M;
 }
 
 
@@ -433,13 +542,13 @@ Value* Variable::getIRValue(IRGenerator & builder, int64_t parentLevel) {
     }
     else ret=IRValue;
 
-    if (ret == NULL) print_error("IRValue - is NULL :" + getUniqueName());
+    if (ret == NULL) print_IR_error("IRValue - is NULL :" + getUniqueName());
     return ret;
 }
 
 Value* Variable::getIRValuePtr(IRGenerator & builder, int64_t parentLevel) {
     auto ret =isBuffered () ? IRBufferRefPtr : NULL;
-    if (ret == NULL) print_error("getIRValuePtr - is NULL :" + getUniqueName());
+    if (ret == NULL) print_IR_error("getIRValuePtr - is NULL :" + getUniqueName());
     return ret;
 }
 
@@ -474,10 +583,10 @@ void  Operation::setupIR(IRGenerator & builder){
 
     }
     else if (isStoreToBuffer(opCode)) {
-        print_error("visitExitTxt StoreToBuffer unknown command .");
+        print_IR_error("visitExitTxt StoreToBuffer unknown command .");
     }
     else {
-        print_error("visitExitTxt unknown command .");
+        print_IR_error("visitExitTxt unknown command .");
     }
 
 

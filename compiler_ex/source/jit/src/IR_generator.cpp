@@ -25,7 +25,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Utils.h"
-
 #include "IR_generator.h"
 #include "table.h"
 using namespace llvm;
@@ -140,15 +139,23 @@ Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty,unsigned int i, cons
     return ret;
 }
 
-Value * IRGenerator::CreatePositionalOffsetAlloca( std::string name,uint64_t startValue)
+Value * IRGenerator::CreatePositionalOffset( std::string name,uint64_t startValue)
 {
-    auto ty=getInt64Ty();
-    SetInitInsertPoint();
-    Value* ret = CreateAlloca(ty, 0, "offset_alloca_" );
-    CreateStore(getInt64(startValue), ret);
+    Value* ret=CreatePositionalOffsetAlloca();
     SetLoadInsertPoint();
     currentOffsetValue=CreateLoad(ret, "offset" );
     SetCalcInsertPoint();
+    return ret;
+}
+
+
+Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, uint64_t startValue)
+{
+    auto ty=getInt64Ty();
+    SetInitInsertPoint();
+    Value* ret = CreateAlloca(ty, 0, "offset_alloca_");
+    currentOffsetValueAlloca=ret;
+    CreateStore(getInt64(startValue), ret);
     return ret;
 }
 
@@ -174,6 +181,12 @@ Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, bool isVolatil
     Value* ret = CreateLoad(aOperand, isVolatile, name);
     SetCalcInsertPoint();
     return ret;
+}
+
+llvm::Value * IRGenerator::CreateLoadOffset( const std::string & name)
+{
+    currentOffsetValue =CreateLoad(currentOffsetValueAlloca, name);
+    return currentOffsetValue;
 }
 
 void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * ptr, bool isVolatile )
@@ -212,6 +225,28 @@ Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
 
     SetCalcInsertPoint();
     return buffer;
+}
+
+void IRGenerator::CreateStartBRs()
+{
+    SetLoadInsertPoint();
+    CreateBr(getCalcBlock());
+    SetCalcInsertPoint();
+    CreateBr(getStoreBlock());
+    //SetStoreInsertPoint();
+    SetLastInsertPoint();
+}
+
+void IRGenerator::CreateMidleBRs()
+{
+    SetIntermediateInsertPoint();
+    CreateBr(getLoadBlock());
+    SetLoadInsertPoint();
+    CreateBr(getCalcBlock());
+    SetCalcInsertPoint();
+    CreateBr(getStoreBlock());
+    //SetStoreInsertPoint();
+    SetLastInsertPoint();
 }
 
 
@@ -260,6 +295,13 @@ void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr)
     else if (type == getInt32Ty())
         convolveI32Function=lambda(type, addr);
     
+}
+
+void IRGenerator::SetOffsetToZero()
+{   
+    BasicBlock*  tmp=BB;
+    CreateStore(getInt64(0), currentOffsetValueAlloca);
+
 }
 
 llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {

@@ -9,7 +9,24 @@
 
 using std::string;
 
-class Variable
+
+class smallArr{
+public:
+    void genRange() {};
+    void loadFromFile(const string &filename) {
+
+    };
+
+    virtual void calculate(){}
+protected:
+    void * bufferPtr;
+};
+
+
+
+
+
+class Variable : public smallArr
 {
 public:
     Variable() {
@@ -132,6 +149,9 @@ protected:
     llvm::Value * IRValue       = NULL;
     llvm::Value * IRLoadedBufferValue = NULL;
     llvm::Value * IRBufferRefPtr = NULL;
+
+
+    
 
 };
 

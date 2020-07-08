@@ -37,23 +37,21 @@ class SubBlock
 {
 public:
 
-    SubBlock (uint64_t leftLength_, uint64_t rightLength_, uint64_t length_) {
-        leftLength=leftLength_;
-        rightLength=rightLength_;
-        length=length_;
-    }
     SubBlock (Variable* var);
 
     ~SubBlock() {}
+
+    void     setUint(Variable * var);
+    void     setBufferLength(uint64_t bufferLength_) { bufferLength=bufferLength_; }
 
     uint64_t getLevel () { return 0; };
     uint64_t getLength() { return length; };
     uint64_t getLeftLength() { return leftLength; };
     uint64_t getRightLength() { return rightLength; };
-    void     setUint(Variable * var);
+
     string   print();
 
-    void generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, 
+    bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle,
         std::string basicBlockPrefix="", std::string basicBlockPostfix="");
 
 private:
@@ -62,7 +60,7 @@ private:
     uint64_t leftLength;
     uint64_t rightLength;
     uint64_t length;
-    uint64_t bufferLength;
+    uint64_t bufferLength=1 << 20;
 };
 
 class Block
@@ -74,12 +72,19 @@ public:
 
     ~Block() {}
 
+    void     setUint(Variable * var);
+    void     setBufferLength(uint64_t bufferLength_) { 
+        for (auto i : subBlockList)
+            i->setBufferLength(bufferLength_);
+        bufferLength=bufferLength_; 
+    }
+
     uint64_t getLevel () { return level;  };
     uint64_t getLength() { return length; };
-    void     setUint(Variable * var);
+
     string  print();
 
-    void generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
+    bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
 
 private:
     void setUintToSubtable(Variable * var);
@@ -88,7 +93,7 @@ private:
     stack<SubBlock*> subBlockList;
     uint64_t level;
     uint64_t length;
-    uint64_t bufferLength;
+    uint64_t bufferLength=1 << 20;
 };
 
 
@@ -100,8 +105,14 @@ public:
     TableColumn (Variable* var);
 
     ~TableColumn() {}
-    uint64_t    getLength(){ return length; }
+
     void        setUint(Variable * var);
+    void     setBufferLength(uint64_t bufferLength_) { 
+        for (auto i : blockList)
+            i->setBufferLength(bufferLength_);
+    }
+
+    uint64_t    getLength() { return length; }
     Block *     getBlock(int level) {
         for (auto i : blockList)
             if (i->getLength() == length) {
@@ -112,7 +123,8 @@ public:
 
     string  print();
 
-    void generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
+
+    bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
 
 private:
     uint64_t      length;
@@ -144,6 +156,10 @@ public:
         return false;
     }
 
+
+    void setUint(Variable * var);
+
+
     TableColumn * getColumn(uint64_t length){
         for (auto i : columnList)
             if (i->getLength() == length) {
@@ -161,9 +177,8 @@ public:
 
     string  print();
     void calculateBufferLength(std::string basicBlockPrefix="");
-    void generateIR(std::string basicBlockPrefix="");
+    bool generateIR(std::string basicBlockPrefix="");
 
-    void setUint(Variable * var);
 
 private:
     void declareFunctions();
@@ -186,6 +201,7 @@ private:
 
     int minBufferLength;
     int maxBufferLength;
+    int iterations=0;
 };
 
 

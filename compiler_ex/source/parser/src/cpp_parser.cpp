@@ -89,27 +89,28 @@ int main(int argc, const char* argv[]) {
     try
     {
 
-        llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+
+        llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
         //listener.activBody->print();
         listener.activBody->symplyfy();
-        llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         llvm::outs()<<listener.activBody->print("", false, true);
         listener.activBody->reduce();
 
 
         Table* table = new Table(moduleUPtr.get());
         TableGenContext context= TableGenContext(table);
+        
         listener.activBody->genTable(&context);
-        llvm::outs() << "~~print~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        llvm::outs() << "~~print~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         table->print();
-        llvm::outs() << "~~~~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-
+        llvm::outs() << "~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        table->calculateBufferLength();
         table->generateIR();
         auto mainF=moduleUPtr->getFunction("main");
-        //theFPM->run(*mainF);
+        theFPM->run(*mainF);
         llvm::outs() << "\n\n---------\nWe just constructed this LLVM module:\n\n---------\n" << *mainF<<"\n\n";
-
 
 
         std::string errStr;
@@ -131,9 +132,8 @@ int main(int argc, const char* argv[]) {
         llvm::outs() << "complete";
     }catch(size_t )
     {
-        
-    }
 
+    }
 
 
     return 0;

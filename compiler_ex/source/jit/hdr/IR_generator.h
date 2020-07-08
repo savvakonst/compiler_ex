@@ -34,20 +34,32 @@ public:
     llvm::Value * CreateTypeConv(llvm::Value *AOperand,  opCodeEn opCode, TypeEn targetTy, const std::string &name="");
     llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, opCodeEn opCode, const std::string &name="");
     llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, unsigned int i, const std::string &name="");
-    llvm::Value * CreatePositionalOffsetAlloca( std::string name="", uint64_t startValue=0);
+    llvm::Value * CreatePositionalOffset( std::string name="", uint64_t startValue=0);
+    llvm::Value * CreatePositionalOffsetAlloca(std::string name="", uint64_t startValue=0);
     llvm::Value * CreatePositionalInBoundsGEP(llvm::Value *Ptr, llvm::ArrayRef<llvm::Value *> IdxList, const std::string &Name = "");
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, const  std::string &name="");
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, bool isVolatile, const std::string &name="");
+    llvm::Value * CreateLoadOffset( const std::string &name="common_offset");
     llvm::Value * CreateConvolve(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
     void          CreatePositionalStore(llvm::Value * AOperand, llvm::Value * BOperand, bool isVolatile = false);
     llvm::Value * CreateBufferInit(TypeEn targetTy, const std::string &name="");
+    void          CreateStartBRs();
+    void          CreateMidleBRs();
 
 
     void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };
     void SetCalcInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(calcBlock, bb); };
     void SetStoreInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(storeBlock, bb); };
+    
+    void SetLoopEnterInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loopEnterBlock, bb); };
+    void SetIntermediateInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(intermediateBlock, bb); };
+    void SetCycleExitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(cycleExitBlock, bb); };
+    void SetExitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(exitBlock, bb); };
+
     void SetLastInsertPoint() { SetInsertPoint(bbList.back()); };
+
+
 
     void SetCurrentFunction(llvm::Function* currentFunction_) { currentFunction=currentFunction_; }
     void SetDeclareConvolve(llvm::Type* type, uintptr_t addr);
@@ -55,20 +67,31 @@ public:
     void SetCurrentOffsetValue(llvm::Value* currentOffsetValue_) { currentOffsetValue=currentOffsetValue; }
     void SetCurrentCMPRes(llvm::Value *currentCMPRes_) {currentCMPRes=currentCMPRes_;}
 
+    void SetOffsetToZero();
+
+    void DropBaseInsertPoint() {
+        calcBlock=NULL;
+        loadBlock=NULL;
+        storeBlock=NULL;
+    };
+
+
     llvm::BasicBlock* getInitBlock() { return initBlock; }
     llvm::BasicBlock* getLoadBlock() { return loadBlock; }
     llvm::BasicBlock* getCalcBlock() { return calcBlock; }
     llvm::BasicBlock* getStoreBlock() { return storeBlock; }
+    llvm::BasicBlock* getCurrentBlock() { return BB; }
 
     llvm::BasicBlock* getBlock(int N) { return bbList[N]; }
     llvm::BasicBlock* getLastBlock(int N) { return bbList.back(); }
 
-
+    llvm::Value*    getCurrentOffsetValueAlloca() { return currentOffsetValueAlloca; }
     llvm::Value*    getCurrentOffsetValue() { return currentOffsetValue;}
     llvm::Value*    getCurrentCMPRes() { return currentCMPRes; }
 
     llvm::Type*     getLLVMType(TypeEn targetTy);
     llvm::Function* getCurrentFunction() { return currentFunction; }
+
 
 
 
@@ -89,6 +112,10 @@ private:
     llvm::BasicBlock* calcBlock=NULL;
     llvm::BasicBlock* loadBlock=NULL;
     llvm::BasicBlock* storeBlock=NULL;
+    llvm::BasicBlock* intermediateBlock=NULL;
+    llvm::BasicBlock* loopEnterBlock=NULL;
+    llvm::BasicBlock* cycleExitBlock=NULL;
+    llvm::BasicBlock* exitBlock=NULL;
 
     std::vector <llvm::BasicBlock*> bbList;
 
@@ -102,6 +129,7 @@ private:
     llvm::Value * convolveI64Function=NULL;
     llvm::Value * convolveI32Function=NULL;
 
+    llvm::Value * currentOffsetValueAlloca =NULL;
     llvm::Value * currentOffsetValue =NULL;
     llvm::Value * currentCMPRes      =NULL;
 

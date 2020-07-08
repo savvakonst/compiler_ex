@@ -9,6 +9,7 @@
 
 
 void print_error(std::string content);
+void print_IR_error(std::string content);
 
 class Line;
 class Variable;

@@ -1,4 +1,6 @@
- function calc(i, j)
+
+
+function calc(i, j)
   v=i+j**i
   return v
   end
@@ -10,16 +12,17 @@ function calc_new(i, j)
   return a
   end
 
-x, y, z = param( "1000", "2000", "1000") 
+x, y, z = param( "33554432", "6108864", "33554432") 
 
-X = range (0,12*10+1)
+X = range(0,12*10+1)
 c = exp(z)
 l = cos(x)
-x = convolve(X,x**9)+convolve(X,l)+l+x+x
+x = convolve(X**2,x**9)+convolve(X,l)+l+x+x
 VV=x 
 x = calc(x,z)
 f = convolve(y,X^22)
 #x = shift(x*2,5)
 x = convolve(X,x)*VV
 
-return x # ,f
+
+return x  # ,f
