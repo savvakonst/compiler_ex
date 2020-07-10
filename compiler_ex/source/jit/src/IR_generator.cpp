@@ -110,12 +110,15 @@ Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, opCodeEn opCode, Typ
     Value * ret=NULL;
     switch (opCode)
     {
-    case opCodeEn::fptrunc: ret = CreateFPTrunc(aOperand, destTy, name);  break;
-    case opCodeEn::fpext:   ret = CreateFPExt(aOperand, destTy, name);    break;
-    case opCodeEn::sitofp:  ret = CreateSIToFP(aOperand, destTy, name);   break;
-    case opCodeEn::fptosi:  ret = CreateFPToSI(aOperand, destTy, name);   break;
     case opCodeEn::trunc:   ret = CreateTrunc(aOperand, destTy, name);    break;
+    case opCodeEn::fptrunc: ret = CreateFPTrunc(aOperand, destTy, name);  break;
+    case opCodeEn::uitofp:  ret = CreateUIToFP(aOperand, destTy, name);   break;
+    case opCodeEn::sitofp:  ret = CreateSIToFP(aOperand, destTy, name);   break;
+    case opCodeEn::fptoi:   ret = CreateFPToUI(aOperand, destTy, name);   break;
+    case opCodeEn::fptosi:  ret = CreateFPToSI(aOperand, destTy, name);   break;
     case opCodeEn::sext:    ret = CreateSExt(aOperand, destTy, name);     break;
+    case opCodeEn::zext:    ret = CreateZExt(aOperand, destTy, name);     break;
+    case opCodeEn::fpext:   ret = CreateFPExt(aOperand, destTy, name);    break;
     }
     return ret;
 }

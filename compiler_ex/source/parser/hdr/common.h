@@ -14,10 +14,6 @@ void print_IR_error(std::string content);
 class Line;
 class Variable;
 
-
-
-
-
 template< typename T > class stack :public  std::vector<T> {
 public:
     T pop() {
@@ -81,6 +77,43 @@ public:
  }
 
 
+
+
+
+#define SWITCH_UINT(CASE_ARG,LOOP, X ) case CASE_ARG: LOOP { X }   
+#define AR_SWITCH_OP(OP,LOOP,RET,ARG_A,ARG_B)   \
+    switch (OP){\
+    SWITCH_UINT(opCodeEn::ADD, LOOP, RET=ARG_A + ARG_B; ) break ;\
+    SWITCH_UINT(opCodeEn::SUB, LOOP, RET=ARG_A - ARG_B;) break ;\
+    SWITCH_UINT(opCodeEn::MUL, LOOP, RET=ARG_A * ARG_B;) break ;\
+    SWITCH_UINT(opCodeEn::SDIV, LOOP, RET=ARG_A / ARG_B;) break ;\
+    SWITCH_UINT(opCodeEn::SREM, LOOP, RET=(T)fmod(ARG_A, ARG_B);) break ;\
+    SWITCH_UINT(opCodeEn::POW, LOOP,  RET=(T)pow((double)ARG_A, ARG_B);) break ;\
+    SWITCH_UINT(opCodeEn::FADD, LOOP, RET=ARG_A + ARG_B;) break; \
+    SWITCH_UINT(opCodeEn::FSUB, LOOP, RET=ARG_A - ARG_B;) break; \
+    SWITCH_UINT(opCodeEn::FMUL, LOOP, RET=ARG_A * ARG_B;) break; \
+    SWITCH_UINT(opCodeEn::FDIV, LOOP, RET=ARG_A / ARG_B;) break; \
+    SWITCH_UINT(opCodeEn::FREM, LOOP, RET=(T)fmod(ARG_A, ARG_B);) break; \
+    SWITCH_UINT(opCodeEn::FPOW, LOOP, RET=(T)pow((double)ARG_A, ARG_B);) break; \
+    default: break;\
+    }
+
+
+
+#define BI_SWITCH_OP(OP,LOOP,RET,ARG_A)   \
+    switch (OP){\
+    SWITCH_UINT(opCodeEn::LOG, LOOP, RET=log(ARG_A) ; ) break ;\
+    SWITCH_UINT(opCodeEn::LOG2, LOOP, RET=log2(ARG_A) ;) break ;\
+    SWITCH_UINT(opCodeEn::LOG10, LOOP, RET=log10(ARG_A) ;) break ;\
+    SWITCH_UINT(opCodeEn::COS, LOOP, RET=cos(ARG_A) ;) break ;\
+    SWITCH_UINT(opCodeEn::SIN, LOOP, RET=sin(ARG_A);) break ;\
+    SWITCH_UINT(opCodeEn::EXP, LOOP,  RET=exp(ARG_A);) break ;\
+    default: break;\
+    }
+
+
+
+ /*
  template< typename T >
  uint64_t calcArithmeticOperation(T arg1, T arg2, opCodeEn uTypeOp)
  {
@@ -100,6 +133,62 @@ public:
 #undef CONV_OP
      return binaryValue;
  }
+ */
+
+ template< typename T >
+ uint64_t calcArithmeticOperation(T arg1, T arg2, opCodeEn uTypeOp){
+     T value;
+     uint64_t binaryValue = 0;
+     AR_SWITCH_OP(uTypeOp, ;, value, arg1, arg2);
+     *((T*)(&binaryValue)) = value;
+     return binaryValue;
+ }
+
+ template< typename T >
+ uint64_t calcBuiltInFuncOperation(T arg, opCodeEn uTypeOp) {
+     T value;
+     uint64_t binaryValue = 0;
+     BI_SWITCH_OP(uTypeOp, ;, value, arg);
+     *((T*)(&binaryValue)) = value;
+     return binaryValue;
+ }
+
+ template <typename T>
+ void aritheticTemplate(opCodeEn op, T * ret, T * a, T * b, int n) {
+     AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i], b[i]);
+ }
+
+ template <typename T>
+ void aritheticConstTemplate(opCodeEn op, T * ret, T * a, T  b, int n) {
+     AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i], b);
+ }
+
+ template <typename T>
+ void aritheticConstTemplate(opCodeEn op, T * ret, T  a, T * b, int n) {
+     AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a, b[i]);
+ }
+
+ template <typename T>
+ void invTemplate( T * ret, T * a, int n) {
+     for (int i=0; i < n; i++) { ret[i]=-a[i]; }
+ }
+
+ template< typename T >
+ void builtInFuncTemplate(opCodeEn op, T * ret, T * a,  int n) {
+     BI_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i]);
+ }
+
+
+#undef SWITCH_UINT
+#undef AR_SWITCH_OP
+#undef BI_SWITCH_OP
+
+void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int n);
+void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, int64_t  a, void *  b, int n);
+void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, int n);
+
+void invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n);
+void typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n);
 
 
 #define DEBUG_STREAM()\

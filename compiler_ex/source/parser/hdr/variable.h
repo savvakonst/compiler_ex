@@ -18,6 +18,7 @@ public:
     };
 
     virtual void calculate(){}
+    void * getBufferPtr() { return bufferPtr; }
 protected:
     void * bufferPtr;
 };
@@ -149,9 +150,6 @@ protected:
     llvm::Value * IRValue       = NULL;
     llvm::Value * IRLoadedBufferValue = NULL;
     llvm::Value * IRBufferRefPtr = NULL;
-
-
-    
 
 };
 

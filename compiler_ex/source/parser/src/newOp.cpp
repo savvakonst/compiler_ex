@@ -1,6 +1,7 @@
 
 #include "operations.h"
 #include <string>
+#include <math.h>
 
 
 void print_error(std::string content);
@@ -44,8 +45,6 @@ Variable* newTypeConvOp(TypeEn targetType, Variable* arg1)
 #undef CONV_OP
 #undef OP
 
-
-
 	if (targetType == arg1->getType()) {
 		return arg1;
 	}
@@ -63,18 +62,28 @@ Variable* newTypeConvOp(TypeEn targetType, Variable* arg1)
 	}
 	else if (isInteger(targetType) && isFloating(arg1)) 
 	{
-
 		if (targetType < arg1)
 			return new Operation(opCodeEn::trunc, arg1, targetType);
 		else
 			return new Operation(opCodeEn::sext, arg1, targetType);
-
 	}
 	else print_error("newTypeConvOp");
-
 }
 
 Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg1, opCodeEn uTypeOp) {
+	#define CONV_OP(depend,target) case (depend):  (target) ;  break
+	#define OP(T)   calcBuiltInFuncOperation<T> ( arg1->getConvTypeVal<T>(),uTypeOp )
+	if (isConst(arg1) && !isUnknownTy(targetType)) {
+		uint64_t V=0;
+		switch (targetType) {
+			CONV_OP(TypeEn::Double_jty, V =OP(double));
+			CONV_OP(TypeEn::Float_jty, V =OP(float));
+		default: print_error("type is not float");
+		}
+		return new Variable(V, targetType);
+	}
+#undef CONV_OP
+#undef OP
 	return new Operation(uTypeOp, arg1, targetType);
 }
 
@@ -84,7 +93,6 @@ Variable* newArithmeticOperation(TypeEn targetType, Variable* arg1, Variable* ar
 
 	if (!is—ompatible(arg1, arg2))
 		print_error("uncompatible values");
-
 
 #define CONV_OP(depend,target) case (depend):  (target) ;  break
 #define OP(T)   calcArithmeticOperation<T> ( arg1->getConvTypeVal<T>(),arg2->getConvTypeVal<T>(),uTypeOp )
