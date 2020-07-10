@@ -127,7 +127,6 @@ void Operation::visitEnter(stack<Variable*>* visitorStack){
 	visitEnterStackUpdate(visitorStack);
 }
 
-
 void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr ){
 
 	is_visited = false;
@@ -157,10 +156,10 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		ret = newTypeConvOp(type, op1);
 	}
 	else if (isBuiltInFunc(opCode)) {
-		auto op1 = Stack->pop();
-
-		if (TypeEn::Float_jty > op1->getType())
+		auto * op1 = Stack->pop();
+		if (TypeEn::Float_jty > op1->getType()) {
 			op1 = newTypeConvOp(TypeEn::Float_jty, op1);
+		}
 		TypeEn targetType = op1->getType();
 		ret = newBuiltInFuncOperation(targetType, op1 , opCode);
 	}
@@ -256,8 +255,8 @@ string Operation::printUint() {
 
 
 
-void Operation::calculate()
-{
+void Operation::calculate(){
+
 	#define OP(i) (operand[(i)]->getAssignedVal(true) )
 
 	if (isArithetic(opCode)) {
@@ -274,10 +273,28 @@ void Operation::calculate()
 		invAritheticSmallArray(type, bufferPtr, OP(0)->getBufferPtr(), length);
 	else if (isTypeConv(opCode))
 		typeConvSmallArray(type, OP(0)->getType(), bufferPtr, OP(0)->getBufferPtr(), length);
-	else if (isBuiltInFunc(opCode))   return;
-		
-	else if (isSelect(opCode))        return;
-	else if (isConvolve(opCode))      return;
+	else if (isBuiltInFunc(opCode))
+		builtInFuncSmallArray(opCode, type, bufferPtr, OP(0)->getBufferPtr(), length);
+	else if (isSelect(opCode)){
+		auto aOperand = OP(0);
+		auto bOperand = OP(1);
+		auto cOperand = OP(2);
+
+		if (bOperand->isArray() && cOperand->isArray())
+			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length);
+		else if (bOperand->isArray())
+			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length);
+		else if (cOperand->isArray())
+			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length);
+		else 
+			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length);
+	}
+	else if (isConvolve(opCode)) {
+		auto aOperand = OP(0);
+		auto bOperand = OP(1);
+		calcConvolveSmallArray(type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), aOperand->getLength(), bOperand->getLength());
+	}
 	else if (isSlice(opCode))         return;
 	else if (isStoreToBuffer(opCode)) return;
+
 }

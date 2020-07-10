@@ -39,6 +39,45 @@ void invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n) {
 #undef OP
 }
 
+void builtInFuncSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a,  int n) {
+#define OP(T)   builtInFuncTemplate<T>(op,(T*)ret,(T*)a , n)
+	SWITCH_OP(targetType);
+#undef OP
+}
+
+
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, void * c, int n) {
+#define OP(T)   selectTemplate<T> (op,(T*)ret,(bool*)a ,(T*)b,(T*)c, n)
+	SWITCH_OP(targetType);
+#undef OP
+}
+
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int64_t c, int n) {
+#define OP(T)   selectTemplate<T> (op,(T*)ret,(bool*)a ,(T*)b,*((T*)(&c)), n)
+	SWITCH_OP(targetType);
+#undef OP
+}
+
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, void * c, int n) {
+#define OP(T)   selectTemplate<T> (op,(T*)ret,(bool*)a ,*((T*)(&b)),(T*)c, n)
+	SWITCH_OP(targetType);
+#undef OP
+}
+
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t b, int64_t c, int n) {
+#define OP(T)  selectTemplate<T> (op,(T*)ret,(bool*)a ,*((T*)(&b)),*((T*)(&c)), n)
+	SWITCH_OP(targetType);
+#undef OP
+}
+
+
+void calcConvolveSmallArray(TypeEn targetType, void * ret, void * a, void * b, int aN, int bN) {
+#define OP(T)  convolveTemplate_<T> ((T*)ret,(T*)a,(T*)b, aN,bN)
+	SWITCH_OP(targetType);
+#undef OP
+}
+
+
 void typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n)
 {
 

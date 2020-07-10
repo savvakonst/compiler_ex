@@ -14,9 +14,9 @@ function calc_new(i, j)
 
 x, y, z = param( "33554432", "6108864", "33554432") 
 
-X = range(0,12*10+1)
-c = exp(z)+cos(5.0)
-l = cos(x)
+X = range(0,12*10)
+c = exp(z)
+l = cos(x)+cos(5)
 x = convolve(X**2,x**9)+convolve(X,l)+l+x+x
 VV=x 
 x = calc(x,z)

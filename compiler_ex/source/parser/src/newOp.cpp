@@ -70,10 +70,21 @@ Variable* newTypeConvOp(TypeEn targetType, Variable* arg1)
 	else print_error("newTypeConvOp");
 }
 
-Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg1, opCodeEn uTypeOp) {
+//#include "llvm/Support/raw_ostream.h"
+
+Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg, opCodeEn uTypeOp) {
+
+	Variable* var=arg;
+
+	if (TypeEn::Float_jty > targetType) {
+		var = newTypeConvOp(TypeEn::Double_jty, arg);
+		targetType=var->getType();
+	}
+
+
 	#define CONV_OP(depend,target) case (depend):  (target) ;  break
-	#define OP(T)   calcBuiltInFuncOperation<T> ( arg1->getConvTypeVal<T>(),uTypeOp )
-	if (isConst(arg1) && !isUnknownTy(targetType)) {
+	#define OP(T)   calcBuiltInFuncOperation<T> ( var->getConvTypeVal<T>(),uTypeOp )
+	if (isConst(var) && !isUnknownTy(targetType)) {
 		uint64_t V=0;
 		switch (targetType) {
 			CONV_OP(TypeEn::Double_jty, V =OP(double));
@@ -84,7 +95,7 @@ Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg1, opCodeEn uT
 	}
 #undef CONV_OP
 #undef OP
-	return new Operation(uTypeOp, arg1, targetType);
+	return new Operation(uTypeOp, var, targetType);
 }
 
 Variable* newArithmeticOperation(TypeEn targetType, Variable* arg1, Variable* arg2, opCodeEn uTypeOp) {

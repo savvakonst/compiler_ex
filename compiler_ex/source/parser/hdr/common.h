@@ -53,6 +53,7 @@ public:
  bool isUInteger  (Variable* var);
 
  int64_t      maxInt  (int64_t   var1, int64_t   var2);
+ int64_t      minInt  (int64_t   var1, int64_t   var2);
  Variable*    max     (Variable* var1, Variable* var2);
  Variable*    maxDS   (Variable* var1, Variable* var2);
  Variable*    maxLevel(Variable* var1, Variable* var2);
@@ -137,7 +138,7 @@ public:
 
  template< typename T >
  uint64_t calcArithmeticOperation(T arg1, T arg2, opCodeEn uTypeOp){
-     T value;
+     T value = (T)0;;
      uint64_t binaryValue = 0;
      AR_SWITCH_OP(uTypeOp, ;, value, arg1, arg2);
      *((T*)(&binaryValue)) = value;
@@ -146,7 +147,7 @@ public:
 
  template< typename T >
  uint64_t calcBuiltInFuncOperation(T arg, opCodeEn uTypeOp) {
-     T value;
+     T value = (T)0;
      uint64_t binaryValue = 0;
      BI_SWITCH_OP(uTypeOp, ;, value, arg);
      *((T*)(&binaryValue)) = value;
@@ -179,6 +180,53 @@ public:
  }
 
 
+
+ template< typename T >
+ void selectTemplate(opCodeEn op, T * ret, bool * a, T * b, T * c, int n) {
+     for (int i=0; i < n; i++) ret[i]=a[i] ? b[i] : c[i];
+ }
+
+ template< typename T >
+ void selectTemplate(opCodeEn op, T * ret, bool * a, T * b, T  c, int n) {
+     for (int i=0; i < n; i++) ret[i]=a[i] ? b[i] : c;
+ }
+
+ template< typename T >
+ void selectTemplate(opCodeEn op, T * ret, bool * a, T  b, T * c, int n) {
+     for (int i=0; i < n; i++) ret[i]=a[i] ? b : c[i];
+ }
+
+ template< typename T >
+ void selectTemplate(opCodeEn op, T * ret, bool * a, T  b, T  c, int n) {
+     for (int i=0; i < n; i++) ret[i]=a[i] ? b : c;
+ }
+
+  template< typename T >
+ void convolveTemplate_( T * ret, T * a, T * b, int na,int nb,int offset=0) {
+     int nMax=na, nMin=nb;
+     T * mainArr=a, * subArr=b;
+     if (nb > na) {
+         nMax=na;
+         nMin=nb;
+         mainArr=b;
+         subArr=a;
+     }
+
+     if (nMax > nMin) {
+         int left_offset=(nMin / 2)+ offset;
+         for (int i=0; i < nMax; i++) {
+             ret[i]=0;
+             for (int j=0; j < nMin; j++) {
+                 int k=i + j - left_offset;
+                 if ((k >= 0) || (k < nMax))
+                     ret[i]+= mainArr[k] * subArr[j];
+             }
+         }
+     }
+ }
+
+
+
 #undef SWITCH_UINT
 #undef AR_SWITCH_OP
 #undef BI_SWITCH_OP
@@ -188,8 +236,17 @@ void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, int64_t
 void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, int n);
 
 void invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n);
-void typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n);
 
+void builtInFuncSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int n);
+
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, void * c, int n);
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int64_t c, int n);
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, void * c, int n);
+void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t b, int64_t c, int n);
+
+void calcConvolveSmallArray( TypeEn targetType, void * ret, void * a, void * b, int aN,int bN);
+
+void typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n);
 
 #define DEBUG_STREAM()\
  std::string content(\
