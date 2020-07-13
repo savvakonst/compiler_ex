@@ -211,7 +211,6 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
 //
 TableColumn::TableColumn (Variable* var) {
     length =var->getLength();
-
     setUint(var);
 }
 
@@ -407,7 +406,9 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
     }
 
     for (auto &j : groupList) {
+
         int subMaxBufferLength = minBufferLength * j.maxLength / j.minLength;
+        
         if (subMaxBufferLength > maxBufferLength) {
             llvm::outs() << "maxBufferLength = subMaxBufferLength;\n";
             maxBufferLength = subMaxBufferLength;

@@ -1,5 +1,4 @@
 
-
 function calc(i, j)
   v=i+j**i
   return v

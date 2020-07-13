@@ -85,6 +85,7 @@ enum class opCodeEn {
     shift,
 
     storeToBuffer,
+    smallArrayDef,
 
     select,
 

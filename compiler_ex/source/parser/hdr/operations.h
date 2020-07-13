@@ -80,6 +80,20 @@ public:
             if (i->getLevel() < level) i->getAssignedVal(true)->setBuffered();
     }
 
+    Operation(opCodeEn op, stack<Variable*> &args, TypeEn targetType) {
+        CommonSetup(op, maxDS(var1, var2));
+        type = targetType;
+
+        level = maxLevel(maxLevel(var1, var2), var3)->getLevel();
+
+        operand.push_back(var1);
+        operand.push_back(var2);
+        operand.push_back(var3);
+
+        for (auto i : operand)
+            if (i->getLevel() < level) i->getAssignedVal(true)->setBuffered();
+    }
+
 
     void CommonSetup(opCodeEn op, Variable* var) {
         opCode = op;

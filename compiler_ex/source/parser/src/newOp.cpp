@@ -158,7 +158,6 @@ Variable* newArithmeticOperation(TypeEn targetType, Variable* arg1, Variable* ar
 
 Variable* newConvolveOperation(TypeEn targetType, Variable* arg1, Variable* arg2, uint32_t shift, opCodeEn uTypeOp) {
 
-
 	if (uTypeOp != opCodeEn::convolve)
 		print_error("convolve_f operation is not supported yet");
 
@@ -178,13 +177,12 @@ Variable* newConvolveOperation(TypeEn targetType, Variable* arg1, Variable* arg2
 		print_error("convolve(LargeArr_t,LargeArr_t) - is not supported");
 	}
 
-
 	return new Operation(uTypeOp, arg1, arg2);
 }
 
 
-Variable* newSelectOp(TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3)
-{
+Variable* newSelectOp(TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3){
+
 	if (!isÑompatible(arg2, arg3) || !isÑompatible(arg1, arg2))
 		print_error("uncompatible values");
 
@@ -208,3 +206,23 @@ Variable* newSliceOp(Variable* arg1, Variable* arg2, opCodeEn uTypeOp) {
 Variable* newSliceOp(Variable* arg1, int64_t intVal, opCodeEn uTypeOp) {
 	return new Operation(uTypeOp, arg1, arg1->getType(), intVal);
 }
+
+Variable* newSmallArrayDefOp(stack<Variable*> &args) {
+	if (args.empty())
+		print_error("SmallArray is empty");
+	Variable* var=args[0];
+	for (auto i : args)
+		var=max(i, var);
+
+	TypeEn targertType =var->getType();
+	
+	if (isUnknownTy(targertType))
+		return new Operation(opCodeEn::smallArrayDef, args, targertType);
+
+	stack<Variable*> typedArgs; 
+	for (auto i : args)
+		typedArgs.push(newTypeConvOp(targertType, i));
+
+	return new Operation(opCodeEn::smallArrayDef, typedArgs, targertType);
+}
+
