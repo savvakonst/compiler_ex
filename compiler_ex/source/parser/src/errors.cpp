@@ -6,7 +6,7 @@ namespace WinNs {
     //#include <windows.h>
 };
 
-void print_error(std::string content) {
+void print_error(const std::string &content) {
 
     //WinNs::HANDLE  hConsole = WinNs::GetStdHandle(((unsigned long)(-11)));
     //WinNs::CONSOLE_SCREEN_BUFFER_INFO TextAttribute;
@@ -32,14 +32,18 @@ void print_error(std::string content) {
     throw  errLine;
 }
 
-void print_IR_error(std::string content) {
+void print_IR_error(const std::string &content) {
     llvm::outs() << "IR generation error: \n    "<< content <<"\n";
     throw  content.length();
 }
 
+void print_SA_error(const std::string &content) {
+    llvm::outs() << "samallarray calc error: \n    " << content << "\n";
+    throw  content.length();
+}
 
 void EErrorListener::syntaxError(Recognizer* recognizer, Token* offendingSymbol, size_t line, size_t charPositionInLine, const std::string & msg, std::exception_ptr e)
-{ //std::ostrstream s;
+{   //std::ostrstream s;
     //WinNs::HANDLE  hConsole = WinNs::GetStdHandle(((unsigned long)(-11)));
     //WinNs::CONSOLE_SCREEN_BUFFER_INFO TextAttribute;
     //WinNs::GetConsoleScreenBufferInfo(hConsole, &TextAttribute);

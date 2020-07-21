@@ -32,7 +32,7 @@ namespace llvm {
 
 class IRGenerator;
 
-typedef std::map<opCodeEn, llvm:: Function*>  BuiltInFuncMap;
+typedef std::map<OpCodeEn, llvm:: Function*>  BuiltInFuncMap;
 class SubBlock
 {
 public:
@@ -137,9 +137,6 @@ private:
 class Table
 {
 public:
-
-
-
     Table (llvm::Module * M_ , int maxBufferLength_=(1<<20),int minBufferLength_=0) {
         M=M_; 
         declareFunctions();  
@@ -168,9 +165,9 @@ public:
         return NULL;
     }
 
-    llvm::Function* getFloatBIFunc(opCodeEn op);
-    llvm::Function* getDoubleBIFunc(opCodeEn op);
-    llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, opCodeEn op, llvm::Type * Ty);
+    llvm::Function* getFloatBIFunc(OpCodeEn op);
+    llvm::Function* getDoubleBIFunc(OpCodeEn op);
+    llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, OpCodeEn op, llvm::Type * Ty);
 
 
     void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
@@ -197,7 +194,7 @@ private:
     stack<TableColumn *> columnList;
 
 
-    std::map<opCodeEn, int> BIF2LLVMmap;
+    std::map<OpCodeEn, int> BIF2LLVMmap;
 
     int minBufferLength;
     int maxBufferLength;

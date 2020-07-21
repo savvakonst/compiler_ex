@@ -3,7 +3,7 @@
 #include <string>
 
 
-void print_error(std::string content);
+//void print_error(std::string &content);
 
 
 //void Operation::setBufferLength(uint64_t left, uint64_t right) {
@@ -58,8 +58,6 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 }
 
 
-
-
 void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
 	if (isArithetic(opCode)) {
 		visitorStack->push(operand[1]);
@@ -86,6 +84,10 @@ void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
 	else if (isSlice(opCode)) {
 		visitorStack->push(operand[0]);
 	}
+	else if (isSmallArrayDef(opCode)) {
+		for (auto i = operand.rbegin(); i != operand.rend(); i++)
+			visitorStack->push(*i);
+	}
 	else {
 		print_error("visitEnter unknown command");
 	}
@@ -96,14 +98,14 @@ void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 	commoMmarkUnusedVisitEnter(visitorStack);
 	visitEnterSetupBuffer(visitorStack);
 	visitEnterStackUpdate(visitorStack);
-	is_unused = false;
+	is_nused_ = false;
 }
 
 void Operation::genBlocksVisitExit(TableGenContext * context)
 {
 	uniqueName =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
 	context->setUint(this);
-	is_visited = false;
+	is_visited_ = false;
 }
 
 void Operation::reduceLinksVisitExit()
@@ -111,7 +113,7 @@ void Operation::reduceLinksVisitExit()
 	//for (size_t i=0; i<operand.size();i++)
 	//	operand[i]->getAssignedVal(true);
 
-	is_visited = false;
+	is_visited_ = false;
 }
 
 /*
@@ -122,30 +124,30 @@ void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
 }
 */
 void Operation::visitEnter(stack<Variable*>* visitorStack){
-	is_visited = true;
+	is_visited_ = true;
 	visitorStack->push(this);
 	visitEnterStackUpdate(visitorStack);
 }
 
 void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr ){
 
-	is_visited = false;
+	is_visited_ = false;
 	Variable* ret = NULL;
 	if (isArithetic(opCode)) {
 		auto op2 = Stack->pop();
 		auto op1 = Stack->pop();
 		
 		if ((op2 == NULL) || (op1 == NULL)) {
-			auto txtOperation = arSym[((int)opCode - (int)typeOpCodeEn::arithetic)];
+			auto txtOperation = arSym[((int)opCode - (int)TypeOpCodeEn::arithetic)];
 			print_error(
-				"Error : " + txtOperation + ". In line : " + std::to_string(namespace_ptr->size() ) + ".  "
-				"Left operand:" + ((op2 != NULL) ? "a" /*op2->Print()*/ : "unknown") + ".  " +
-				"Right operand:" + ((op1 != NULL) ? "a" /*op1->Print()*/ : "unknown") 
+				txtOperation + " "
+				"left operand:" + ((op1 != NULL) ? "a"  : "unknown") + ".  " +
+				"right operand:" + ((op2 != NULL)? "a"  : "unknown")
 			);
 		}
 		TypeEn targetType = max(op1, op2)->getType();
 		
-		ret = newArithmeticOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2),  (opCodeEn)(int)opCode );
+		ret = newArithmeticOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2),  (OpCodeEn)(int)opCode );
 	}
 	else if (isInv(opCode)) {
 		auto op1 = Stack->pop();
@@ -153,12 +155,12 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 	}
 	else if (isTypeConv(opCode)) {
 		auto op1 = Stack->pop();
-		ret = newTypeConvOp(type, op1);
+		ret = newTypeConvOp(type_, op1);
 	}
 	else if (isBuiltInFunc(opCode)) {
 		auto * op1 = Stack->pop();
-		if (TypeEn::Float_jty > op1->getType()) {
-			op1 = newTypeConvOp(TypeEn::Float_jty, op1);
+		if (TypeEn::float_jty > op1->getType()) {
+			op1 = newTypeConvOp(TypeEn::float_jty, op1);
 		}
 		TypeEn targetType = op1->getType();
 		ret = newBuiltInFuncOperation(targetType, op1 , opCode);
@@ -184,6 +186,14 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 	else if (isStoreToBuffer(opCode)) {
 		print_error("visitExitTxt StoreToBuffer unknown command .");
 	}
+	else if (isSmallArrayDef(opCode)) {
+		size_t size = operand.size();
+		stack<Variable*> op;
+		for (size_t i = 0; i < size; i++)
+			op.push(Stack->pop());
+		std::reverse(op.begin(), op.end());
+		ret =newSmallArrayDefOp(op);
+	}
 	else {
 		print_error("visitExit unknown command . In line : " +std::to_string(namespace_ptr->size() ) );
 	}
@@ -193,7 +203,7 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 
 
 void Operation::printVisitExit(stack<std::string>* Stack) {
-	is_visited = false;
+	is_visited_ = false;
 	std::string txtOperation = "";
 #define OP(i) (operand[(i)]->getUniqueName() )
 
@@ -208,7 +218,7 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 		Stack->push(checkBuffer(txtTConOp(opCode) + "(" + Stack->pop() + ")"));
 	}
 	else if (isBuiltInFunc(opCode)) {
-		txtOperation = arBuiltIn[((int)opCode - (int)typeOpCodeEn::builtInFunc)];
+		txtOperation = arBuiltIn[((int)opCode - (int)TypeOpCodeEn::builtInFunc)];
 		Stack->push(checkBuffer(txtBuiltInOp(opCode) + "(" + Stack->pop() + ")"));
 	}
 	else if (isSelect(opCode)) {
@@ -225,7 +235,20 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 	else if (isStoreToBuffer(opCode)) {
 		print_error("visitExitTxt StoreToBuffer unknown command .");
 	}
-	else {
+	else if (isSmallArrayDef(opCode)) {
+		size_t size = operand.size();
+		stack<string > op;
+
+		for (size_t i = 0; i < size; i++)
+			op.push(Stack->pop());
+
+		std::reverse(op.begin(), op.end());
+
+		std::string out="";
+		for (auto &i : op)
+			out += i + ", ";
+		Stack->push("[" + out + "]");
+	}else{
 		print_error("visitExitTxt unknown command .");
 	}
 #undef OP
@@ -233,7 +256,7 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 
 
 string Operation::printUint() {
-	is_visited = false;
+	is_visited_ = false;
 	std::string txtOperation = "";
 	std::string uName = getUniqueName();
 
@@ -246,10 +269,15 @@ string Operation::printUint() {
 	else if (isSelect(opCode))        return uName + " = " + OP(0) + "? " + OP(1) + ": " + OP(2);
 	else if (isConvolve(opCode))      return uName + " = convolve( " + OP(0) + ", " + OP(1) + ", " + std::to_string(shiftParameter) + ")";
 	else if (isSlice(opCode))         return uName + " = " + txtSliceOp(opCode) + "( " + OP(0) + ", " + std::to_string(getSliceParameter()) + ")";
-	else if (isStoreToBuffer(opCode))
-		print_error("visitExitTxt StoreToBuffer unknown command .");
+	else if (isStoreToBuffer(opCode)) print_error("visitExitTxt StoreToBuffer unknown command .");
+	else if (isSmallArrayDef(opCode)) {
+		std::string out="";
+		for (auto &i : operand)
+			out += i->getAssignedVal(true)->getUniqueName() + ", ";
+		return uName + " = [" + out + "]";
+	}
 	else print_error("visitExitTxt unknown command .");
-
+	return "";
 #undef OP
 }
 
@@ -262,39 +290,41 @@ void Operation::calculate(){
 	if (isArithetic(opCode)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
+
 		if (aOperand->isArray() && bOperand->isArray())
-			calcAritheticSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length);
+			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
 		else if (aOperand->isArray())
-			calcAritheticSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length);
+			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
 		else
-			calcAritheticSmallArray(opCode, type, bufferPtr, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length);
+			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
 	}
 	else if (isInv(opCode))
-		invAritheticSmallArray(type, bufferPtr, OP(0)->getBufferPtr(), length);
+		bufferPtr_=invAritheticSmallArray(type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
 	else if (isTypeConv(opCode))
-		typeConvSmallArray(type, OP(0)->getType(), bufferPtr, OP(0)->getBufferPtr(), length);
+		bufferPtr_=typeConvSmallArray(type_, OP(0)->getType(), bufferPtr_, OP(0)->getBufferPtr(), length_);
 	else if (isBuiltInFunc(opCode))
-		builtInFuncSmallArray(opCode, type, bufferPtr, OP(0)->getBufferPtr(), length);
+		bufferPtr_=builtInFuncSmallArray(opCode, type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
 	else if (isSelect(opCode)){
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 		auto cOperand = OP(2);
-
 		if (bOperand->isArray() && cOperand->isArray())
-			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length);
+			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length_);
 		else if (bOperand->isArray())
-			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length);
+			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length_);
 		else if (cOperand->isArray())
-			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length);
+			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length_);
 		else 
-			calcSelectSmallArray(opCode, type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length);
+			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length_);
 	}
 	else if (isConvolve(opCode)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
-		calcConvolveSmallArray(type, bufferPtr, aOperand->getBufferPtr(), bOperand->getBufferPtr(), aOperand->getLength(), bOperand->getLength());
+		bufferPtr_=calcConvolveSmallArray(type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), aOperand->getLength(), bOperand->getLength());
 	}
 	else if (isSlice(opCode))         return;
 	else if (isStoreToBuffer(opCode)) return;
+	else if (isSmallArrayDef(opCode)) 
+		bufferPtr_=calcSmallArrayDef(type_, operand);
 
 }

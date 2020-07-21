@@ -7,8 +7,8 @@
 
 
 using namespace llvm;
-void print_IR_error(std::string content);
-
+//void print_IR_error(const std::string &content);
+//void print_SA_error(const std::string &content);
 
 
 SubBlock::SubBlock(Variable * var)
@@ -283,6 +283,38 @@ Value * genConvolve(IRGenerator & builder, llvm::Type* type, uintptr_t addr) {
 }
 
 
+std::vector <BufferSt >  *g_inputBuffers=NULL;
+std::vector <BufferSt >  *g_internalBuffers=NULL;
+std::vector <BufferSt >  *g_outputBuffers=NULL;
+
+Parameters*  activParameters =NULL;
+
+bool isInvalidBuffers() {
+    return 
+        NULL == g_inputBuffers ||
+        NULL == g_internalBuffers ||
+        NULL == g_outputBuffers;
+}
+
+void initBuffers() {
+    if (isInvalidBuffers())
+        return;
+
+    for (auto i : *g_inputBuffers) 
+        activParameters->read(i.ptr,-i.leftOffset, i.leftOffset+i.rightOffset+i.length);
+        //isDouble
+}
+
+void updateBuffer() {
+    if (isInvalidBuffers()) 
+        return;
+
+    if (g_inputBuffers)
+        for (auto i : *g_inputBuffers) 
+            NULL;
+}
+
+
 //Table:: Table section 
 //
 //
@@ -306,17 +338,17 @@ void    Table::setUint(Variable * var){
     columnList.push(new TableColumn(var));
 }
 
-llvm::Function * Table::getFloatBIFunc(opCodeEn op) { 
+llvm::Function * Table::getFloatBIFunc(OpCodeEn op) { 
     //return floatBIFuncMap[op];
     return getBIFunc (floatBIFuncMap, op, fTy);
 }
 
-llvm::Function * Table::getDoubleBIFunc(opCodeEn op) {
+llvm::Function * Table::getDoubleBIFunc(OpCodeEn op) {
     //return doubleBIFuncMap[op]; 
     return getBIFunc (doubleBIFuncMap, op, dTy);
 }
 
-llvm::Function*  Table::getBIFunc(BuiltInFuncMap &UBIFMap, opCodeEn op, Type * Ty) {
+llvm::Function*  Table::getBIFunc(BuiltInFuncMap &UBIFMap, OpCodeEn op, Type * Ty) {
     auto pos=floatBIFuncMap.find(op);
     if (pos != floatBIFuncMap.end()) {
         return pos->second;
@@ -338,13 +370,13 @@ void    Table::declareFunctions() {
 
 void    Table::declareBuiltInFunctions(BuiltInFuncMap &UBIFMap, Type * Ty) {
     BIF2LLVMmap ={
-{opCodeEn::FPOW, Intrinsic::pow},
-{opCodeEn::COS, Intrinsic::cos},
-{opCodeEn::SIN, Intrinsic::sin},
-{opCodeEn::EXP, Intrinsic::exp},
-{opCodeEn::LOG, Intrinsic::log},
-{opCodeEn::LOG2, Intrinsic::log2},
-{opCodeEn::LOG10,Intrinsic::log10} };
+{OpCodeEn::fpow, Intrinsic::pow},
+{OpCodeEn::cos, Intrinsic::cos},
+{OpCodeEn::sin, Intrinsic::sin},
+{OpCodeEn::exp, Intrinsic::exp},
+{OpCodeEn::log, Intrinsic::log},
+{OpCodeEn::log2, Intrinsic::log2},
+{OpCodeEn::log10,Intrinsic::log10} };
 }
 
 
@@ -451,9 +483,11 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.SetDeclareConvolve(builder.getFloatTy(),  uintptr_t(convolveTemplate<float>));
 
     for (auto i : constList)
-       i->setupIR(builder);
+        i->setupIR(builder);
 
     for (auto i : smallArrayList)
+        i->calculate();
+
         //i.
        //i->setupIR(builder);
 
@@ -533,52 +567,57 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
 //
 Value* Variable::getIRValue(IRGenerator & builder, int64_t parentLevel) {
     Value * ret=NULL;
-    if (isBuffered() & (parentLevel != level) ) {
-        if (!builder.CheckExistence(IRBufferRefPtr)) {
-            auto valPtr=builder.CreatePositionalInBoundsGEP(IRBufferRefPtr, builder.getCurrentOffsetValue(), "offset_incr");
-            IRLoadedBufferValue=builder.CreatePositionalLoad(valPtr, "buffer_");
-            builder.AddInitializedVariable(IRBufferRefPtr);
+    if (isBuffered() & (parentLevel != level_) ) {
+        if (!builder.CheckExistence(IRBufferRefPtr_)) {
+            auto valPtr=builder.CreatePositionalInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_incr");
+            IRLoadedBufferValue_=builder.CreatePositionalLoad(valPtr, "buffer_");
+            builder.AddInitializedVariable(IRBufferRefPtr_);
         }
-        ret=IRLoadedBufferValue;
+        ret=IRLoadedBufferValue_;
     }
-    else ret=IRValue;
+    else ret=IRValue_;
 
     if (ret == NULL) print_IR_error("IRValue - is NULL :" + getUniqueName());
     return ret;
 }
 
 Value* Variable::getIRValuePtr(IRGenerator & builder, int64_t parentLevel) {
-    auto ret =isBuffered () ? IRBufferRefPtr : NULL;
+    auto ret =isBuffered () ? IRBufferRefPtr_ : NULL;
     if (ret == NULL) print_IR_error("getIRValuePtr - is NULL :" + getUniqueName());
     return ret;
 }
 
 void  Variable::setupIR(IRGenerator & builder) {
-    IRValue=builder.CreateConst(binaryValue, type, "");
+    IRValue_=builder.CreateConst(binaryValue_, type_, "");
 }
+
+
+
 
 void  Operation::setupIR(IRGenerator & builder){
 
-#define OP(i)     (operand[(i)]->getAssignedVal(true)->getIRValue(builder,level) )
-#define OP_PTR(i) (operand[(i)]->getAssignedVal(true)->getIRValuePtr(builder,level) )
+#define OP(i)     (operand[(i)]->getAssignedVal(true)->getIRValue(builder,level_) )
+#define OP_PTR(i) (operand[(i)]->getAssignedVal(true)->getIRValuePtr(builder,level_) )
 
     if (isArithetic(opCode)) {
-        IRValue =builder.CreateArithmetic(OP(0), OP(1), opCode, getUniqueName());
+        IRValue_ =builder.CreateArithmetic(OP(0), OP(1), opCode, getUniqueName());
     }
     else if (isInv(opCode)) {
-        IRValue =builder.CreateInv(OP(0), opCode, getUniqueName());
+        IRValue_ =builder.CreateInv(OP(0), opCode, getUniqueName());
     }
     else if (isTypeConv(opCode)) {
-        IRValue =builder.CreateTypeConv(OP(0), opCode, type, getUniqueName());
+        IRValue_ =builder.CreateTypeConv(OP(0), opCode, type_, getUniqueName());
     }
     else if (isBuiltInFunc(opCode)) {
-        IRValue =builder.CreateBuiltInFunc(OP(0), opCode, getUniqueName());
+        IRValue_ =builder.CreateBuiltInFunc(OP(0), opCode, getUniqueName());
     }
     else if (isSelect(opCode)) {
          
     }
     else if (isConvolve(opCode)) {
-        IRValue =builder.CreateConvolve(OP_PTR(0), OP_PTR(0), getUniqueName());
+        outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
+        
+        IRValue_ =builder.CreateConvolve(OP_PTR(0), OP_PTR(0), getUniqueName());
     }
     else if (isSlice(opCode)) {
 
@@ -593,12 +632,14 @@ void  Operation::setupIR(IRGenerator & builder){
 
     if (isBuffered()|isReturned()) {
         if (!is_initialized) {
-            IRBufferRefPtr=builder.CreateBufferInit(type,"internal_");
+            BufferTypeEn bufferType=isReturned()? BufferTypeEn::output: BufferTypeEn::internal;
+            builder.CreateBufferAlloca(type_, length_, bufferType);
+            IRBufferRefPtr_=builder.CreateBufferInit(type_,"internal_");
             is_initialized=true;
         }
         builder.SetStoreInsertPoint();
-        auto valPtr=builder.CreateInBoundsGEP(IRBufferRefPtr, builder.getCurrentOffsetValue(), "offset_incr");
-        builder.CreatePositionalStore(IRValue, valPtr);
+        auto valPtr=builder.CreateInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_incr");
+        builder.CreatePositionalStore(IRValue_, valPtr);
     }
 
 #undef OP_PTR
@@ -612,13 +653,14 @@ void  Line::setupIR(IRGenerator & builder) {
     }
     else {
         //setBuffered();
-        Type * volatile t= builder.getLLVMType(type);
+        Type * volatile t= builder.getLLVMType(type_);
         if (!is_initialized) {
-            IRBufferRefPtr =builder.CreateBufferInit(type, "external_");
+            builder.CreateBufferAlloca(type_, length_, BufferTypeEn::input,getName());
+            IRBufferRefPtr_ =builder.CreateBufferInit(type_, "external_");
             is_initialized=true;
         }
-        auto valPtr    =builder.CreatePositionalInBoundsGEP(IRBufferRefPtr, builder.getCurrentOffsetValue(), "offset_arg_incr");
-        IRValue        =builder.CreatePositionalLoad(valPtr, "arg_buffer_");
+        auto valPtr    =builder.CreatePositionalInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
+        IRValue_       =builder.CreatePositionalLoad(valPtr, "arg_buffer_");
     }
 }
 

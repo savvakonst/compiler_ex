@@ -2,29 +2,29 @@
 #include "body.h"
 #include "types_jty.h"
 
-void print_error(std::string content);
+//void print_error(const std::string &content);
 
-Body::Body( std::string name_,  bool isPrototype_ )
+Body::Body( std::string name,  bool isPrototype )
 {
-	name = name_;
-	isPrototype = isPrototype_;
-	lines.reserve(30);
+	name_ = name;
+	isPrototype_ = isPrototype;
+	lines_.reserve(30);
 }
 
 Body::~Body()
 {
-	for (auto& value : lines) {
+	for (auto& value : lines_) {
 		delete value;
 	}
 }
 
 Line* Body::getLastLineFromName(std::string name)
 {
-	if (lines.size()<1)
+	if (lines_.size()<1)
 		return NULL;
-	for (int i = lines.size()-1; i >= 0; i--) {
-		if (lines[i]->haveTargetName(name)) 
-			return (lines[i]);
+	for (int i = lines_.size()-1; i >= 0; i--) {
+		if (lines_[i]->haveTargetName(name)) 
+			return (lines_[i]);
 	}
 	print_error("unknown symbol " + name);
 
@@ -33,31 +33,31 @@ Line* Body::getLastLineFromName(std::string name)
 
 void Body::addLine(std::string name, Variable* var)
 {
-	auto line = new Line(name,var, lines.size());
-	lines.push_back(line);
+	auto line = new Line(name,var, lines_.size());
+	lines_.push_back(line);
 }
 
 void Body::addArg(std::string name)
 {
 
-	auto line = new Line(name,lines.size());
-	argCount++;
-	lines.push_back(line);
+	auto line = new Line(name,lines_.size());
+	argCount_++;
+	lines_.push_back(line);
 }
 
 
 void Body::addParam(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len)
 {
-	auto line = new Line(name,  ty,  dsty,  len, lines.size());
-	argCount++;
-	lines.push_back(line);
+	auto line = new Line(name,  ty,  dsty,  len, lines_.size());
+	argCount_++;
+	lines_.push_back(line);
 }
 
 
 void Body::addReturn(std::string name, Variable* var, int N)
 {
-	auto line = new Line(name, var, returnStack.size());
-	returnStack.push_back(line);
+	auto line = new Line(name, var, returnStack_.size());
+	returnStack_.push_back(line);
 }
 
 
@@ -65,16 +65,16 @@ void Body::addReturn(std::string name, Variable* var, int N)
 //varStack push/pop 
 void Body::push(Variable* line)
 {
-	varStack.push_back(line);
+	varStack_.push_back(line);
 }
 
 Variable* Body::pop()
 {
-	if (varStack.size() == 0) {
+	if (varStack_.size() == 0) {
 		print_error("stack is empty");
 	}
-	Variable* res = varStack.back();
-	varStack.pop_back(); return res;
+	Variable* res = varStack_.back();
+	varStack_.pop_back(); return res;
 }
 
 
@@ -96,24 +96,24 @@ void Body::typeConvOp(Variable* arg1, Variable* arg2, Variable* ret_arg1, Variab
 }
 */
 
-Variable* Body::builtInFuncOp(opCodeEn uTypeOp, Variable* arg1 ){
+Variable* Body::builtInFuncOp(OpCodeEn uTypeOp, Variable* arg1 ){
 
 	Variable* ret_arg1 = arg1;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 
-	if (!isPrototype) {
-		if (TypeEn::Float_jty > arg1->getType())
-			ret_arg1 = typeConvOp(TypeEn::Float_jty, arg1);
+	if (!isPrototype_) {
+		if (TypeEn::float_jty > arg1->getType())
+			ret_arg1 = typeConvOp(TypeEn::float_jty, arg1);
 		targetType = arg1->getType();
 	}
 	return newBuiltInFuncOperation(targetType, ret_arg1, uTypeOp);
 }
 
-Variable* Body::arithmeticOp(opCodeEn uTypeOp,Variable* arg1, Variable* arg2)
+Variable* Body::arithmeticOp(OpCodeEn uTypeOp,Variable* arg1, Variable* arg2)
 {
 	Variable * ret_arg1= arg1, * ret_arg2= arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
-	if (!isPrototype) {
+	if (!isPrototype_) {
 		targetType = max(arg1, arg2)->getType();
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
@@ -121,11 +121,11 @@ Variable* Body::arithmeticOp(opCodeEn uTypeOp,Variable* arg1, Variable* arg2)
 	return newArithmeticOperation(targetType, ret_arg1, ret_arg2,  uTypeOp );
 }
 
-Variable* Body::convolveOp(opCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint32_t shift) //necessary to add type maching
+Variable* Body::convolveOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint32_t shift) //necessary to add type maching
 {
 	Variable* ret_arg1 = arg1, * ret_arg2 = arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
-	if (!isPrototype) {
+	if (!isPrototype_) {
 		targetType = max(arg1, arg2)->getType();
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
@@ -137,7 +137,7 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 {
 	Variable* ret_arg2 = arg2, * ret_arg3 = arg3;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
-	if (!isPrototype) {
+	if (!isPrototype_) {
 		targetType = max(arg2, arg3)->getType();
 		ret_arg2   = typeConvOp(targetType, arg2);
 		ret_arg3   = typeConvOp(targetType, arg3);
@@ -152,36 +152,33 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 
 
 //create operation and push to varStack
-void Body::addTypeConvOp(TypeEn targetType)
-{
+void Body::addTypeConvOp(TypeEn targetType){
+
 	Variable* arg1 = pop();
 	push(typeConvOp(targetType, arg1));
 }
 
-void Body::addBuiltInFuncOp(opCodeEn uTypeOp)
-{
+void Body::addBuiltInFuncOp(OpCodeEn uTypeOp){
 	Variable* arg1 = pop();
 	push(builtInFuncOp(uTypeOp, arg1));
 }
 
-void Body::addArithmeticOp(opCodeEn uTypeOp)
-{
+void Body::addArithmeticOp(OpCodeEn uTypeOp){
 
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
 	push(arithmeticOp(uTypeOp,arg1, arg2));
 }
 
-void Body::addConvolveOp(opCodeEn uTypeOp,uint32_t shift)
-{
+void Body::addConvolveOp(OpCodeEn uTypeOp,uint32_t shift){
 
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
 	push(convolveOp(uTypeOp, arg1, arg2,shift));
 }
 
-void Body::addSelectOp()
-{
+void Body::addSelectOp(){
+
 	Variable* arg3 = pop();
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
@@ -212,25 +209,35 @@ void Body::addShiftOp()
 {
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
-	push(newSliceOp(arg1, arg2, opCodeEn::shift));
+	push(newSliceOp(arg1, arg2, OpCodeEn::shift));
 }
 
-void Body::addDecimationOp()
-{
+void Body::addDecimationOp(){
+
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
-	push(newSliceOp(arg1, arg2,opCodeEn::decimation));
+	push(newSliceOp(arg1, arg2,OpCodeEn::decimation));
 }
 
-void Body::addCall(Body* body_)
-{
+void Body::addSmallArrayDefinitionOp(size_t size) {
+	stack<Variable* > op;
+
+	for (size_t i = 0; i < size; i++)
+		op.push(pop());
+	std::reverse(op.begin(), op.end());
+	push(newSmallArrayDefOp(op));
+}
+
+
+void Body::addCall(Body* body){
+
 	stack<Variable*> a;
-	a.resize(body_->getArgCount());
-	for (int i = body_->getArgCount()-1; i >=0  ; i--) {
+	a.resize(body->getArgCount());
+	for (int i = body->getArgCount()-1; i >=0  ; i--) {
 		a[i] = pop();
 	}
 
-	auto b = body_->genBodyByPrototype(a);
+	auto b = body->genBodyByPrototype(a);
 	push(new Call(b,a));
 }
 
@@ -247,7 +254,7 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 	std::string result = " " + getName() + "\n";
 	std::string txtLine, txtSkip, txtShifts, txtUsaaage;
 
-	for (auto& value : lines) {
+	for (auto& value : lines_) {
 		if (value->isArg()) {
 			//std::string postfix = (!hideUnusedLines || !value->isUnused()) ? "" : " \t\t#unused";
 			if (!hideUnusedLines || !value->isUnused()) {
@@ -279,7 +286,7 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 		}
 	}
 	
-	for (auto& value : returnStack) {
+	for (auto& value : returnStack_) {
 		visitorStack.push(value->getAssignedVal());
 		do {
 			auto var = visitorStack.pop();
@@ -299,24 +306,23 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 	}
 
-
 	return   result ;
 }
 
 
 
-Body* Body::genBodyByPrototype(stack<Variable*> args)
-{
+Body* Body::genBodyByPrototype(stack<Variable*> args){
+
 	//std::cout << "debug args.size() " << args[0]->Print() << "\n";
 	auto arg= args.begin();
 
-	if (isPrototype == false)
+	if (isPrototype_ == false)
 		return this;
 
-	auto body =new Body(name,false);
+	auto body =new Body(name_,false);
 	stack<Variable*> visitorStack;
 	
-	for (auto& value : lines) {
+	for (auto& value : lines_) {
 		if (value->isArg()) {
 			body->addLine(value->getName(), *(arg++));// in line 
 		}
@@ -325,35 +331,35 @@ Body* Body::genBodyByPrototype(stack<Variable*> args)
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
-					var->genBodyVisitExit(&varStack, &(body->lines));
+					var->genBodyVisitExit(&varStack_, &(body->lines_));
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
-			body->addLine(value->getName(), varStack.pop());
+			body->addLine(value->getName(), varStack_.pop());
 		}
 	}
 
 
-	for (auto& value : returnStack) {
+	for (auto& value : returnStack_) {
 		visitorStack.push(value->getAssignedVal());
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
-				var->genBodyVisitExit(&varStack, &(body->lines));
+				var->genBodyVisitExit(&varStack_, &(body->lines_));
 			else
 				var->visitEnter(&visitorStack);
 		} while (!visitorStack.empty());
-		body->addReturn(returnStack[0]->getName(), varStack.pop());
+		body->addReturn(returnStack_[0]->getName(), varStack_.pop());
 	}
 	return body;
 }
 
 
 
-void Body::symplyfy()
-{
+void Body::symplyfy(){
+
     stack<Variable*> visitorStack;
-    for (auto& value : returnStack) {
+    for (auto& value : returnStack_) {
         visitorStack.push(value->getAssignedVal());
         do {
             auto var = visitorStack.pop();
@@ -364,11 +370,11 @@ void Body::symplyfy()
 }
 
 // this function doesn't work correctly
-void Body::reduce()
-{
+void Body::reduce(){
+
 	stack<Variable*>  visitorStack;
 
-	for (auto& value : lines) {
+	for (auto& value : lines_) {
 		if (value->isArg() && (!value->isUnused())) {
 			//code
 		}
@@ -385,7 +391,7 @@ void Body::reduce()
 		}
 	}
 
-	for (auto& value : returnStack) {
+	for (auto& value : returnStack_) {
 		visitorStack.push(value->getAssignedVal());
 		do {
 			auto var = visitorStack.pop();
@@ -399,11 +405,11 @@ void Body::reduce()
 }
 
 
-void Body::genTable(TableGenContext * context)
-{
+void Body::genTable(TableGenContext * context){
+
 	stack<Variable*>  visitorStack;
 
-	for (auto& value : lines) {
+	for (auto& value : lines_) {
 		if (value->isArg() && (!value->isUnused())) {
 			context->setUint(value);
 		}
@@ -421,11 +427,11 @@ void Body::genTable(TableGenContext * context)
 		}
 	}
 
-	for (auto& value : returnStack) {
+	for (auto& value : returnStack_) {
 
 		visitorStack.push(value->getAssignedVal());
 
-		if (name == "main")
+		if (name_ == "main")
 			value->getAssignedVal(true)->setReturned();
 
 		do {

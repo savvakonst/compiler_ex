@@ -13,18 +13,18 @@ enum class unknownTypeOpEn {
 };
 
 enum class TypeEn {
-    Int1_jty = 0,
-    Int8_jty,
-    Int16_jty,
-    Int32_jty,
-    Int64_jty,
-    Float_jty = 16,
-    Double_jty,
+    int1_jty = 0,
+    int8_jty,
+    int16_jty,
+    int32_jty,
+    int64_jty,
+    float_jty = 16,
+    double_jty,
 
-    Unknown_jty=32
+    unknown_jty=32
 };
 
-#define DEFAULT_JTY Unknown_jty
+#define DEFAULT_JTY unknown_jty
 
 
 enum class DataStructTypeEn
@@ -41,24 +41,24 @@ enum class DataStructTypeEn
  
 ///////////////////////////////////////////////////
 
-enum class opCodeEn {
-    NEG = 0,
-    FNEG,
+enum class OpCodeEn {
+    neg = 0,
+    fneg,
 
-    ADD,
-    FADD,
-    SUB,
-    FSUB,
-    MUL,
-    FMUL,
-    UDIV,
-    SDIV,
-    FDIV,
-    UREM,
-    SREM,
-    FREM,
-    POW,
-    FPOW,
+    add,
+    fadd,
+    sub,
+    fsub,
+    mul,
+    fmul,
+    udiv,
+    sdiv,
+    fdiv,
+    urem,
+    srem,
+    frem,
+    pow,
+    fpow,
 
     LSHL,
     LSHR,
@@ -91,91 +91,94 @@ enum class opCodeEn {
 
     call,
 
-    LOG , 
-    LOG2 ,
-    LOG10 , 
-    COS , 
-    SIN , 
-    EXP,
+    log , 
+    log2 ,
+    log10 , 
+    cos , 
+    sin , 
+    exp,
 
-    NONE_op
+    none_op
 };
 
 
-enum class typeOpCodeEn { 
-    inv= (int)opCodeEn::NEG,
-    arithetic = (int)opCodeEn::ADD,
-    bitwise = (int)opCodeEn::LSHL,
-    typeConv = (int)opCodeEn::trunc,
-    convolve_op = (int)opCodeEn::convolve,
-    slice_op = (int)opCodeEn::decimation,
-    storeToBuffer = (int)opCodeEn::storeToBuffer,
-    builtInFunc = (int)opCodeEn::LOG,
+enum class TypeOpCodeEn { 
+    inv= (int)OpCodeEn::neg,
+    arithetic = (int)OpCodeEn::add,
+    bitwise = (int)OpCodeEn::LSHL,
+    typeConv = (int)OpCodeEn::trunc,
+    convolve_op = (int)OpCodeEn::convolve,
+    slice_op = (int)OpCodeEn::decimation,
+    storeToBuffer = (int)OpCodeEn::storeToBuffer,
+    smallArrayDef = (int)OpCodeEn::smallArrayDef,
+    builtInFunc = (int)OpCodeEn::log,
     
 
     invEnd = arithetic,
     aritheticEnd = bitwise,
     bitwiseEnd = typeConv,
     typeConvEnd = convolve_op,
-    convolve_opEnd= (int)opCodeEn::convolve_f+1,
-    slice_opEnd = (int)opCodeEn::shift+1,
-    builtInFuncEnd = (int)opCodeEn::EXP+1
+    convolve_opEnd= (int)OpCodeEn::convolve_f+1,
+    slice_opEnd = (int)OpCodeEn::shift+1,
+    builtInFuncEnd = (int)OpCodeEn::exp+1
 };
 
 enum class NodeTypeEn {
-    Variable,
-    Operation,
-    TerminalLine,
-    Line,
-    Call
+    variable,
+    operation,
+    terminalLine,
+    line,
+    call
 };
 
 
 
-inline bool isInv(opCodeEn x) {
-    typeOpCodeEn t = (typeOpCodeEn)x;
-    return  (t < typeOpCodeEn::invEnd);
+inline bool isInv(OpCodeEn x) {
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return  (t < TypeOpCodeEn::invEnd);
 }
-inline bool isArithetic(opCodeEn x){
-    typeOpCodeEn t=(typeOpCodeEn)x;
-    return (typeOpCodeEn::arithetic <= t) && (t < typeOpCodeEn::aritheticEnd);
+inline bool isArithetic(OpCodeEn x){
+    TypeOpCodeEn t=(TypeOpCodeEn)x;
+    return (TypeOpCodeEn::arithetic <= t) && (t < TypeOpCodeEn::aritheticEnd);
 }
-inline bool isBitwise(opCodeEn x) {
-    typeOpCodeEn t = (typeOpCodeEn)x;
-    return (typeOpCodeEn::bitwise <= t) && (t < typeOpCodeEn::bitwiseEnd);
+inline bool isBitwise(OpCodeEn x) {
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return (TypeOpCodeEn::bitwise <= t) && (t < TypeOpCodeEn::bitwiseEnd);
 }
-inline bool isTypeConv(opCodeEn x) {
-    typeOpCodeEn t = (typeOpCodeEn)x;
-    return (typeOpCodeEn::typeConv <= t) && (t < typeOpCodeEn::typeConvEnd);
+inline bool isTypeConv(OpCodeEn x) {
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return (TypeOpCodeEn::typeConv <= t) && (t < TypeOpCodeEn::typeConvEnd);
 }
-inline bool isSelect(opCodeEn x) {
-    return (opCodeEn::select == x);
+inline bool isSelect(OpCodeEn x) {
+    return (OpCodeEn::select == x);
 }
-inline bool isCall(opCodeEn x) {
-    return (opCodeEn::call == x);
+inline bool isCall(OpCodeEn x) {
+    return (OpCodeEn::call == x);
 }
-inline bool isConvolve(opCodeEn x) {
-    typeOpCodeEn t = (typeOpCodeEn)x;
-    return (typeOpCodeEn::convolve_op <= t) && (t < typeOpCodeEn::convolve_opEnd);
+inline bool isConvolve(OpCodeEn x) {
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return (TypeOpCodeEn::convolve_op <= t) && (t < TypeOpCodeEn::convolve_opEnd);
 }
-inline bool isSlice(opCodeEn x) {
-    typeOpCodeEn t = (typeOpCodeEn)x;
-    return (typeOpCodeEn::slice_op <= t) && (t < typeOpCodeEn::slice_opEnd);
+inline bool isSlice(OpCodeEn x) {
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return (TypeOpCodeEn::slice_op <= t) && (t < TypeOpCodeEn::slice_opEnd);
 }
-inline bool isDecimation(opCodeEn x) {
-    return x == opCodeEn::decimation;
+inline bool isDecimation(OpCodeEn x) {
+    return x == OpCodeEn::decimation;
 }
-inline bool isShift(opCodeEn x) {
-    return x == opCodeEn::shift;
+inline bool isShift(OpCodeEn x) {
+    return x == OpCodeEn::shift;
 }
-inline bool isStoreToBuffer(opCodeEn x) {
-    return (opCodeEn::storeToBuffer == x);
+inline bool isStoreToBuffer(OpCodeEn x) {
+    return (OpCodeEn::storeToBuffer == x);
 }
-inline bool isBuiltInFunc(opCodeEn x) {
-    typeOpCodeEn t = (typeOpCodeEn)x;
-    return (typeOpCodeEn::builtInFunc <= t) && (t < typeOpCodeEn::builtInFuncEnd);
+inline bool isBuiltInFunc(OpCodeEn x) {
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return (TypeOpCodeEn::builtInFunc <= t) && (t < TypeOpCodeEn::builtInFuncEnd);
 }
-
+inline bool isSmallArrayDef(OpCodeEn x) {
+    return (OpCodeEn::smallArrayDef == x);
+}
 
 
 
@@ -185,13 +188,13 @@ inline std::string typeToStr(TypeEn type)
 #define ENUM2STR(x) case (TypeEn::x):t=#x;   break
     switch (type)
     {
-        ENUM2STR(Int1_jty);
-        ENUM2STR(Int8_jty);
-        ENUM2STR(Int16_jty);
-        ENUM2STR(Int32_jty);
-        ENUM2STR(Float_jty);
-        ENUM2STR(Double_jty);
-        ENUM2STR(Unknown_jty);
+        ENUM2STR(int1_jty);
+        ENUM2STR(int8_jty);
+        ENUM2STR(int16_jty);
+        ENUM2STR(int32_jty);
+        ENUM2STR(float_jty);
+        ENUM2STR(double_jty);
+        ENUM2STR(unknown_jty);
     }
     return t;
 #undef ENUM2STR

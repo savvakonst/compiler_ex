@@ -88,8 +88,6 @@ int main(int argc, const char* argv[]) {
 
     try
     {
-
-
         llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
         //listener.activBody->print();
@@ -107,6 +105,7 @@ int main(int argc, const char* argv[]) {
         table->print();
         llvm::outs() << "~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         table->calculateBufferLength();
+
         table->generateIR();
         auto mainF=moduleUPtr->getFunction("main");
         theFPM->run(*mainF);
@@ -130,8 +129,7 @@ int main(int argc, const char* argv[]) {
             return 1;
         }
         llvm::outs() << "complete";
-    }catch(size_t )
-    {
+    }catch(size_t ){
 
     }
 

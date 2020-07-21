@@ -6,18 +6,42 @@
 #include <vector>
 #include "llvm/IR/IRBuilder.h"
 #include "types_jty.h"
+#include "ioIfs.h"
+
+typedef  int64_t  ex_size_t;
+
 
 class Table;
 class Variable;
 
+
+
+
+typedef struct {
+    void * ptr =NULL;
+    ex_size_t length = 0;
+    ex_size_t leftOffset = 0;
+    ex_size_t rightOffset = 0;
+    std::string name = "" ;
+    TypeEn      type = TypeEn::unknown_jty;
+}BufferSt;
+
+enum class BufferTypeEn {
+    input,
+    internal,
+    output
+};
+
+
 class IRGenerator : public llvm::IRBuilder <>
 {
 public:
-    IRGenerator(llvm::LLVMContext & context, Table * table_=NULL);
 
+
+    IRGenerator(llvm::LLVMContext & context, Table * table_=NULL);
     ~IRGenerator();
 
-
+     
     bool CheckExistence(llvm::Value *var) { 
         for (auto &i : initializedVariablesList)
             if (i == var) return true;
@@ -29,10 +53,10 @@ public:
 
     llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
     llvm::Value * CreateConst(uint64_t & binaryValue, TypeEn targetTy, const std::string &name="");
-    llvm::Value * CreateArithmetic(llvm::Value *AOperand, llvm::Value *BOperand, opCodeEn opCode, const std::string &name="");
-    llvm::Value * CreateInv(llvm::Value * AOperand, opCodeEn opCode, const std::string &name="");
-    llvm::Value * CreateTypeConv(llvm::Value *AOperand,  opCodeEn opCode, TypeEn targetTy, const std::string &name="");
-    llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, opCodeEn opCode, const std::string &name="");
+    llvm::Value * CreateArithmetic(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
+    llvm::Value * CreateInv(llvm::Value * AOperand, OpCodeEn opCode, const std::string &name="");
+    llvm::Value * CreateTypeConv(llvm::Value *AOperand,  OpCodeEn opCode, TypeEn targetTy, const std::string &name="");
+    llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, unsigned int i, const std::string &name="");
     llvm::Value * CreatePositionalOffset( std::string name="", uint64_t startValue=0);
     llvm::Value * CreatePositionalOffsetAlloca(std::string name="", uint64_t startValue=0);
@@ -46,6 +70,8 @@ public:
     void          CreateStartBRs();
     void          CreateMidleBRs();
 
+
+    void        * CreateBufferAlloca(TypeEn type, size_t length, BufferTypeEn bufferType, const std::string &name="");
 
     void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };
@@ -95,7 +121,10 @@ public:
 
 
 
+
 private:
+
+
     typedef llvm::BasicBlock* BasicBlockPtr;
 
     void SetCInsertPoint(BasicBlockPtr & prot, llvm::BasicBlock * bb=NULL) {
@@ -107,6 +136,12 @@ private:
         }
         SetInsertPoint(bb);
     }
+
+    std::vector <BufferSt >  inputBuffers;
+    std::vector <BufferSt >  internalBuffers;
+    std::vector <BufferSt >  outputBuffers;
+
+
 
     llvm::BasicBlock* initBlock=NULL;
     llvm::BasicBlock* calcBlock=NULL;

@@ -12,15 +12,15 @@ class Body
 {
 public:
 
-    Body(std::string name_ = "main", bool isPrototype_ = false);
+    Body(std::string name = "main", bool isPrototype = false);
     ~Body();
 
     Line*       getLastLineFromName(std::string name);
-    std::string getName() { return name; };
+    std::string getName() { return name_; };
 
 
-    bool    isRetStackFull () {if (name != "main") return 0 < returnStack.size(); else return false;}
-    bool    isRetStackEmpty() {return 0 == returnStack.size();}
+    bool    isRetStackFull () {if (name_ != "main") return 0 < returnStack_.size(); else return false;}
+    bool    isRetStackEmpty() {return 0 == returnStack_.size();}
 
     void addLine    (std::string name, Variable* var);
     void addArg     (std::string name); //is necessary to add returned status value with line ,pos end error code and string;
@@ -33,28 +33,28 @@ public:
 private:
     //create operation
     Variable* typeConvOp    (TypeEn   targetType, Variable* arg1);
-    Variable* builtInFuncOp (opCodeEn    uTypeOp, Variable* arg1);
-    Variable* arithmeticOp  (opCodeEn    uTypeOp, Variable* arg1, Variable* arg2);
+    Variable* builtInFuncOp (OpCodeEn    uTypeOp, Variable* arg1);
+    Variable* arithmeticOp  (OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2);
     Variable* selectOp      (Variable*      arg1, Variable* arg2, Variable* arg3);
-    Variable* convolveOp    (opCodeEn    uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
+    Variable* convolveOp    (OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
 
 public:
     //create operation and push to varStack
     void addTypeConvOp      (TypeEn targetType);
-    void addBuiltInFuncOp   (opCodeEn uTypeOp);
-    void addArithmeticOp    (opCodeEn uTypeOp);
-    void addConvolveOp      (opCodeEn uTypeOp, uint32_t shift = 0);
+    void addBuiltInFuncOp   (OpCodeEn uTypeOp);
+    void addArithmeticOp    (OpCodeEn uTypeOp);
+    void addConvolveOp      (OpCodeEn uTypeOp, uint32_t shift = 0);
     void addSelectOp        ();
 
     void addRangeOp(size_t argCount);
     void addShiftOp         ();
     void addDecimationOp    ();
-
+    void addSmallArrayDefinitionOp(size_t length);
     //create call
-    void addCall            (Body* body_);
+    void addCall            (Body* body);
 
-    stack<Line*>  getRet     () { return returnStack; }
-    int           getArgCount() { return argCount; }
+    stack<Line*>  getRet     () { return returnStack_; }
+    int           getArgCount() { return argCount_; }
 
     // tree walker methods
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
@@ -65,17 +65,17 @@ public:
 
 private:
 
-    bool isPrototype=false;
-    std::string name="main";
-    std::vector<Line*> lines;
+    bool isPrototype_=false;
+    std::string name_="main";
+    std::vector<Line*> lines_;
 
-    stack<Variable*> varStack;
+    stack<Variable*> varStack_;
 
-    stack<Line*> argStack;
-    stack<Line*> returnStack;
+    stack<Line*> argStack_;
+    stack<Line*> returnStack_;
 
-    int argCount=0;
-    Body* genBody;
+    int   argCount_=0;
+    Body* genBody_=NULL;
 };
 
 
@@ -83,24 +83,20 @@ private:
 class Call :public Variable
 {
 public:
-    Call(Body* body_, stack<Variable*> args_ = {}) {
-        body = body_; 
+    Call(Body* body, stack<Variable*> args = {}) {
+        body_ = body; 
+        args_ = args;
 
-        //for (int i = (args_.size() - 1); i >= 0; i--) {
-        //	args.push(args_[i]);
-        //}
-        args = args_;
+        auto ret = body_->getRet()[0];
 
-        auto ret = body->getRet()[0];
-
-        level       = ret->getLevel();
-        type        = ret->getType();
-        dstype      = ret->getDSType();
-        length      = ret->getLength();
+        level_       = ret->getLevel();
+        type_        = ret->getType();
+        dsType_      = ret->getDSType();
+        length_      = ret->getLength();
 
         if (isConst(ret)) {
-            binaryValue = ret->getBinaryValue();
-            textValue   = ret->getTextValue();
+            binaryValue_ = ret->getBinaryValue();
+            textValue_   = ret->getTextValue();
         }
 
     }
@@ -113,11 +109,11 @@ public:
         //    visitorStack->push(args[i]);
         //    //args[i]->setBufferLength(this);
         //}
-        auto ret = body->getRet()[0];
+        auto ret = body_->getRet()[0];
         visitorStack->push(ret);
         ret->setBufferLength(this);
 
-        is_unused = false;
+        is_nused_ = false;
         
     }
 
@@ -132,64 +128,64 @@ public:
     */
     virtual void genBlocksVisitExit  (TableGenContext*  context) override {
 
-         body->genTable(context);
+         body_->genTable(context);
          uniqueName =(isLargeArr(this) ? "fb" : "fs") + std::to_string(context->getUniqueIndex());
          context->setUint(this);
-         is_visited = false;
+         is_visited_ = false;
     };
 
     virtual void visitEnter(stack<Variable*>* visitorStack) override {
         visitorStack->push(this);
-        for(int i= (args.size()-1);i>=0;i--){
-            visitorStack->push(args[i]);
+        for(int i= (args_.size()-1);i>=0;i--){
+            visitorStack->push(args_[i]);
         }
-        is_visited = true; 
+        is_visited_ = true; 
     };
 
     virtual void genBodyVisitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) override {
         stack<Variable*> a;
 
-        for (auto &i : args) 
+        for (auto &i : args_) 
             a.push(Stack->pop());
 
-        auto b=body->genBodyByPrototype(a);
+        auto b=body_->genBodyByPrototype(a);
         auto call =new Call(b, a);
         Stack->push(call);
-        is_visited = false;
+        is_visited_ = false;
     }
 
     virtual void printVisitExit(stack<std::string>* Stack) override {
-        std::cout <<"  call." << body->getName() <<"\n";
-        body->print("    ");
-        for (auto& i : args) 
+        std::cout <<"  call." << body_->getName() <<"\n";
+        body_->print("    ");
+        for (auto& i : args_) 
             auto x=Stack->pop();
 
-        Stack->push( body->getName()+".ret."+ typeToStr(type));
-        is_visited = false;
+        Stack->push( body_->getName()+".ret."+ typeToStr(type_));
+        is_visited_ = false;
     };
 
     virtual void reduceLinksVisitExit() override { 
-        is_visited = false; 
+        is_visited_ = false; 
     }
 
 
     virtual string printUint() { 
 
-        return ""; uniqueName + " = assignCall(" + body->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
+        return ""; uniqueName + " = assignCall(" + body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
     }
     virtual void setupIR(IRGenerator & builder)override;
 
     virtual Variable*   getAssignedVal(bool deep = false)  override { 
         if (is_buffered & deep) {
-            body->getRet()[0]->getAssignedVal(true)->setBuffered();
+            body_->getRet()[0]->getAssignedVal(true)->setBuffered();
         }
 
-        return body->getRet()[0]->getAssignedVal(deep);
+        return body_->getRet()[0]->getAssignedVal(deep);
     }
     //virtual Variable*   getAssignedVal(bool deep = false)  override { return this; }
 private:
-    stack<Variable*> args;
-    Body* body = NULL;
+    stack<Variable*>  args_;
+    Body*             body_ = NULL;
 
 };
 

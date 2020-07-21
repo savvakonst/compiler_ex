@@ -1,15 +1,19 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include "types_jty.h"
 
-#ifndef COMMON_H
-#define COMMON_H
 
 
 
-void print_error(std::string content);
-void print_IR_error(std::string content);
+
+void print_error(const std::string &content);
+void print_IR_error(const std::string &content);
+void print_SA_error(const std::string &content);
+
 
 class Line;
 class Variable;
@@ -65,18 +69,30 @@ public:
 #define ENUM2STR(x) case (TypeEn::x):t=#x;   break
      switch (type)
      {
-         ENUM2STR(Int1_jty);
-         ENUM2STR(Int8_jty);
-         ENUM2STR(Int16_jty);
-         ENUM2STR(Int32_jty);
-         ENUM2STR(Float_jty);
-         ENUM2STR(Double_jty);
-         ENUM2STR(Unknown_jty);
+         ENUM2STR(int1_jty);
+         ENUM2STR(int8_jty);
+         ENUM2STR(int16_jty);
+         ENUM2STR(int32_jty);
+         ENUM2STR(float_jty);
+         ENUM2STR(double_jty);
+         ENUM2STR(unknown_jty);
      }
      return  t;
 #undef ENUM2STR
  }
 
+
+#define CONV_TYPE_OP(depend,target) case (depend):  target ;  break
+#define  SWITCH_TYPE_OP(TYPE,DEFAULT) switch(TYPE){\
+    CONV_TYPE_OP(TypeEn::double_jty, OP(double));\
+    CONV_TYPE_OP(TypeEn::float_jty, OP(float));\
+    CONV_TYPE_OP(TypeEn::int64_jty, OP(int64_t));\
+    CONV_TYPE_OP(TypeEn::int32_jty, OP(int32_t));\
+    CONV_TYPE_OP(TypeEn::int16_jty, OP(int16_t));\
+    CONV_TYPE_OP(TypeEn::int8_jty, OP(int8_t));\
+    CONV_TYPE_OP(TypeEn::int1_jty, OP(bool) );\
+    default: DEFAULT ; break;\
+    }
 
 
 
@@ -84,18 +100,18 @@ public:
 #define SWITCH_UINT(CASE_ARG,LOOP, X ) case CASE_ARG: LOOP { X }   
 #define AR_SWITCH_OP(OP,LOOP,RET,ARG_A,ARG_B)   \
     switch (OP){\
-    SWITCH_UINT(opCodeEn::ADD, LOOP, RET=ARG_A + ARG_B; ) break ;\
-    SWITCH_UINT(opCodeEn::SUB, LOOP, RET=ARG_A - ARG_B;) break ;\
-    SWITCH_UINT(opCodeEn::MUL, LOOP, RET=ARG_A * ARG_B;) break ;\
-    SWITCH_UINT(opCodeEn::SDIV, LOOP, RET=ARG_A / ARG_B;) break ;\
-    SWITCH_UINT(opCodeEn::SREM, LOOP, RET=(T)fmod(ARG_A, ARG_B);) break ;\
-    SWITCH_UINT(opCodeEn::POW, LOOP,  RET=(T)pow((double)ARG_A, ARG_B);) break ;\
-    SWITCH_UINT(opCodeEn::FADD, LOOP, RET=ARG_A + ARG_B;) break; \
-    SWITCH_UINT(opCodeEn::FSUB, LOOP, RET=ARG_A - ARG_B;) break; \
-    SWITCH_UINT(opCodeEn::FMUL, LOOP, RET=ARG_A * ARG_B;) break; \
-    SWITCH_UINT(opCodeEn::FDIV, LOOP, RET=ARG_A / ARG_B;) break; \
-    SWITCH_UINT(opCodeEn::FREM, LOOP, RET=(T)fmod(ARG_A, ARG_B);) break; \
-    SWITCH_UINT(opCodeEn::FPOW, LOOP, RET=(T)pow((double)ARG_A, ARG_B);) break; \
+    SWITCH_UINT(OpCodeEn::add, LOOP, RET=ARG_A + ARG_B; ) break ;\
+    SWITCH_UINT(OpCodeEn::sub, LOOP, RET=ARG_A - ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::mul, LOOP, RET=ARG_A * ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::sdiv, LOOP, RET=ARG_A / ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::srem, LOOP, RET=(T)fmod(ARG_A, ARG_B);) break ;\
+    SWITCH_UINT(OpCodeEn::pow, LOOP,  RET=(T)pow((double)ARG_A, ARG_B);) break ;\
+    SWITCH_UINT(OpCodeEn::fadd, LOOP, RET=ARG_A + ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::fsub, LOOP, RET=ARG_A - ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::fmul, LOOP, RET=ARG_A * ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::fdiv, LOOP, RET=ARG_A / ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::frem, LOOP, RET=(T)fmod(ARG_A, ARG_B);) break; \
+    SWITCH_UINT(OpCodeEn::fpow, LOOP, RET=(T)pow((double)ARG_A, ARG_B);) break; \
     default: break;\
     }
 
@@ -103,12 +119,12 @@ public:
 
 #define BI_SWITCH_OP(OP,LOOP,RET,ARG_A)   \
     switch (OP){\
-    SWITCH_UINT(opCodeEn::LOG, LOOP, RET=log(ARG_A) ; ) break ;\
-    SWITCH_UINT(opCodeEn::LOG2, LOOP, RET=log2(ARG_A) ;) break ;\
-    SWITCH_UINT(opCodeEn::LOG10, LOOP, RET=log10(ARG_A) ;) break ;\
-    SWITCH_UINT(opCodeEn::COS, LOOP, RET=cos(ARG_A) ;) break ;\
-    SWITCH_UINT(opCodeEn::SIN, LOOP, RET=sin(ARG_A);) break ;\
-    SWITCH_UINT(opCodeEn::EXP, LOOP,  RET=exp(ARG_A);) break ;\
+    SWITCH_UINT(OpCodeEn::log, LOOP, RET=log(ARG_A) ; ) break ;\
+    SWITCH_UINT(OpCodeEn::log2, LOOP, RET=log2(ARG_A) ;) break ;\
+    SWITCH_UINT(OpCodeEn::log10, LOOP, RET=log10(ARG_A) ;) break ;\
+    SWITCH_UINT(OpCodeEn::cos, LOOP, RET=cos(ARG_A) ;) break ;\
+    SWITCH_UINT(OpCodeEn::sin, LOOP, RET=sin(ARG_A);) break ;\
+    SWITCH_UINT(OpCodeEn::exp, LOOP,  RET=exp(ARG_A);) break ;\
     default: break;\
     }
 
@@ -137,7 +153,15 @@ public:
  */
 
  template< typename T >
- uint64_t calcArithmeticOperation(T arg1, T arg2, opCodeEn uTypeOp){
+ T *  SmallArrayAlloc(int n, T* ptr=NULL) {
+     if (ptr != NULL)
+         return ptr;
+     return new T[n];
+ }
+
+
+ template< typename T >
+ uint64_t calcArithmeticOperation(T arg1, T arg2, OpCodeEn uTypeOp){
      T value = (T)0;;
      uint64_t binaryValue = 0;
      AR_SWITCH_OP(uTypeOp, ;, value, arg1, arg2);
@@ -146,7 +170,7 @@ public:
  }
 
  template< typename T >
- uint64_t calcBuiltInFuncOperation(T arg, opCodeEn uTypeOp) {
+ uint64_t calcBuiltInFuncOperation(T arg, OpCodeEn uTypeOp) {
      T value = (T)0;
      uint64_t binaryValue = 0;
      BI_SWITCH_OP(uTypeOp, ;, value, arg);
@@ -155,17 +179,17 @@ public:
  }
 
  template <typename T>
- void aritheticTemplate(opCodeEn op, T * ret, T * a, T * b, int n) {
+ void aritheticTemplate(OpCodeEn op, T * ret, T * a, T * b, int n) {
      AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i], b[i]);
  }
 
  template <typename T>
- void aritheticConstTemplate(opCodeEn op, T * ret, T * a, T  b, int n) {
+ void aritheticConstTemplate(OpCodeEn op, T * ret, T * a, T  b, int n) {
      AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i], b);
  }
 
  template <typename T>
- void aritheticConstTemplate(opCodeEn op, T * ret, T  a, T * b, int n) {
+ void aritheticConstTemplate(OpCodeEn op, T * ret, T  a, T * b, int n) {
      AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a, b[i]);
  }
 
@@ -175,78 +199,100 @@ public:
  }
 
  template< typename T >
- void builtInFuncTemplate(opCodeEn op, T * ret, T * a,  int n) {
+ void builtInFuncTemplate(OpCodeEn op, T * ret, T * a,  int n) {
      BI_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i]);
  }
 
-
-
  template< typename T >
- void selectTemplate(opCodeEn op, T * ret, bool * a, T * b, T * c, int n) {
+ void selectTemplate(OpCodeEn op, T * ret, bool * a, T * b, T * c, int n) {
      for (int i=0; i < n; i++) ret[i]=a[i] ? b[i] : c[i];
  }
 
  template< typename T >
- void selectTemplate(opCodeEn op, T * ret, bool * a, T * b, T  c, int n) {
+ void selectTemplate(OpCodeEn op, T * ret, bool * a, T * b, T  c, int n) {
      for (int i=0; i < n; i++) ret[i]=a[i] ? b[i] : c;
  }
 
  template< typename T >
- void selectTemplate(opCodeEn op, T * ret, bool * a, T  b, T * c, int n) {
+ void selectTemplate(OpCodeEn op, T * ret, bool * a, T  b, T * c, int n) {
      for (int i=0; i < n; i++) ret[i]=a[i] ? b : c[i];
  }
 
  template< typename T >
- void selectTemplate(opCodeEn op, T * ret, bool * a, T  b, T  c, int n) {
+ void selectTemplate(OpCodeEn op, T * ret, bool * a, T  b, T  c, int n) {
      for (int i=0; i < n; i++) ret[i]=a[i] ? b : c;
  }
-
-  template< typename T >
- void convolveTemplate_( T * ret, T * a, T * b, int na,int nb,int offset=0) {
+ 
+ template< typename T >
+ void convolveTemplate_(T * ret, T * a, T * b, int na, int nb, int offset=0) {
      int nMax=na, nMin=nb;
      T * mainArr=a, * subArr=b;
      if (nb > na) {
-         nMax=na;
-         nMin=nb;
+         nMax=nb;
+         nMin=na;
          mainArr=b;
          subArr=a;
      }
 
-     if (nMax > nMin) {
-         int left_offset=(nMin / 2)+ offset;
-         for (int i=0; i < nMax; i++) {
-             ret[i]=0;
-             for (int j=0; j < nMin; j++) {
-                 int k=i + j - left_offset;
-                 if ((k >= 0) || (k < nMax))
-                     ret[i]+= mainArr[k] * subArr[j];
-             }
+     
+     int left_offset=(nMin / 2) + offset - (nMin - 1);
+     for (int i=0; i < nMax; i++) {
+         ret[i]=(T)0;
+         /*
+
+         for (int j=0; j < nMin; j++) {
+             int k=i + j - left_offset;
+             if ((k >= 0) && (k < nMax))
+                 ret[i]+= mainArr[k] * subArr[nMin-1-j];
+         }
+         */
+
+         for (int j=nMin-1; j > -1; j--) {
+             int k=i -j - left_offset ;
+             if ((k >= 0) && (k < nMax))
+                 ret[i]+= mainArr[k] * subArr[j];
          }
      }
- }
 
+ }
 
 
 #undef SWITCH_UINT
 #undef AR_SWITCH_OP
 #undef BI_SWITCH_OP
 
-void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int n);
-void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, int64_t  a, void *  b, int n);
-void calcAritheticSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, int n);
+void * calcSmallArrayAlloc(TypeEn targetType, int N, void* ptr=NULL);
 
-void invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n);
+void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int n);
+void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, int64_t  a, void *  b, int n);
+void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, int n);
 
-void builtInFuncSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int n);
+void * invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n);
 
-void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, void * c, int n);
-void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int64_t c, int n);
-void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, void * c, int n);
-void calcSelectSmallArray(opCodeEn op, TypeEn targetType, void * ret, void * a, int64_t b, int64_t c, int n);
+void * builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int n);
 
-void calcConvolveSmallArray( TypeEn targetType, void * ret, void * a, void * b, int aN,int bN);
+void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, void * c, int n);
+void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int64_t c, int n);
+void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, void * c, int n);
+void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t b, int64_t c, int n);
 
-void typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n);
+void * calcConvolveSmallArray( TypeEn targetType, void * ret, void * a, void * b, int aN,int bN);
+
+void * typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n);
+
+void * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand);
+
+
+
+inline size_t tEnSizeof(TypeEn type) {
+    size_t size=0;
+#define OP(T)  size=sizeof(T)
+    SWITCH_TYPE_OP(type, ;)
+#undef OP
+    return size;
+}
+
+
 
 #define DEBUG_STREAM()\
  std::string content(\

@@ -59,6 +59,8 @@ public:
     virtual void exitCallFunc(EGrammarParser::CallFuncContext* ctx) override;
     virtual void enterFunc(EGrammarParser::FuncContext* ctx) override;
     virtual void exitFunc(EGrammarParser::FuncContext* ctx) override;
+    //array definition
+    virtual void exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext* ctx) override;
 
     Body* activBody;
     std::vector<Body*> context;

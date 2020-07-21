@@ -10,37 +10,47 @@
 using std::string;
 
 
-class smallArr{
+class SmallArr{
+
+
 public:
+    ~SmallArr() {
+        if (bufferPtr_ != NULL)
+            delete bufferPtr_;
+    }
+
     void genRange() {};
     void loadFromFile(const string &filename) {
-
     };
 
     virtual void calculate(){}
-    void * getBufferPtr() { return bufferPtr; }
+    void * getBufferPtr() { 
+        return bufferPtr_; 
+    }
+
 protected:
-    void * bufferPtr;
+
+    double start_=0;
+    double stop_=0;
+
+    void * bufferPtr_=NULL;
 };
 
 
-
-
-
-class Variable : public smallArr
+class Variable : public SmallArr
 {
 public:
-    Variable() {
+    Variable(){
     };
 
-    Variable(string text, TypeEn type_);
-    Variable(int64_t value, TypeEn type_);
+    Variable(string text, TypeEn type);
+    Variable(int64_t value, TypeEn type);
     Variable(Variable* arg1, Variable* arg2, Variable* arg3);
     Variable(Variable* arg1, Variable* arg2);
     Variable(Variable* arg1);
 
     virtual void setBuffered();
-    void         setReturned() { is_returned=true; }
+    void setReturned() { is_returned=true; }
 
     void setBufferLength(uint64_t left, uint64_t right);
     void setBufferLength(Variable * var);
@@ -52,19 +62,20 @@ public:
     string  getTxtDSType();
 
     template< typename T >
-    T            getConvTypeVal   () { return *((T*)(&binaryValue)); }
-    int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue)); }
-    string       getTextValue     () { return textValue; }
+    T            getConvTypeVal   () { return *((T*)(&binaryValue_)); }
+    int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue_)); }
+    double       getDoubleValue   ();
+    string       getTextValue     () { return textValue_; }
     string       getUniqueName    () { return uniqueName; }
-    int64_t      getUsageCounter  () { return usageCounter; }
-    int64_t      getLength        () { return length; }
-    int64_t      getLevel         () { return level; }
+    int64_t      getUsageCounter  () { return usageCounter_; }
+    int64_t      getLength        () { return length_; }
+    int64_t      getLevel         () { return level_; }
     int64_t      getDecimation    () { return decimation; }
-    int64_t      getLeftBufferLen () { return leftBufferLength; }
-    int64_t      getRightBufferLen() { return rightBufferLength; }
-    NodeTypeEn   getNodeType      () { return NodeTypeEn::TerminalLine; }
-    TypeEn       getType          () { return type; }
-    DataStructTypeEn getDSType    () { return dstype; }
+    int64_t      getLeftBufferLen () { return leftBufferLength_; }
+    int64_t      getRightBufferLen() { return rightBufferLength_; }
+    NodeTypeEn   getNodeType      () { return NodeTypeEn::terminalLine; }
+    TypeEn       getType          () { return type_; }
+    DataStructTypeEn getDSType    () { return dsType_; }
 
     virtual Variable* getAssignedVal(bool deep = false) { return this; }
 
@@ -73,46 +84,50 @@ public:
 
 
     virtual bool isTermialLargeArray    () { return false; }
-    bool         isUnused               () { return is_unused; }
-    bool         isArray                () { return dstype != DataStructTypeEn::constant_dsty; }
-    bool         isVisited              () { return is_visited; }
+    bool         isUnused               () { return is_nused_; }
+    bool         isArray                () { return dsType_ != DataStructTypeEn::constant_dsty; }
+    bool         isVisited              () { return is_visited_; }
     bool         isBuffered             () { return is_buffered; }
     bool         isReturned             () { return is_returned; }
 
     //safe functions .external stack is used
-    void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter++; };
+    void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter_++; };
 
     virtual void visitEnter          (stack<Variable*>* visitorStack) { 
         visitorStack->push(this); 
-        is_visited = true; 
+        is_visited_ = true; 
     };
 
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) {
         commoMmarkUnusedVisitEnter(visitorStack); 
-        is_unused = false; 
+        is_nused_ = false; 
     };
 
     virtual void genBodyVisitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { 
-        Stack->push(new Variable(textValue, type)); is_visited = false; 
+        Stack->push(new Variable(textValue_, type_)); is_visited_ = false; 
     };
 
     virtual void genBlocksVisitExit(TableGenContext*  context) {
         uniqueName ="c" + std::to_string(context->getUniqueIndex());
         context->setUint(this);
-        is_visited = false;
+        is_visited_ = false;
     };
 
     virtual void reduceLinksVisitExit(){
-        is_visited = false;
+        is_visited_ = false;
     };
 
     virtual void printVisitExit(stack<string> *Stack) {
-        Stack->push(textValue); is_visited = false;
+        Stack->push(textValue_); is_visited_ = false;
     };
 
-
-    virtual string printUint() { return uniqueName+"="+textValue; }
+    virtual string printUint() { return uniqueName+"="+textValue_; }
     virtual void   setupIR(IRGenerator & builder);
+
+    virtual void   calculate() override;
+
+    std::string printSmallArray();
+
 protected:
 
     string checkBuffer(string arg) {
@@ -122,38 +137,36 @@ protected:
             return arg;
     }
 
-    bool is_unused   = true;
-    bool is_visited  = false;
+
+    bool is_nused_   = true;
+    bool is_visited_  = false;
     bool is_buffered = false;
 
-    bool is_returned = false;
+    bool is_returned    = false;
     bool is_initialized = false;
 
-    DataStructTypeEn    dstype = DataStructTypeEn::constant_dsty;
-    TypeEn              type   = TypeEn::DEFAULT_JTY;
+    DataStructTypeEn    dsType_ = DataStructTypeEn::constant_dsty;
+    TypeEn              type_   = TypeEn::DEFAULT_JTY;
 
-    string   textValue  = "" ;
+    string   textValue_  = "" ;
     string   uniqueName = "" ;
 
-    uint64_t length     = 1;
+    uint64_t length_     = 1;
     int64_t  decimation = 0;
-    int64_t  level      = 0;
+    int64_t  level_      = 0;
 
-    uint64_t leftBufferLength  = 0;
-    uint64_t rightBufferLength = 0;
+    uint64_t leftBufferLength_  = 0;
+    uint64_t rightBufferLength_ = 0;
 
-    uint64_t binaryValue  = 0;
-    uint64_t usageCounter = 0;
+    uint64_t binaryValue_  = 0;
+    uint64_t usageCounter_ = 0;
 
-    uint64_t bufferNum    = 0;
+    uint64_t bufferNum_    = 0; //unused
 
-    llvm::Value * IRValue       = NULL;
-    llvm::Value * IRLoadedBufferValue = NULL;
-    llvm::Value * IRBufferRefPtr = NULL;
-
+    llvm::Value * IRValue_        = NULL;
+    llvm::Value * IRLoadedBufferValue_ = NULL;
+    llvm::Value * IRBufferRefPtr_ = NULL;
 };
-
-
 
 
 
@@ -170,20 +183,21 @@ inline bool isSimilar   (Variable* var1, Variable* var2) { return  (var1->getDST
 inline bool isÑompatible(Variable* var1, Variable* var2) { return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
 
 
-inline bool isUnknownTy (TypeEn type) { return type == TypeEn::Unknown_jty; }
-inline bool isFloating  (TypeEn type) { return type >= TypeEn::Float_jty; }
-inline bool isInteger   (TypeEn type) { return type <= TypeEn::Int64_jty; }
+inline bool isUnknownTy (TypeEn type) { return type == TypeEn::unknown_jty; }
+inline bool isFloating  (TypeEn type) { return type >= TypeEn::float_jty; }
+inline bool isInteger   (TypeEn type) { return type <= TypeEn::int64_jty; }
 inline bool isUInteger  (TypeEn type) { return false; }
 
-inline bool isUnknownTy (Variable* var) { return var->getType() == TypeEn::Unknown_jty; }
-inline bool isFloating  (Variable* var) { return var->getType() >= TypeEn::Float_jty; }
-inline bool isInteger   (Variable* var) { return var->getType() <= TypeEn::Int64_jty; }
+inline bool isUnknownTy (Variable* var) { return var->getType() == TypeEn::unknown_jty; }
+inline bool isFloating  (Variable* var) { return var->getType() >= TypeEn::float_jty; }
+inline bool isInteger   (Variable* var) { return var->getType() <= TypeEn::int64_jty; }
 inline bool isUInteger  (Variable* var) { return false; }
 
 
 inline int64_t      maxInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var1; }
 inline int64_t      minInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var2; }
 inline Variable*    max     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var2 : var1; }
+inline Variable*    min     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var1 : var2; }
 inline Variable*    maxDS   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
 inline Variable*    maxLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
 inline Variable*    minLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }

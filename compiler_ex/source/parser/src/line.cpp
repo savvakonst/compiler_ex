@@ -2,7 +2,7 @@
 #include "line.h"
 
 
-void print_error(std::string content);
+//void print_error(std::string content);
 
 
 template <class T> inline const T& max(const T& a, const T& b) {
@@ -15,11 +15,11 @@ bool Line::isArg() {
 
 void Line::assignValue(Variable* var) {
 	assignedVal = var;
-	type = var->getType();
+	type_ = var->getType();
 }
 
 bool Line::haveTargetName(std::string name){
-	for (auto i : names) {
+	for (auto i : names_) {
 		if (i == name) return true; 
 	}
 	return false;
@@ -49,41 +49,31 @@ void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 		visitorStack->push(assignedVal);
 		assignedVal->setBufferLength(this);
 	}
-	is_unused = false;
+	is_nused_ = false;
 }
 
 void Line::genBlocksVisitExit(TableGenContext * context)
 {
-	uniqueName = (isLargeArr(this) ? "vb" : "vs") + std::to_string(context->getUniqueIndex())+"."+ names[0];
+	uniqueName = (isLargeArr(this) ? "vb" : "vs") + std::to_string(context->getUniqueIndex())+"."+ names_[0];
 	//context->setUint(this);
-	is_visited = false;
+	is_visited_ = false;
 }
 
-
-/*
-void Line::genBlocksVisitEnter(stack<Variable*>* visitorStack){
-	visitorStack->push(this);
-	if (!is_arg) {
-		visitorStack->push(assignedVal);
-	}
-	is_visited = true;
-}
-*/
 
 void Line::visitEnter(stack<Variable*>* visitorStack){
 	visitorStack->push(this);
-	is_visited = true;
+	is_visited_ = true;
 }
 
 void Line::genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr ){
-	is_visited = false;
+	is_visited_ = false;
 	auto namespace_ = *namespace_ptr;
 
-	std::string name_ = getName();
+	std::string name = getName();
 	if (namespace_.size() < 1)
 		return ;
 	for (int i = namespace_.size() - 1; i >= 0; i--) {
-		if (namespace_[i]->haveTargetName(name_)) { varStack->push(namespace_[i]);  return;
+		if (namespace_[i]->haveTargetName(name)) { varStack->push(namespace_[i]);  return;
 		}
 	}
 	print_error("visitExit can't find var name");
@@ -91,7 +81,7 @@ void Line::genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* name
 }
 
 void Line::printVisitExit(stack<std::string>* varStack){
-	is_visited = false;
-	varStack->push( names[0] + "." + typeToStr(type));
+	is_visited_ = false;
+	varStack->push( names_[0] + "." + typeToStr(type_));
 }
 

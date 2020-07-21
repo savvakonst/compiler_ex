@@ -45,9 +45,9 @@ Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::str
     if (table == NULL) return NULL;
 
     if (aOperand->getType() == getFloatTy())
-        return CreateCall(table->getFloatBIFunc(opCodeEn::FPOW), { aOperand, bOperand }, name);
+        return CreateCall(table->getFloatBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
     else
-        return CreateCall(table->getDoubleBIFunc(opCodeEn::FPOW), { aOperand, bOperand }, name);
+        return CreateCall(table->getDoubleBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
 }
 
 
@@ -57,73 +57,73 @@ Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, const s
     auto &context = getContext();
     switch (targetTy)
     {
-    case TypeEn::Int1_jty:   ret = getInt1(*((bool    *)(&binaryValue)));   break;
-    case TypeEn::Int8_jty:   ret = getInt8(*((int8_t  *)(&binaryValue)));   break;
-    case TypeEn::Int16_jty:  ret = getInt16(*((int16_t*)(&binaryValue)));   break;
-    case TypeEn::Int32_jty:  ret = getInt32(*((int32_t*)(&binaryValue)));   break;
-    case TypeEn::Int64_jty:  ret = getInt64(*((int64_t*)(&binaryValue)));   break;
-    case TypeEn::Float_jty:  ret = ConstantFP::get(Type::getFloatTy(context), *((float  *)(&binaryValue)));  break;
-    case TypeEn::Double_jty: ret = ConstantFP::get(Type::getDoubleTy(context), *((double *)(&binaryValue))); break;
-    case TypeEn::Unknown_jty:ret = NULL;                                    break;
+    case TypeEn::int1_jty:   ret = getInt1(*((bool    *)(&binaryValue)));   break;
+    case TypeEn::int8_jty:   ret = getInt8(*((int8_t  *)(&binaryValue)));   break;
+    case TypeEn::int16_jty:  ret = getInt16(*((int16_t*)(&binaryValue)));   break;
+    case TypeEn::int32_jty:  ret = getInt32(*((int32_t*)(&binaryValue)));   break;
+    case TypeEn::int64_jty:  ret = getInt64(*((int64_t*)(&binaryValue)));   break;
+    case TypeEn::float_jty:  ret = ConstantFP::get(Type::getFloatTy(context), *((float  *)(&binaryValue)));  break;
+    case TypeEn::double_jty: ret = ConstantFP::get(Type::getDoubleTy(context), *((double *)(&binaryValue))); break;
+    case TypeEn::unknown_jty:ret = NULL;                                    break;
     default:                 ret = NULL;                                    break;
     }
 
     return ret;
 }
 
-Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, opCodeEn opCode, const std::string &name) {
+Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, OpCodeEn opCode, const std::string &name) {
     Value * ret = NULL;
     switch (opCode)
     {
-    case opCodeEn::ADD:  ret = CreateAdd(aOperand, bOperand, name);  break;
-    case opCodeEn::SUB:  ret = CreateSub(aOperand, bOperand, name);  break;
-    case opCodeEn::MUL:  ret = CreateMul(aOperand, bOperand, name);  break;
-    case opCodeEn::SDIV: ret = CreateSDiv(aOperand, bOperand, name); break;
-    case opCodeEn::SREM: ret = CreateSRem(aOperand, bOperand, name); break;
-    case opCodeEn::POW:  ret = NULL; break;
+    case OpCodeEn::add:  ret = CreateAdd(aOperand, bOperand, name);  break;
+    case OpCodeEn::sub:  ret = CreateSub(aOperand, bOperand, name);  break;
+    case OpCodeEn::mul:  ret = CreateMul(aOperand, bOperand, name);  break;
+    case OpCodeEn::sdiv: ret = CreateSDiv(aOperand, bOperand, name); break;
+    case OpCodeEn::srem: ret = CreateSRem(aOperand, bOperand, name); break;
+    case OpCodeEn::pow:  ret = NULL; break;
 
-    case opCodeEn::FADD: ret = CreateFAdd(aOperand, bOperand, name); break;
-    case opCodeEn::FSUB: ret = CreateFSub(aOperand, bOperand, name); break;
-    case opCodeEn::FMUL: ret = CreateFMul(aOperand, bOperand, name); break;
-    case opCodeEn::FDIV: ret = CreateFDiv(aOperand, bOperand, name); break;
-    case opCodeEn::FREM: ret = CreateFRem(aOperand, bOperand, name); break;
-    case opCodeEn::FPOW: ret = CreateFPow(aOperand, bOperand, name); break;
+    case OpCodeEn::fadd: ret = CreateFAdd(aOperand, bOperand, name); break;
+    case OpCodeEn::fsub: ret = CreateFSub(aOperand, bOperand, name); break;
+    case OpCodeEn::fmul: ret = CreateFMul(aOperand, bOperand, name); break;
+    case OpCodeEn::fdiv: ret = CreateFDiv(aOperand, bOperand, name); break;
+    case OpCodeEn::frem: ret = CreateFRem(aOperand, bOperand, name); break;
+    case OpCodeEn::fpow: ret = CreateFPow(aOperand, bOperand, name); break;
     }
     return ret;
 
 
 }
 
-Value * IRGenerator::CreateInv(Value *aOperand, opCodeEn opCode, const std::string &name) {
+Value * IRGenerator::CreateInv(Value *aOperand, OpCodeEn opCode, const std::string &name) {
     Value * ret = NULL;
 
-    if (opCode == opCodeEn::NEG)
+    if (opCode == OpCodeEn::neg)
         return CreateNeg(aOperand, name);
     else
         return CreateFNeg(aOperand,name);
 }
 
-Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, opCodeEn opCode, TypeEn targetTy, const std::string &name)
+Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCode, TypeEn targetTy, const std::string &name)
 {
     Type* destTy = getLLVMType(targetTy);
 
     Value * ret=NULL;
     switch (opCode)
     {
-    case opCodeEn::trunc:   ret = CreateTrunc(aOperand, destTy, name);    break;
-    case opCodeEn::fptrunc: ret = CreateFPTrunc(aOperand, destTy, name);  break;
-    case opCodeEn::uitofp:  ret = CreateUIToFP(aOperand, destTy, name);   break;
-    case opCodeEn::sitofp:  ret = CreateSIToFP(aOperand, destTy, name);   break;
-    case opCodeEn::fptoi:   ret = CreateFPToUI(aOperand, destTy, name);   break;
-    case opCodeEn::fptosi:  ret = CreateFPToSI(aOperand, destTy, name);   break;
-    case opCodeEn::sext:    ret = CreateSExt(aOperand, destTy, name);     break;
-    case opCodeEn::zext:    ret = CreateZExt(aOperand, destTy, name);     break;
-    case opCodeEn::fpext:   ret = CreateFPExt(aOperand, destTy, name);    break;
+    case OpCodeEn::trunc:   ret = CreateTrunc(aOperand, destTy, name);    break;
+    case OpCodeEn::fptrunc: ret = CreateFPTrunc(aOperand, destTy, name);  break;
+    case OpCodeEn::uitofp:  ret = CreateUIToFP(aOperand, destTy, name);   break;
+    case OpCodeEn::sitofp:  ret = CreateSIToFP(aOperand, destTy, name);   break;
+    case OpCodeEn::fptoi:   ret = CreateFPToUI(aOperand, destTy, name);   break;
+    case OpCodeEn::fptosi:  ret = CreateFPToSI(aOperand, destTy, name);   break;
+    case OpCodeEn::sext:    ret = CreateSExt(aOperand, destTy, name);     break;
+    case OpCodeEn::zext:    ret = CreateZExt(aOperand, destTy, name);     break;
+    case OpCodeEn::fpext:   ret = CreateFPExt(aOperand, destTy, name);    break;
     }
     return ret;
 }
 
-Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, opCodeEn opCode, const std::string &name)
+Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, OpCodeEn opCode, const std::string &name)
 {
     if (table == NULL) return NULL;
     if (aOperand->getType() == getFloatTy()) {
@@ -223,7 +223,7 @@ Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
         getLLVMType(targetTy)->getPointerTo(),
         name + "buffer_"+ numberOfBufferTxt);
 
-
+    
     buffersList.push_back(buffer);
 
     SetCalcInsertPoint();
@@ -242,6 +242,7 @@ void IRGenerator::CreateStartBRs()
 
 void IRGenerator::CreateMidleBRs()
 {
+
     SetIntermediateInsertPoint();
     CreateBr(getLoadBlock());
     SetLoadInsertPoint();
@@ -250,6 +251,23 @@ void IRGenerator::CreateMidleBRs()
     CreateBr(getStoreBlock());
     //SetStoreInsertPoint();
     SetLastInsertPoint();
+}
+
+void * IRGenerator::CreateBufferAlloca(TypeEn type, size_t length, BufferTypeEn bufferType, const std::string &name)
+{
+    //bufferType
+    size_t typeSize = tEnSizeof(type);
+    void * ptr= malloc(typeSize * length);
+
+    BufferSt s={ ptr,length,typeSize,0,0,name};
+
+    switch (bufferType){
+    case BufferTypeEn::input:    inputBuffers.push_back(s); break;
+    case BufferTypeEn::internal: internalBuffers.push_back(s); break;
+    case BufferTypeEn::output:   outputBuffers.push_back(s); break;
+    default: break;
+    }
+    return ptr;
 }
 
 
@@ -268,9 +286,7 @@ Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const st
         convolveFunction=convolveI32Function;
     else
         return ret;
-
     //if (ret == NULL) print_error("CreateConvolve :" );
-
     return CreateCall(convolveFunction, { aOperand ,bOperand }, name);
 }
 
@@ -312,14 +328,14 @@ llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
     //this->SetInsertPoint
     switch (targetTy)
     {
-    case TypeEn::Int1_jty:   ret = getInt1Ty();   break;
-    case TypeEn::Int8_jty:   ret = getInt8Ty();   break;
-    case TypeEn::Int16_jty:  ret = getInt16Ty();  break;
-    case TypeEn::Int32_jty:  ret = getInt32Ty();  break;
-    case TypeEn::Int64_jty:  ret = getInt64Ty();  break;
-    case TypeEn::Float_jty:  ret = getFloatTy();  break;
-    case TypeEn::Double_jty: ret = getDoubleTy(); break;
-    case TypeEn::Unknown_jty:ret = NULL;          break;
+    case TypeEn::int1_jty:   ret = getInt1Ty();   break;
+    case TypeEn::int8_jty:   ret = getInt8Ty();   break;
+    case TypeEn::int16_jty:  ret = getInt16Ty();  break;
+    case TypeEn::int32_jty:  ret = getInt32Ty();  break;
+    case TypeEn::int64_jty:  ret = getInt64Ty();  break;
+    case TypeEn::float_jty:  ret = getFloatTy();  break;
+    case TypeEn::double_jty: ret = getDoubleTy(); break;
+    case TypeEn::unknown_jty:ret = NULL;          break;
     default:                 ret = NULL;          break;
     }
     
