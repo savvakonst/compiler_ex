@@ -216,7 +216,6 @@ void Body::addSmallArrayDefinitionOp(size_t size) {
 }
 
 void Body::addCall(Body* body){
-
 	stack<Variable*> a;
 	a.resize(body->getArgCount());
 	for (int i = body->getArgCount()-1; i >=0  ; i--) {
@@ -298,15 +297,19 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	//std::cout << "debug args.size() " << args[0]->Print() << "\n";
-	auto arg= args.begin();
+	
 
 	if (isPrototype_ == false)
 		return this;
 
 
-	auto body =new Body(name_, isPrototype);
+	auto arg	= args.begin();
+
+	auto body	= new Body(name_, isPrototype);
+	auto context= new BodyGenContext(&varStack_, &(body->lines_), isPrototype);
+
 	stack<Variable*> visitorStack;
-	
+
 	for (auto& value : lines_) {
 		if (value->isArg()) {
 			body->addLine(value->getName(), *(arg++));// in line 
@@ -316,7 +319,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 			do {
 				auto var = visitorStack.pop();
 				if (var->isVisited())
-					var->genBodyVisitExit(&varStack_, &(body->lines_));
+					var->genBodyVisitExit(context);
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
@@ -329,13 +332,17 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 		do {
 			auto var = visitorStack.pop();
 			if (var->isVisited())
-				var->genBodyVisitExit(&varStack_, &(body->lines_));
+				var->genBodyVisitExit(context);
 			else
 				var->visitEnter(&visitorStack);
 		} while (!visitorStack.empty());
 		body->addReturn(returnStack_[0]->getName(), varStack_.pop());
 	}
+
+	delete context;
 	return body;
+
+
 }
 
 

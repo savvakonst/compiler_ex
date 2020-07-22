@@ -8,7 +8,29 @@
 #include "IR_generator.h"
 
 using std::string;
+class Body;
 
+class BodyGenContext {
+public:
+    BodyGenContext (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr, bool isPrototype) {
+        varStack_=varStack;
+        namespace_ptr_=namespace_ptr;
+        isPrototype_=isPrototype;
+    }
+    BodyGenContext (Body & body){}
+    ~BodyGenContext() {}
+
+
+    inline void push(Variable* var) {varStack_->push(var);}
+    inline Variable*  pop() { return varStack_->pop();}
+    inline std::vector< Line*> &getNamespace() { return *namespace_ptr_; }
+    inline bool isPrototype() { return isPrototype_; }
+
+private:
+    stack<Variable*>*   varStack_=NULL;
+    std::vector<Line*>* namespace_ptr_=NULL;
+    bool isPrototype_ = false;
+};
 
 
 class SmallArr{
@@ -102,8 +124,8 @@ public:
         is_nused_ = false; 
     };
 
-    virtual void genBodyVisitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) { 
-        Stack->push(new Variable(textValue_, type_)); is_visited_ = false; 
+    virtual void genBodyVisitExit(BodyGenContext* context) {
+        context->push(new Variable(textValue_, type_)); is_visited_ = false;
     };
 
     virtual void genBlocksVisitExit(TableGenContext*  context) {

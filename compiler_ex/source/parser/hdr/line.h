@@ -63,7 +63,7 @@ public:
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)                                   override;
     //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                                 override;
 
-    virtual void genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr=NULL)   override;
+    virtual void genBodyVisitExit(BodyGenContext*  context)                                             override;
     virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
     virtual void genBlocksVisitExit  (TableGenContext*  context)                                        override;
     virtual void setupIR(IRGenerator & builder)                                                         override;

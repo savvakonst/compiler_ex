@@ -59,7 +59,7 @@ public:
 
     // tree walker methods
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
-    Body* genBodyByPrototype(stack<Variable*> args = {},bool isPrototype=true);
+    Body* genBodyByPrototype(stack<Variable*> args ,bool isPrototype);
     void  symplyfy();
     void  reduce();// this function doesn't work correctly
     void  genTable(TableGenContext * tableGenContext);
@@ -77,6 +77,8 @@ private:
 
     int   argCount_=0;
     Body* genBody_=NULL;
+
+    friend BodyGenContext;
 };
 
 
@@ -143,17 +145,18 @@ public:
         is_visited_ = true; 
     };
 
-    virtual void genBodyVisitExit(stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr = NULL) override {
+    virtual void genBodyVisitExit(BodyGenContext * context) override {
         stack<Variable*> a;
+        for (auto &i : args_)
+            a.push(context->pop());
 
-        for (auto &i : args_) 
-            a.push(Stack->pop());
-
-        auto b=body_->genBodyByPrototype(a);
+        auto b=body_->genBodyByPrototype(a, context->isPrototype());
         auto call =new Call(b, a);
-        Stack->push(call);
+        context->push(call);
         is_visited_ = false;
     }
+
+
 
     virtual void printVisitExit(stack<std::string>* Stack) override {
         //std::cout <<"  call." << body_->getName() <<"\n";

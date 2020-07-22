@@ -70,7 +70,7 @@ public:
     }
 
     int64_t read(void *bufferPtr,int64_t pos, int64_t size){
-        
+        return 0;
     }
 
 

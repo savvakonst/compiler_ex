@@ -23,10 +23,10 @@ x, y, z = param( "33554432", "6108864", "33554432")
 
 INF=2**32-1
 
-X = range(100,104)
-ff= [5,0,2,1]
+X = (range(4))
+ff= [5,0,2,2]*X
 f = [5,0,2,1]/(ff?ff:INF)
-x = convolve(f,int(x**9))
+x = convolve(f,int(x**19))
 
 return x
 # ,f

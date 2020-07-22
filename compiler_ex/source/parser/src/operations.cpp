@@ -129,13 +129,14 @@ void Operation::visitEnter(stack<Variable*>* visitorStack){
 	visitEnterStackUpdate(visitorStack);
 }
 
-void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* namespace_ptr ){
+
+void Operation::genBodyVisitExit(BodyGenContext* context){
 
 	is_visited_ = false;
 	Variable* ret = NULL;
 	if (isArithetic(opCode)) {
-		auto op2 = Stack->pop();
-		auto op1 = Stack->pop();
+		auto op2 = context->pop();
+		auto op1 = context->pop();
 		
 		if ((op2 == NULL) || (op1 == NULL)) {
 			auto txtOperation = arSym[((int)opCode - (int)TypeOpCodeEn::arithetic)];
@@ -150,15 +151,15 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		ret = newArithmeticOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2),  (OpCodeEn)(int)opCode );
 	}
 	else if (isInv(opCode)) {
-		auto op1 = Stack->pop();
+		auto op1 = context->pop();
 		ret = newInvOperation(op1);
 	}
 	else if (isTypeConv(opCode)) {
-		auto op1 = Stack->pop();
+		auto op1 = context->pop();
 		ret = newTypeConvOp(type_, op1);
 	}
 	else if (isBuiltInFunc(opCode)) {
-		auto * op1 = Stack->pop();
+		auto * op1 = context->pop();
 		if (TypeEn::float_jty > op1->getType()) {
 			op1 = newTypeConvOp(TypeEn::float_jty, op1);
 		}
@@ -166,20 +167,20 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		ret = newBuiltInFuncOperation(targetType, op1 , opCode);
 	}
 	else if (isSelect(opCode)) {
-		auto op3 = Stack->pop();
-		auto op2 = Stack->pop();
-		auto op1 = Stack->pop();
+		auto op3 = context->pop();
+		auto op2 = context->pop();
+		auto op1 = context->pop();
 		TypeEn targetType = max(op2, op3)->getType();
 		ret = newSelectOp(targetType, op1, newTypeConvOp(targetType, op2), newTypeConvOp(targetType, op3));
 	}
 	else if(isConvolve(opCode)){
-		auto op2 = Stack->pop();
-		auto op1 = Stack->pop();
+		auto op2 = context->pop();
+		auto op1 = context->pop();
 		TypeEn targetType = max(op1, op2)->getType();
 		ret = newConvolveOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2), shiftParameter, opCode);
 	}
 	else if (isSlice(opCode)) {
-		auto op1 = Stack->pop();
+		auto op1 = context->pop();
 		ret =newSliceOp(op1,getSliceParameter(),opCode);
 	}
 	else if (isStoreToBuffer(opCode)) {
@@ -189,15 +190,17 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		size_t size = operand.size();
 		stack<Variable*> op;
 		for (size_t i = 0; i < size; i++)
-			op.push(Stack->pop());
+			op.push(context->pop());
 		std::reverse(op.begin(), op.end());
 		ret = newSmallArrayDefOp(op, opCode);
 	}
 	else {
-		print_error("visitExit unknown command . In line : " +std::to_string(namespace_ptr->size() ) );
+		print_error("visitExit unknown command . In line : " +std::to_string(context->getNamespace().size() ) );
 	}
-	Stack->push(ret);
+	context->push(ret);
 }
+
+
 
 
 
@@ -344,23 +347,18 @@ void Operation::calculate(){
 
 
 
-void Operation::smallArrayGen() {
+void Operation::smallArray() {
 	size_t argsSize = operand.size();
-	if (argsSize == 1)       smallArrayGen(operand[0]);
-	else if (argsSize == 2)  smallArrayGen(operand[0], operand[1]);
-	else if (argsSize == 3)  smallArrayGen(operand[0], operand[1], operand[2]);
+	if (argsSize == 1)       smallArray(operand[0]);
+	else if (argsSize == 2)  smallArray(operand[0], operand[1]);
+	else if (argsSize == 3)  smallArray(operand[0], operand[1], operand[2]);
 }
 
-void Operation::smallArrayGen(double stop , double start ){
-
-	//double start = 0;//arg1->getDoubleValue();
-	//double stop  = 0;// arg2->getDoubleValue();
-
-	//size_t argsSize = operand.size();
+void Operation::smallArrayGen(){
 
 	double delta=0.0;
 	if (isInteger(type_)) {
-		delta = (stop - start) / length_;
+		delta = (stop_ - start_) / length_;
 	}
 
 	bufferPtr_=calcSmallArrayAlloc(type_, length_);
@@ -368,7 +366,7 @@ void Operation::smallArrayGen(double stop , double start ){
 #define OP(T) {\
     T* point=(T*)bufferPtr_;\
     for (uint64_t i=0; i < length_; i++)  \
-        *point++ =(T)(start + delta * i);}
+        *point++ =(T)(start_ + delta * i);}
 
 SWITCH_TYPE_OP(type_, print_SA_error("samallarray range ");)
 #undef OP
@@ -376,17 +374,13 @@ SWITCH_TYPE_OP(type_, print_SA_error("samallarray range ");)
 
 
 
-void Operation::smallArrayGen(Variable* arg1, Variable* arg2, Variable* arg3) {
+void Operation::smallArray(Variable* arg1, Variable* arg2, Variable* arg3) {
 	if ((isConst(arg1) && isConst(arg2) && isConst(arg3) && isInteger(arg3))) {
+		start_     = arg1->getDoubleValue();
+		stop_      = arg2->getDoubleValue();
 
-		double start     = arg1->getDoubleValue();
-		double stop      = arg2->getDoubleValue();
-
-		dsType_    = DataStructTypeEn::smallArr_dsty;
 		type_      = TypeEn::double_jty;
 		length_    = arg3->getBinaryValue();
-
-		smallArrayGen(start, stop);
 	}
 	else {
 		print_error("range(start_num,stop_num,length) -signature is not supported yet");
@@ -394,34 +388,25 @@ void Operation::smallArrayGen(Variable* arg1, Variable* arg2, Variable* arg3) {
 	}
 };
 
-void Operation::smallArrayGen(Variable* arg1, Variable* arg2) {
+void Operation::smallArray(Variable* arg1, Variable* arg2) {
 	if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2)) {
+		start_     = arg1->getDoubleValue();
+		stop_      = arg2->getDoubleValue();
 
-		double start     = arg1->getDoubleValue();
-		double stop      = arg2->getDoubleValue();
-
-		dsType_    = DataStructTypeEn::smallArr_dsty;
 		type_      = TypeEn::int64_jty;
-		length_    = (uint64_t)(stop - start);
-
-		smallArrayGen(start, stop);
+		length_    = (uint64_t)(stop_ - start_);
 	}
 	else {
 		print_error("range(start_num,stop_num) - arg must be integer consant");
 	}
 };
 
-void Operation::smallArrayGen(Variable* arg1) {
+void Operation::smallArray(Variable* arg1) {
 	if (isConst(arg1) && isInteger(arg1)) {
-
-		double start     = 0;
-		double stop      = arg1->getBinaryValue();
-		
-		dsType_    = DataStructTypeEn::smallArr_dsty;
+		start_     = 0;
+		stop_      = arg1->getBinaryValue();
 		type_      = TypeEn::int64_jty;
-		length_    = (uint64_t)stop;
-
-		smallArrayGen(start, stop);
+		length_    = (uint64_t)stop_;
 	}
 	else {
 		print_error("range(len) - arg must be integer consant");

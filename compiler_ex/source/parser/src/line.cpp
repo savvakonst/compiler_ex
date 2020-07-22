@@ -59,26 +59,29 @@ void Line::genBlocksVisitExit(TableGenContext * context)
 	is_visited_ = false;
 }
 
-
 void Line::visitEnter(stack<Variable*>* visitorStack){
 	visitorStack->push(this);
 	is_visited_ = true;
 }
 
-void Line::genBodyVisitExit(stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr ){
+void Line::genBodyVisitExit(BodyGenContext * context) {
 	is_visited_ = false;
-	auto namespace_ = *namespace_ptr;
-
+	std::vector<Line*> namespace_ = context->getNamespace();
+	namespace_[0]=this;
 	std::string name = getName();
 	if (namespace_.size() < 1)
-		return ;
+		return;
 	for (int i = namespace_.size() - 1; i >= 0; i--) {
-		if (namespace_[i]->haveTargetName(name)) { varStack->push(namespace_[i]);  return;
+		if (namespace_[i]->haveTargetName(name)) {
+			context->push(namespace_[i]);  return;
 		}
 	}
 	print_error("visitExit can't find var name");
 
 }
+
+
+
 
 void Line::printVisitExit(stack<std::string>* varStack){
 	is_visited_ = false;

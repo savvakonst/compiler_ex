@@ -91,7 +91,8 @@ int main(int argc, const char* argv[]) {
         llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
         
-        auto body=listener.activBody_->genBodyByPrototype({});
+        auto body=listener.activBody_->genBodyByPrototype({},false);
+        llvm::outs() << body->print("", false, true);
         body->symplyfy();
         llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         llvm::outs()<< body->print("", false, true);

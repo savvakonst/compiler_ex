@@ -92,14 +92,18 @@ public:
             dsType_ = DataStructTypeEn::smallArr_dsty;
             length_ = argsSize;
 
-            level_ = 0;
+            level_ = 0; 
         }
         else if (op == OpCodeEn::smallArrayRange) {
             for (auto &i : args)
                 operand.push_back(i);
 
-            //if (isUnknownTy(targetType))
-            //    return;
+            if (isUnknownTy(targetType))
+                return;
+
+            dsType_ = DataStructTypeEn::smallArr_dsty;
+            smallArray();
+
             if (argsSize > 3)print_error("range( .. ) -invalid signature");
         }
     }
@@ -126,9 +130,9 @@ public:
 
     virtual void visitEnter(stack<Variable*>* visitorStack) override;
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override;
-    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) override;
 
-    virtual void genBodyVisitExit( stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr = NULL) override;
+
+    virtual void genBodyVisitExit(BodyGenContext * context) override;
     virtual void printVisitExit( stack<std::string>* Stack)	override;
     virtual void genBlocksVisitExit(TableGenContext* context) override;
     virtual void reduceLinksVisitExit()override;
@@ -144,10 +148,10 @@ public:
 
 private:
     void smallArrayGen();
-    void smallArrayGen(double stop, double start);
-    void smallArrayGen(Variable* arg1, Variable* arg2, Variable* arg3);
-    void smallArrayGen(Variable* arg1, Variable* arg2);
-    void smallArrayGen(Variable* arg1);
+    void smallArray();
+    void smallArray(Variable* arg1, Variable* arg2, Variable* arg3);
+    void smallArray(Variable* arg1, Variable* arg2);
+    void smallArray(Variable* arg1);
 
 
     std::vector<Variable*> operand;

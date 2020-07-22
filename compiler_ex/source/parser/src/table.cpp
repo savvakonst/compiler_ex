@@ -557,6 +557,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     //create jump from init block to the next
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
+    return true;
 }
 
 
