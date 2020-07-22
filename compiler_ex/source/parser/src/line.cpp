@@ -54,7 +54,7 @@ void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 
 void Line::genBlocksVisitExit(TableGenContext * context)
 {
-	uniqueName = (isLargeArr(this) ? "vb" : "vs") + std::to_string(context->getUniqueIndex())+"."+ names_[0];
+	uniqueName_ = (isLargeArr(this) ? "vb" : "vs") + std::to_string(context->getUniqueIndex())+"."+ names_[0];
 	//context->setUint(this);
 	is_visited_ = false;
 }

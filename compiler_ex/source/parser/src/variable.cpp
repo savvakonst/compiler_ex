@@ -9,14 +9,14 @@ Variable::Variable(string text, TypeEn type) {
     switch (type)
     {
     case TypeEn::int1_jty:   *((bool   *)(&binaryValue_)) = (bool)stoi(textValue_); break;
-    case TypeEn::int8_jty:   *((int8_t *)(&binaryValue_)) = stoi(textValue_); break;
-    case TypeEn::int16_jty:  *((int16_t*)(&binaryValue_)) = stoi(textValue_); break;
-    case TypeEn::int32_jty:  *((int32_t*)(&binaryValue_)) = stoi(textValue_); break;
-    case TypeEn::int64_jty:  *((int64_t*)(&binaryValue_)) = stol(textValue_); break;
-    case TypeEn::float_jty:  *((float  *)(&binaryValue_)) = stof(textValue_); break;
-    case TypeEn::double_jty: *((double *)(&binaryValue_)) = stod(textValue_); break;
-    case TypeEn::unknown_jty:                                               break;
-    default: print_error("constant reading error");                         break;
+    case TypeEn::int8_jty:   *((int8_t *)(&binaryValue_)) = stoi(textValue_);   break;
+    case TypeEn::int16_jty:  *((int16_t*)(&binaryValue_)) = stoi(textValue_);   break;
+    case TypeEn::int32_jty:  *((int32_t*)(&binaryValue_)) = stoi(textValue_);   break;
+    case TypeEn::int64_jty:  *((int64_t*)(&binaryValue_)) = stol(textValue_);   break;
+    case TypeEn::float_jty:  *((float  *)(&binaryValue_)) = stof(textValue_);   break;
+    case TypeEn::double_jty: *((double *)(&binaryValue_)) = stod(textValue_);   break;
+    case TypeEn::unknown_jty:                                                   break;
+    default: print_error("constant reading error");                             break;
     }
 };
 
@@ -29,11 +29,11 @@ Variable::Variable(int64_t value, TypeEn type) {
 #undef OP 
 };
 
+
 Variable::Variable(Variable* arg1, Variable* arg2, Variable* arg3) {
     if (!(isConst(arg1) && isConst(arg2) && isConst(arg3) && isInteger(arg3))) {
         print_error("range args must be a constant");
         return;
-
         length_    = arg3->getBinaryValue();
         type_      = TypeEn::double_jty;
         start_     = arg1->getDoubleValue();

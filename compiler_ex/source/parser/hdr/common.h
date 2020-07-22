@@ -22,14 +22,23 @@ template< typename T > class stack :public  std::vector<T> {
 public:
     T pop() {
         if (std::vector<T> ::size() == 0) {
-            std::cout << "Error : stack is empty\n";
+            std::cout << "Error : stack is empty-\n";
             return NULL;
         }
         T res = std::vector<T> ::back();
         std::vector<T> ::pop_back();
-
+        
         return res;
     }
+
+    stack<T> pop(size_t length) {
+        stack<T> op;
+        for (size_t i = 0; i < length; i++)
+            op.push(pop());
+        std::reverse(op.begin(), op.end());
+        return op;
+    }
+
     void push(T var) { std::vector<T> ::push_back(var); }
 };
 

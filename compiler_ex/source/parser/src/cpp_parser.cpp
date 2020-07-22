@@ -90,17 +90,19 @@ int main(int argc, const char* argv[]) {
     {
         llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-        //listener.activBody->print();
-        listener.activBody->symplyfy();
+        
+        auto body=listener.activBody_->genBodyByPrototype({});
+        body->symplyfy();
         llvm::outs() << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-        llvm::outs()<<listener.activBody->print("", false, true);
-        listener.activBody->reduce();
+        llvm::outs()<< body->print("", false, true);
+        body->reduce();
 
 
         Table* table = new Table(moduleUPtr.get());
         TableGenContext context= TableGenContext(table);
         
-        listener.activBody->genTable(&context);
+
+        body->genTable(&context);
         llvm::outs() << "~~print~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         table->print();
         llvm::outs() << "~~end~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";

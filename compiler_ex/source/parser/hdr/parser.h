@@ -33,7 +33,6 @@ class TreeShapeListener : public EGrammarBaseListener {
 public:
 
     TreeShapeListener();// : EGrammarBaseListener()
-
     ~TreeShapeListener();
 
     void NewBody(std::string name, bool isPrototype);
@@ -62,7 +61,7 @@ public:
     //array definition
     virtual void exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext* ctx) override;
 
-    Body* activBody;
+    Body* activBody_;
     std::vector<Body*> context;
 
 private:

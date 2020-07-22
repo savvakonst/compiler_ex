@@ -259,7 +259,7 @@ void * IRGenerator::CreateBufferAlloca(TypeEn type, size_t length, BufferTypeEn 
     size_t typeSize = tEnSizeof(type);
     void * ptr= malloc(typeSize * length);
 
-    BufferSt s={ ptr,length,typeSize,0,0,name};
+    BufferSt s={ ptr,length,0,0,name,type};
 
     switch (bufferType){
     case BufferTypeEn::input:    inputBuffers.push_back(s); break;

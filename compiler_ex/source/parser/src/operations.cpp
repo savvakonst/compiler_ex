@@ -1,7 +1,7 @@
 
 #include "operations.h"
 #include <string>
-
+#include <sstream>
 
 //void print_error(std::string &content);
 
@@ -103,7 +103,7 @@ void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 
 void Operation::genBlocksVisitExit(TableGenContext * context)
 {
-	uniqueName =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
+	uniqueName_ =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
 	context->setUint(this);
 	is_visited_ = false;
 }
@@ -177,7 +177,6 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		auto op1 = Stack->pop();
 		TypeEn targetType = max(op1, op2)->getType();
 		ret = newConvolveOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2), shiftParameter, opCode);
-		//print_error("visitExit convolve operation is unsupported");
 	}
 	else if (isSlice(opCode)) {
 		auto op1 = Stack->pop();
@@ -192,7 +191,7 @@ void Operation::genBodyVisitExit( stack<Variable*>* Stack, std::vector<Line*>* n
 		for (size_t i = 0; i < size; i++)
 			op.push(Stack->pop());
 		std::reverse(op.begin(), op.end());
-		ret =newSmallArrayDefOp(op);
+		ret = newSmallArrayDefOp(op, opCode);
 	}
 	else {
 		print_error("visitExit unknown command . In line : " +std::to_string(namespace_ptr->size() ) );
@@ -241,13 +240,17 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 
 		for (size_t i = 0; i < size; i++)
 			op.push(Stack->pop());
-
 		std::reverse(op.begin(), op.end());
 
 		std::string out="";
 		for (auto &i : op)
 			out += i + ", ";
-		Stack->push("[" + out + "]");
+
+		if (opCode == OpCodeEn::smallArrayDef)
+			Stack->push("[" + out + "]");
+		else
+			Stack->push("range[" + out + "]");
+
 	}else{
 		print_error("visitExitTxt unknown command .");
 	}
@@ -274,7 +277,12 @@ string Operation::printUint() {
 		std::string out="";
 		for (auto &i : operand)
 			out += i->getAssignedVal(true)->getUniqueName() + ", ";
-		return uName + " = [" + out + "]";
+	
+		if (opCode == OpCodeEn::smallArrayDef)
+			return "[" + out + "]";
+		else
+			return "range[" + out + "]";
+
 	}
 	else print_error("visitExitTxt unknown command .");
 	return "";
@@ -324,7 +332,98 @@ void Operation::calculate(){
 	}
 	else if (isSlice(opCode))         return;
 	else if (isStoreToBuffer(opCode)) return;
-	else if (isSmallArrayDef(opCode)) 
-		bufferPtr_=calcSmallArrayDef(type_, operand);
+	else if (isSmallArrayDef(opCode)) {
+		if (opCode == OpCodeEn::smallArrayDef)
+			bufferPtr_=calcSmallArrayDef(type_, operand);
+		else
+			smallArrayGen();
+	}
 
 }
+
+
+
+
+void Operation::smallArrayGen() {
+	size_t argsSize = operand.size();
+	if (argsSize == 1)       smallArrayGen(operand[0]);
+	else if (argsSize == 2)  smallArrayGen(operand[0], operand[1]);
+	else if (argsSize == 3)  smallArrayGen(operand[0], operand[1], operand[2]);
+}
+
+void Operation::smallArrayGen(double stop , double start ){
+
+	//double start = 0;//arg1->getDoubleValue();
+	//double stop  = 0;// arg2->getDoubleValue();
+
+	//size_t argsSize = operand.size();
+
+	double delta=0.0;
+	if (isInteger(type_)) {
+		delta = (stop - start) / length_;
+	}
+
+	bufferPtr_=calcSmallArrayAlloc(type_, length_);
+
+#define OP(T) {\
+    T* point=(T*)bufferPtr_;\
+    for (uint64_t i=0; i < length_; i++)  \
+        *point++ =(T)(start + delta * i);}
+
+SWITCH_TYPE_OP(type_, print_SA_error("samallarray range ");)
+#undef OP
+};
+
+
+
+void Operation::smallArrayGen(Variable* arg1, Variable* arg2, Variable* arg3) {
+	if ((isConst(arg1) && isConst(arg2) && isConst(arg3) && isInteger(arg3))) {
+
+		double start     = arg1->getDoubleValue();
+		double stop      = arg2->getDoubleValue();
+
+		dsType_    = DataStructTypeEn::smallArr_dsty;
+		type_      = TypeEn::double_jty;
+		length_    = arg3->getBinaryValue();
+
+		smallArrayGen(start, stop);
+	}
+	else {
+		print_error("range(start_num,stop_num,length) -signature is not supported yet");
+		return;
+	}
+};
+
+void Operation::smallArrayGen(Variable* arg1, Variable* arg2) {
+	if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2)) {
+
+		double start     = arg1->getDoubleValue();
+		double stop      = arg2->getDoubleValue();
+
+		dsType_    = DataStructTypeEn::smallArr_dsty;
+		type_      = TypeEn::int64_jty;
+		length_    = (uint64_t)(stop - start);
+
+		smallArrayGen(start, stop);
+	}
+	else {
+		print_error("range(start_num,stop_num) - arg must be integer consant");
+	}
+};
+
+void Operation::smallArrayGen(Variable* arg1) {
+	if (isConst(arg1) && isInteger(arg1)) {
+
+		double start     = 0;
+		double stop      = arg1->getBinaryValue();
+		
+		dsType_    = DataStructTypeEn::smallArr_dsty;
+		type_      = TypeEn::int64_jty;
+		length_    = (uint64_t)stop;
+
+		smallArrayGen(start, stop);
+	}
+	else {
+		print_error("range(len) - arg must be integer consant");
+	}
+};

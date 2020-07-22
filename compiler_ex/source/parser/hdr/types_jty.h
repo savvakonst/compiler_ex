@@ -85,7 +85,9 @@ enum class OpCodeEn {
     shift,
 
     storeToBuffer,
+
     smallArrayDef,
+    smallArrayRange,
 
     select,
 
@@ -119,6 +121,7 @@ enum class TypeOpCodeEn {
     bitwiseEnd = typeConv,
     typeConvEnd = convolve_op,
     convolve_opEnd= (int)OpCodeEn::convolve_f+1,
+    smallArrayDefEnd=(int)OpCodeEn::smallArrayRange+1,
     slice_opEnd = (int)OpCodeEn::shift+1,
     builtInFuncEnd = (int)OpCodeEn::exp+1
 };
@@ -177,7 +180,8 @@ inline bool isBuiltInFunc(OpCodeEn x) {
     return (TypeOpCodeEn::builtInFunc <= t) && (t < TypeOpCodeEn::builtInFuncEnd);
 }
 inline bool isSmallArrayDef(OpCodeEn x) {
-    return (OpCodeEn::smallArrayDef == x);
+    TypeOpCodeEn t = (TypeOpCodeEn)x;
+    return (TypeOpCodeEn::smallArrayDef <= t) && (t < TypeOpCodeEn::smallArrayDefEnd);
 }
 
 

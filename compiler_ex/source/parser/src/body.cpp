@@ -39,7 +39,6 @@ void Body::addLine(std::string name, Variable* var)
 
 void Body::addArg(std::string name)
 {
-
 	auto line = new Line(name,lines_.size());
 	argCount_++;
 	lines_.push_back(line);
@@ -54,8 +53,8 @@ void Body::addParam(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t
 }
 
 
-void Body::addReturn(std::string name, Variable* var, int N)
-{
+void Body::addReturn(std::string name, Variable* var, int N){
+
 	auto line = new Line(name, var, returnStack_.size());
 	returnStack_.push_back(line);
 }
@@ -70,14 +69,17 @@ void Body::push(Variable* line)
 
 Variable* Body::pop()
 {
-	if (varStack_.size() == 0) {
+	if (varStack_.size() == 0) 
 		print_error("stack is empty");
-	}
-	Variable* res = varStack_.back();
-	varStack_.pop_back(); return res;
+	return varStack_.pop();
 }
 
-
+stack<Variable*> Body::pop(size_t length)
+{
+	//if (varStack_.size() < length) 
+	//	print_error("stack is empty");
+	return varStack_.pop(length);
+}
 
 
 //create operation
@@ -147,10 +149,6 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 
 
 
-
-
-
-
 //create operation and push to varStack
 void Body::addTypeConvOp(TypeEn targetType){
 
@@ -185,24 +183,13 @@ void Body::addSelectOp(){
 	push(selectOp(arg1, arg2, arg3));
 }
 
-
 void Body::addRangeOp(size_t argCount){
-	if (argCount == 1) {
-		Variable* arg1 = pop();
-		push(new Variable(arg1));
-	}else if (argCount == 2) {
-		Variable* arg2 = pop();
-		Variable* arg1 = pop();
-		push(new Variable(arg1, arg2));
-	}
-	else if (argCount == 3) {
-		Variable* arg3 = pop();
-		Variable* arg2 = pop();
-		Variable* arg1 = pop();
-		push(new Variable(arg1, arg2, arg3));
-	}
-	else
+	if((argCount < 1)||(argCount>3))
 		print_error("invalid signature of range(..) function");
+
+	stack<Variable*> v=pop(argCount);
+	push(newSmallArrayDefOp(v,OpCodeEn::smallArrayRange));
+
 }
 
 void Body::addShiftOp()
@@ -228,7 +215,6 @@ void Body::addSmallArrayDefinitionOp(size_t size) {
 	push(newSmallArrayDefOp(op));
 }
 
-
 void Body::addCall(Body* body){
 
 	stack<Variable*> a;
@@ -237,11 +223,9 @@ void Body::addCall(Body* body){
 		a[i] = pop();
 	}
 
-	auto b = body->genBodyByPrototype(a);
+	auto b = body->genBodyByPrototype(a,isPrototype_);
 	push(new Call(b,a));
 }
-
-
 // tree walker methods
 std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
@@ -311,7 +295,7 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 
 
-Body* Body::genBodyByPrototype(stack<Variable*> args){
+Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	//std::cout << "debug args.size() " << args[0]->Print() << "\n";
 	auto arg= args.begin();
@@ -319,7 +303,8 @@ Body* Body::genBodyByPrototype(stack<Variable*> args){
 	if (isPrototype_ == false)
 		return this;
 
-	auto body =new Body(name_,false);
+
+	auto body =new Body(name_, isPrototype);
 	stack<Variable*> visitorStack;
 	
 	for (auto& value : lines_) {
@@ -338,7 +323,6 @@ Body* Body::genBodyByPrototype(stack<Variable*> args){
 			body->addLine(value->getName(), varStack_.pop());
 		}
 	}
-
 
 	for (auto& value : returnStack_) {
 		visitorStack.push(value->getAssignedVal());

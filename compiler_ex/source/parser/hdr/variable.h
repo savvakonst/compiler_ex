@@ -10,9 +10,8 @@
 using std::string;
 
 
+
 class SmallArr{
-
-
 public:
     ~SmallArr() {
         if (bufferPtr_ != NULL)
@@ -66,11 +65,11 @@ public:
     int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue_)); }
     double       getDoubleValue   ();
     string       getTextValue     () { return textValue_; }
-    string       getUniqueName    () { return uniqueName; }
+    string       getUniqueName    () { return uniqueName_; }
     int64_t      getUsageCounter  () { return usageCounter_; }
     int64_t      getLength        () { return length_; }
     int64_t      getLevel         () { return level_; }
-    int64_t      getDecimation    () { return decimation; }
+    int64_t      getDecimation    () { return decimation_; }
     int64_t      getLeftBufferLen () { return leftBufferLength_; }
     int64_t      getRightBufferLen() { return rightBufferLength_; }
     NodeTypeEn   getNodeType      () { return NodeTypeEn::terminalLine; }
@@ -108,7 +107,7 @@ public:
     };
 
     virtual void genBlocksVisitExit(TableGenContext*  context) {
-        uniqueName ="c" + std::to_string(context->getUniqueIndex());
+        uniqueName_ ="c" + std::to_string(context->getUniqueIndex());
         context->setUint(this);
         is_visited_ = false;
     };
@@ -121,7 +120,7 @@ public:
         Stack->push(textValue_); is_visited_ = false;
     };
 
-    virtual string printUint() { return uniqueName+"="+textValue_; }
+    virtual string printUint() { return uniqueName_+"="+textValue_; }
     virtual void   setupIR(IRGenerator & builder);
 
     virtual void   calculate() override;
@@ -148,11 +147,13 @@ protected:
     DataStructTypeEn    dsType_ = DataStructTypeEn::constant_dsty;
     TypeEn              type_   = TypeEn::DEFAULT_JTY;
 
-    string   textValue_  = "" ;
-    string   uniqueName = "" ;
+
+
+    string   textValue_ = "" ;
+    string   uniqueName_ = "" ;
 
     uint64_t length_     = 1;
-    int64_t  decimation = 0;
+    int64_t  decimation_ = 0;
     int64_t  level_      = 0;
 
     uint64_t leftBufferLength_  = 0;
@@ -198,6 +199,13 @@ inline int64_t      maxInt  (int64_t   var1, int64_t   var2) { return (var1 < va
 inline int64_t      minInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var2; }
 inline Variable*    max     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var2 : var1; }
 inline Variable*    min     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var1 : var2; }
+inline Variable*    max     (std::vector<Variable*> args) { 
+    Variable * var=args[0];
+    for (auto i : args) 
+        var=max(i, var);
+    return var; 
+} //unsafe function .zero size array check missing
+
 inline Variable*    maxDS   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
 inline Variable*    maxLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
 inline Variable*    minLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }

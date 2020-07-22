@@ -208,7 +208,7 @@ Variable* newSliceOp(Variable* arg1, int64_t intVal, OpCodeEn uTypeOp) {
 	return new Operation(uTypeOp, arg1, arg1->getType(), intVal);
 }
 
-Variable* newSmallArrayDefOp(stack<Variable*> &args) {
+Variable* newSmallArrayDefOp(stack<Variable*> &args, OpCodeEn uTypeOp) {
 	if (args.empty())
 		print_error("SmallArray is empty");
 
@@ -225,8 +225,8 @@ Variable* newSmallArrayDefOp(stack<Variable*> &args) {
 
 	TypeEn targertType =var->getType();
 	
-	if (isUnknownTy(targertType))
-		return new Operation(OpCodeEn::smallArrayDef, args, targertType);
+	if (isUnknownTy(targertType) || uTypeOp == OpCodeEn::smallArrayRange)
+		return new Operation(uTypeOp, args, targertType);
 
 	stack<Variable*> typedArgs; 
 	for (auto i : args)

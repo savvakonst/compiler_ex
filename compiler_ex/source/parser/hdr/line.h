@@ -69,7 +69,7 @@ public:
     virtual void setupIR(IRGenerator & builder)                                                         override;
     virtual void reduceLinksVisitExit() override { is_visited_ = false; }
 
-    virtual string printUint() { return uniqueName + (is_arg?" = arg()"  :" = assign(" + assignedVal->getUniqueName()+")"); }
+    virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assignedVal->getUniqueName()+")"); }
     //virtual Variable* getAssignedVal() { assignedVal; };
     
 

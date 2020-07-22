@@ -30,6 +30,7 @@ public:
     //varStack push/pop 
     void push       (Variable*);
     Variable* pop   ();
+    stack<Variable*> pop(size_t length);
 private:
     //create operation
     Variable* typeConvOp    (TypeEn   targetType, Variable* arg1);
@@ -58,7 +59,7 @@ public:
 
     // tree walker methods
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
-    Body* genBodyByPrototype(stack<Variable*> args = {});
+    Body* genBodyByPrototype(stack<Variable*> args = {},bool isPrototype=true);
     void  symplyfy();
     void  reduce();// this function doesn't work correctly
     void  genTable(TableGenContext * tableGenContext);
@@ -129,7 +130,7 @@ public:
     virtual void genBlocksVisitExit  (TableGenContext*  context) override {
 
          body_->genTable(context);
-         uniqueName =(isLargeArr(this) ? "fb" : "fs") + std::to_string(context->getUniqueIndex());
+         uniqueName_ =(isLargeArr(this) ? "fb" : "fs") + std::to_string(context->getUniqueIndex());
          context->setUint(this);
          is_visited_ = false;
     };
@@ -155,7 +156,7 @@ public:
     }
 
     virtual void printVisitExit(stack<std::string>* Stack) override {
-        std::cout <<"  call." << body_->getName() <<"\n";
+        //std::cout <<"  call." << body_->getName() <<"\n";
         body_->print("    ");
         for (auto& i : args_) 
             auto x=Stack->pop();
@@ -171,7 +172,7 @@ public:
 
     virtual string printUint() { 
 
-        return ""; uniqueName + " = assignCall(" + body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
+        return ""; uniqueName_ + " = assignCall(" + body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
     }
     virtual void setupIR(IRGenerator & builder)override;
 
