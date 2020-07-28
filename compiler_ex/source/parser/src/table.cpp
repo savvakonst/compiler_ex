@@ -234,7 +234,7 @@ string  TableColumn::print(){
 }
 
 bool    TableColumn::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix) {
-    std::stringstream hex();
+    std::stringstream hex;
     bool res=false;
     for (auto i : blockList) {
         std::stringstream ss;
@@ -395,8 +395,6 @@ string  Table::print() {
     for (auto i : columnList) {
         out+= i->print();
     }
-
-llvm:outs() << out;
     return out;
 }
 
@@ -406,9 +404,9 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
     int minLength=columnList[0]->getLength();
 
     typedef struct {
-        int maxLength;
-        int minLength;
-        int iterations;
+        uint64_t maxLength;
+        uint64_t minLength;
+        uint64_t iterations;
         stack<TableColumn *> columnList;
     } group;
 

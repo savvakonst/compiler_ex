@@ -22,10 +22,11 @@ Variable::Variable(string text, TypeEn type) {
 
 
 Variable::Variable(int64_t value, TypeEn type) {
+
     binaryValue_ = value;
     type_ = type;
 #define OP(T) textValue_ = std::to_string(*((T   *)(&binaryValue_)))
-    SWITCH_TYPE_OP(type, print_error("constant calc error"));
+    SWITCH_TYPE_OP(type, ;);
 #undef OP 
 };
 
@@ -139,8 +140,7 @@ void Variable::calculate()
 
 std::string Variable::printSmallArray()
 {
-
-    std:string ret = "array=[";
+    std::string ret = "array=[";
     if (length_ < 1)
         return ret;
 

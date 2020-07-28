@@ -1,21 +1,22 @@
  
 function calc(i, j)
-  v=i*cos(j**i)
-  return v+1
+  v=i*(j*i)+1.0
+  return v
   end
 
 
 
 function calc_new(i, j)
   v=int(j)*i
-  return v+1
+  return v
   end
 
 
-x, y, z = param( "1000", "1000", "2000")  
+x, y, z = param( "#1_A01__2", "#1_A01__20", "#1_A01__20" )  
+#x, y, z = param()  
+v=x+x
 
-z=z*100
-g=x+y
-g2=calc(g,y)
-
-return g2 ,z
+g=cos(z)*z+10000
+g2=z*g*calc(z,g)
+g2=x*x
+return v,g2

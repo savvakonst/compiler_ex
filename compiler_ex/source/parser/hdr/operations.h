@@ -54,7 +54,7 @@ public:
 
     Operation(OpCodeEn op, Variable* var1, Variable* var2) {
         CommonSetup(op, maxDS(var1, var2));
-        type_ = var1->getType();
+        type_ = max(var1, var2)->getType();
         level_ = maxLevel(var1, var2)->getLevel();
 
         operand.push_back(var1);

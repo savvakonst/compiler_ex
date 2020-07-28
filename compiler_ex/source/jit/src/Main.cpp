@@ -170,7 +170,7 @@ int main2(int argc, char** argv) {
 
 
     int** arg = new int* [IO->ICounter + 1];
-    for (int i = 0; i < IO->ICounter; i++) arg[i]=(int*)IO->Buffers.IBuffer_array[i];
+    for (uint32_t i = 0; i < IO->ICounter; i++) arg[i]=(int*)IO->Buffers.IBuffer_array[i];
     arg[IO->ICounter] = (int*)IO->Buffers.OBuffer;
     int res = Call(arg);
     IO->close_file();
@@ -246,7 +246,7 @@ int main3(int argc, char** argv) {
 
 
     int** arg = new int* [IO->ICounter + 1];
-    for (int i = 0; i < IO->ICounter; i++) arg[i] = (int*)IO->Buffers.IBuffer_array[i];
+    for (uint32_t i = 0; i < IO->ICounter; i++) arg[i] = (int*)IO->Buffers.IBuffer_array[i];
     arg[IO->ICounter] = (int*)IO->Buffers.OBuffer;
     int res = Call(arg);
     IO->close_file();

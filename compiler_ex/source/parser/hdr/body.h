@@ -22,15 +22,28 @@ public:
     bool    isRetStackFull () {if (name_ != "main") return 0 < returnStack_.size(); else return false;}
     bool    isRetStackEmpty() {return 0 == returnStack_.size();}
 
-    void addLine    (std::string name, Variable* var);
-    void addArg     (std::string name); //is necessary to add returned status value with line ,pos end error code and string;
-    void addParam   (std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
-    void addReturn  (std::string name, Variable* var,int N=1); //is necessary to add returned status value with line ,pos end error code and string;
+    void addLine    (const std::string &name, Variable* var);
+    void addArg     (const std::string &name); //is necessary to add returned status value with line ,pos end error code and string;
+    void addParam   (Line * line);
+    void addParam   (const std::string &name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
+    void addParam   (const std::string &name, const std::string & linkName, DataStructTypeEn dsty=DataStructTypeEn::constant_dsty);
+    void addReturn  (const std::string &name, Variable* var); //is necessary to add returned status value with line ,pos end error code and string;
 
     //varStack push/pop 
-    void push       (Variable*);
-    Variable* pop   ();
+    void             push       (Variable*);
+    Variable*        pop   ();
     stack<Variable*> pop(size_t length);
+
+
+
+    std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames() {
+        std::map<std::string, std::string > ret;
+        for (auto& value : lines_)
+            if (value->isArg())
+                ret[value->getName(true)]=value->getLinkName();
+        return ret;
+    }
+
 private:
     //create operation
     Variable* typeConvOp    (TypeEn   targetType, Variable* arg1);
@@ -150,7 +163,10 @@ public:
         for (auto &i : args_)
             a.push(context->pop());
 
-        auto b=body_->genBodyByPrototype(a, context->isPrototype());
+        Body * b=body_;
+        
+        if(!context->isPrototype())
+            b=body_->genBodyByPrototype(a, false);
         auto call =new Call(b, a);
         context->push(call);
         is_visited_ = false;
@@ -159,12 +175,13 @@ public:
 
 
     virtual void printVisitExit(stack<std::string>* Stack) override {
-        //std::cout <<"  call." << body_->getName() <<"\n";
-        body_->print("    ");
+
+        llvm::outs()<<body_->print("    ")<<"\n";
+
         for (auto& i : args_) 
             auto x=Stack->pop();
 
-        Stack->push( body_->getName()+".ret."+ typeToStr(type_));
+        Stack->push( body_->getName()+".ret."+ toString(type_));
         is_visited_ = false;
     };
 
@@ -175,7 +192,7 @@ public:
 
     virtual string printUint() { 
 
-        return ""; uniqueName_ + " = assignCall(" + body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
+        return uniqueName_ + " = assignCall(" + body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")"; 
     }
     virtual void setupIR(IRGenerator & builder)override;
 

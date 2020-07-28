@@ -1,6 +1,6 @@
 #ifndef TYPES_JTS_H
 #define TYPES_JTS_H
-
+#include "llvm/Support/JSON.h"
 
 enum class unknownTypeOpEn {
     uNEG,
@@ -186,7 +186,9 @@ inline bool isSmallArrayDef(OpCodeEn x) {
 
 
 
-inline std::string typeToStr(TypeEn type)
+
+
+inline std::string toString(TypeEn type)
 {
     std::string t = "pass";
 #define ENUM2STR(x) case (TypeEn::x):t=#x;   break

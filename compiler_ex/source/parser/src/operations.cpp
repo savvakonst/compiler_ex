@@ -201,9 +201,6 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 }
 
 
-
-
-
 void Operation::printVisitExit(stack<std::string>* Stack) {
 	is_visited_ = false;
 	std::string txtOperation = "";
@@ -296,7 +293,7 @@ string Operation::printUint() {
 
 void Operation::calculate(){
 
-	#define OP(i) (operand[(i)]->getAssignedVal(true) )
+#define OP(i) (operand[(i)]->getAssignedVal(true) )
 
 	if (isArithetic(opCode)) {
 		auto aOperand = OP(0);
@@ -341,6 +338,7 @@ void Operation::calculate(){
 		else
 			smallArrayGen();
 	}
+#undef OP
 
 }
 

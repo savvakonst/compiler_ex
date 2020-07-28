@@ -9,34 +9,55 @@ class Line : public Variable
 {
 public:
 
-    Line(std::string name, Variable* var, int index=-1) {
+    Line(std::string name, Variable* var) {
         names_.push_back(name);
-
+        name_=name;
         if (isConst(var)) {
             binaryValue_ = var->getBinaryValue();
             textValue_   = var->getTextValue();
         }
-
-        assignedVal = var;
+        assignedVal_ = var;
         level_       = var->getLevel();
-        dsType_      = var->getDSType();
         type_        = var->getType();
+        dsType_      = var->getDSType();
         length_      = var->getLength();
     }
 
 
-    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len, int index=-1) {
+    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) {
         names_.push_back(name);
-
+        name_   = name;
         dsType_ = dsty;
         type_   = ty;
         length_ = len;
         is_arg = true;
     }
 
-    Line(std::string name, int ind = -1) {
-        names_.push_back(name);
 
+    Line(std::string name, std::string linkName, DataStructTypeEn dsty) {
+        //llvm::outs() <<"isLargeArr(dsty):"<< (DataStructTypeEn::largeArr_dsty==dsty)<<"\n";
+        names_.push_back(name);
+        name_=name;
+        linkName_=linkName;
+        dsType_ = dsty;
+        is_arg = true;
+    }
+
+    Line(std::string name, ParameterInfo parameterInfo) {
+        names_.push_back(name);
+        name_       = name;
+        linkName_   = parameterInfo.parameterName;
+        type_       = parameterInfo.extendedInfo->jitType;
+        length_     = parameterInfo.extendedInfo->virtualSize;
+        dsType_     = DataStructTypeEn::largeArr_dsty;
+        is_arg      = true;
+         
+        parameterInfo_ = parameterInfo;
+    }
+
+    Line(std::string name) {
+        names_.push_back(name);
+        name_=name;
         type_ = TypeEn::unknown_jty;
         is_arg = true;
     }
@@ -46,7 +67,6 @@ public:
 
 
     void assignValue(Variable* var);
-    int  getUnicleIndex();
     //Variable* getAssignedVal() { return assignedVal; }
     virtual Variable* getAssignedVal(bool deep = false)  override;
 
@@ -55,8 +75,9 @@ public:
     bool haveTargetName(std::string);
     bool isTermialLargeArray() { return isArg(); }
 
-    std::string getName() { return checkBuffer(names_[0]); }
-
+    const std::string getName(bool onlyName = false)      { return onlyName ? name_ :checkBuffer(name_); }
+    const std::string getLinkName()  { return linkName_; }
+    //virtual Variable* getAssignedVal() { assignedVal; };
 
     //safe functions .external stack is used
     virtual void visitEnter (stack<Variable*>* visitorStack)                                            override;
@@ -69,21 +90,22 @@ public:
     virtual void setupIR(IRGenerator & builder)                                                         override;
     virtual void reduceLinksVisitExit() override { is_visited_ = false; }
 
-    virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assignedVal->getUniqueName()+")"); }
-    //virtual Variable* getAssignedVal() { assignedVal; };
+    virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assignedVal_->getUniqueName()+")"); }
+
     
 
 
 private:
+    bool        is_arg       = false;
 
-    Variable* assignedVal=NULL;
+    Variable    *assignedVal_ = NULL;
+
     std::vector<std::string> names_;
 
-    bool is_arg = false;
+    std::string name_        = std::string();
+    std::string linkName_    = std::string();
 
-
-    int unicle_index=-1;
-
+    ParameterInfo parameterInfo_ ;
 
 };
 

@@ -303,33 +303,6 @@ inline size_t tEnSizeof(TypeEn type) {
 
 
 
-#define DEBUG_STREAM()\
- std::string content(\
-     "func calc(i, j):\n"\
-     "a = 0 * 1\n"\
-     "v=i+j**i\n"\
-     "return v\n"\
-     ";\n"\
-     "\n"\
-     "func calc_new(i, j) :\n"\
-     "a = 0 * 1\n"\
-     "v=i + j**i + 1\n"\
-     "return a\n"\
-     ";\n"\
-     "\n"\
-     "x, y, z =param(\"1000\", \"1000\", \"1000\") #asfafasdfs\n"\
-     "X=range (0, 12 * 10 + 1)\n"\
-     "x=convolve(X, x)\n"\
-     "x=calc(x, y)\n"\
-     "x=shift(x * 2, 5)\n"\
-     "x=convolve(X, x)\n"\
-     "\n"\
-     "return x\n");\
- \
- \
- ANTLRInputStream input(\
-     content)
-
 
 
 #endif // COMMON_H

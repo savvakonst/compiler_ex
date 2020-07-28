@@ -107,7 +107,7 @@ extern Function* CreateMainFunction(Module * M, LLVMContext & Context, Header_pt
     // GlobalValue::ExternalLinkage, "llvm.sqrt.f64", TheModule);
     // func_sqrt->setCallingConv(CallingConv::C);
 
-    Command l;
+
     int arg_count = 0;
     for (int i = 0; i < header->len_val; i++) {
         if ((header->initVal[i].Type >= GoC::int32arg_T) && (header->initVal[i].Type <= GoC::intENDarg_T)) {
@@ -141,8 +141,8 @@ extern Function* CreateMainFunction(Module * M, LLVMContext & Context, Header_pt
             )
         ));
 
-    Value* AOperand,* BOperand;
-    Value** Ret;
+    //Value* AOperand,* BOperand;
+
     /*
     for (int i = 0; i < header->len_com; i++) {
         l = header->commands[i];

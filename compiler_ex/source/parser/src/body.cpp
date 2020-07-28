@@ -31,31 +31,42 @@ Line* Body::getLastLineFromName(std::string name)
 	//auto  L = std::find_if(lines.rbegin(), lines.rend(), [&name](Line x) -> bool {return x.name == name; });
 }
 
-void Body::addLine(std::string name, Variable* var)
+void Body::addLine(const std::string &name, Variable* var)
 {
-	auto line = new Line(name,var, lines_.size());
+	auto line = new Line(name,var);
 	lines_.push_back(line);
 }
 
-void Body::addArg(std::string name)
+void Body::addArg(const std::string &name)
 {
-	auto line = new Line(name,lines_.size());
+	auto line = new Line(name);
 	argCount_++;
 	lines_.push_back(line);
 }
 
-
-void Body::addParam(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len)
+void Body::addParam(Line * line)
 {
-	auto line = new Line(name,  ty,  dsty,  len, lines_.size());
 	argCount_++;
 	lines_.push_back(line);
 }
 
+void Body::addParam(const std::string &name, TypeEn ty, DataStructTypeEn dsty, uint64_t len)
+{
+	auto line = new Line(name,  ty,  dsty,  len);
+	argCount_++;
+	lines_.push_back(line);
+}
 
-void Body::addReturn(std::string name, Variable* var, int N){
+void Body::addParam(const std::string &name, const std::string &linkName,DataStructTypeEn dsty)
+{
+	auto line = new Line(name, linkName, dsty);
+	argCount_++;
+	lines_.push_back(line);
+}
 
-	auto line = new Line(name, var, returnStack_.size());
+void Body::addReturn(const std::string &name, Variable* var)
+{
+	auto line = new Line(name, var);
 	returnStack_.push_back(line);
 }
 
@@ -221,14 +232,15 @@ void Body::addCall(Body* body){
 	for (int i = body->getArgCount()-1; i >=0  ; i--) {
 		a[i] = pop();
 	}
+	
 
-	auto b = body->genBodyByPrototype(a,isPrototype_);
+	auto b =isPrototype_? body : body->genBodyByPrototype(a,isPrototype_);
 	push(new Call(b,a));
 }
 // tree walker methods
 std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
-	hideUnusedLines =true;
+	//hideUnusedLines =true;
 	stack<Variable*> visitorStack;
 	stack<std::string> stringStack;
 
@@ -298,7 +310,6 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	//std::cout << "debug args.size() " << args[0]->Print() << "\n";
 	
-
 	if (isPrototype_ == false)
 		return this;
 
@@ -312,7 +323,14 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	for (auto& value : lines_) {
 		if (value->isArg()) {
-			body->addLine(value->getName(), *(arg++));// in line 
+			if (name_ == "main") {
+				body->addParam((Line*)*(arg));
+				arg++;
+			}
+			else {
+				body->addLine(value->getName(), *(arg));// in line 
+				arg++;
+			}
 		}
 		else{
 			visitorStack.push(value->getAssignedVal());
@@ -326,7 +344,6 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 			body->addLine(value->getName(), varStack_.pop());
 		}
 	}
-
 	for (auto& value : returnStack_) {
 		visitorStack.push(value->getAssignedVal());
 		do {

@@ -14,19 +14,19 @@ bool Line::isArg() {
 }
 
 void Line::assignValue(Variable* var) {
-	assignedVal = var;
+	assignedVal_ = var;
 	type_ = var->getType();
 }
 
 bool Line::haveTargetName(std::string name){
+	if (name_ == name) 
+		return true;
+	/*
 	for (auto i : names_) {
 		if (i == name) return true; 
-	}
+	}*/
 	return false;
-}
-
-int Line::getUnicleIndex(){
-	return unicle_index;
+	
 }
 
 Variable * Line::getAssignedVal(bool deep)
@@ -34,10 +34,10 @@ Variable * Line::getAssignedVal(bool deep)
 	if (is_arg)
 		return this;
 	else if (deep){
-		return assignedVal->getAssignedVal(true);
+		return assignedVal_->getAssignedVal(true);
 	}
 	else {
-		return assignedVal;
+		return assignedVal_;
 	}
 }
 
@@ -46,15 +46,15 @@ Variable * Line::getAssignedVal(bool deep)
 void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 	commoMmarkUnusedVisitEnter(visitorStack);
 	if (!is_arg) {
-		visitorStack->push(assignedVal);
-		assignedVal->setBufferLength(this);
+		visitorStack->push(assignedVal_);
+		assignedVal_->setBufferLength(this);
 	}
 	is_nused_ = false;
 }
 
 void Line::genBlocksVisitExit(TableGenContext * context)
 {
-	uniqueName_ = (isLargeArr(this) ? "vb" : "vs") + std::to_string(context->getUniqueIndex())+"."+ names_[0];
+	uniqueName_ = (isLargeArr(this) ? "vb" : "vs") + std::to_string(context->getUniqueIndex())+"."+ name_;
 	//context->setUint(this);
 	is_visited_ = false;
 }
@@ -67,7 +67,7 @@ void Line::visitEnter(stack<Variable*>* visitorStack){
 void Line::genBodyVisitExit(BodyGenContext * context) {
 	is_visited_ = false;
 	std::vector<Line*> namespace_ = context->getNamespace();
-	namespace_[0]=this;
+
 	std::string name = getName();
 	if (namespace_.size() < 1)
 		return;
@@ -85,6 +85,6 @@ void Line::genBodyVisitExit(BodyGenContext * context) {
 
 void Line::printVisitExit(stack<std::string>* varStack){
 	is_visited_ = false;
-	varStack->push( names_[0] + "." + typeToStr(type_));
+	varStack->push( name_ + "." + toString(type_));
 }
 

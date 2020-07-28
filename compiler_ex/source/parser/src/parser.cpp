@@ -30,16 +30,17 @@ void TreeShapeListener::exitAssignParam(EGrammarParser::AssignParamContext* ctx)
     auto id = ctx->ID();
     auto stl = ctx->STRINGLITERAL();
 
-    if (stl.size() == 0) {
-        for (auto i : id) {
-            activBody_->addParam(i->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, 1000);
-        }
-    }
-    else if (id.size() == stl.size()) {
+    if (stl.size() == 0) 
+        for (auto i : id) 
+            activBody_->addParam(i->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, 100000);
+    
+    else if (id.size() == stl.size()) 
         for (int i = 0; i < id.size(); i++) {
-            activBody_->addParam(id[i]->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, stoi(stl[i]->getText().substr(1)));
+            //activBody_->addParam(id[i]->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, stoi(stl[i]->getText().substr(1)));
+            std::string s=stl[i]->getText();
+            activBody_->addParam(id[i]->getText(), s.substr(1, s.length()-2), DataStructTypeEn::largeArr_dsty);
         }
-    }
+    
     else
         print_error("there are invalid signature ");
 }
@@ -163,7 +164,6 @@ void TreeShapeListener::exitCallFunc(EGrammarParser::CallFuncContext* ctx) {
             break;
         }
     }
-
     if (b){
         print_error("there are no functin with same name");
         activBody_->push(new Variable(ctx->getText(), TypeEn::float_jty));

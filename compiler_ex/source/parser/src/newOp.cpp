@@ -101,6 +101,7 @@ Variable* newBuiltInFuncOperation(TypeEn targetType, Variable* arg, OpCodeEn uTy
 Variable* newArithmeticOperation(TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp) {
 
 	OpCodeEn opType = OpCodeEn::add;
+	
 
 	if (!is—ompatible(arg1, arg2))
 		print_error("uncompatible values");
@@ -123,7 +124,7 @@ Variable* newArithmeticOperation(TypeEn targetType, Variable* arg1, Variable* ar
 	}
 #undef CONV_OP
 #undef OP
-
+	
 #define CONV_OP(depend,target) case (depend):  opType=(target) ;  break
 	if (isInteger(targetType) || isUnknownTy(targetType)) {
 		switch (uTypeOp)

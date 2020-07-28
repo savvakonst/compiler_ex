@@ -11,7 +11,7 @@ function calc_new(i, j)
   return a
   end
 
-x, y, z = param( "33554432", "6108864", "33554432") 
+x, y, z = param( "#1_A01__20", "#1_A01__20", "#1_A01__20" ) 
 
 X = range(0,12*10)
 c = exp(z)
