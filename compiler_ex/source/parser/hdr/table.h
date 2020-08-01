@@ -176,6 +176,7 @@ public:
     void calculateBufferLength(std::string basicBlockPrefix="");
     bool generateIR(std::string basicBlockPrefix="");
 
+    
 
 private:
     void declareFunctions();

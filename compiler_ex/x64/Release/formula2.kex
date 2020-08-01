@@ -1,5 +1,4 @@
 
-
 function calc(i, j,num)
   v = i-j**i+[num,num+1,num+2]
   return v
@@ -14,17 +13,19 @@ end
 
 
 function sgn(arg )
-  return arg ? -1 : 1
+  return arg ? arg : 0
 end
 
 const=11*7
-x, y, z = param("#1_A01__20", "#1_A01__20", "#1_A01__20" ) 
+x, y, z = param("#1_A01__20", "#1_A01__21", "#1_A01__22" ) 
 
 INF= 2**32-1
 
-X  = range(4)
-ff = [5,0,2,2] * X
-f  = [5,0,2,1] / (ff?ff:INF)
-x  = convolve(f, int(x**19 ))
+X  = range(int(5.0))
+ff = [5,0,2,1,2] * X
+f  = (ff?ff:INF)
+x  = convolve( f, x**19 )
+x  = x**2
+z2 = z**z
+return x ,z2
 
-return x

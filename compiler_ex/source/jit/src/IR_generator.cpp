@@ -39,8 +39,6 @@ IRGenerator::~IRGenerator(){
 
 }
 
-
-
 Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::string &name) {
     if (table == NULL) return NULL;
 
@@ -253,21 +251,21 @@ void IRGenerator::CreateMidleBRs()
     SetLastInsertPoint();
 }
 
-void * IRGenerator::CreateBufferAlloca(TypeEn type, size_t length, BufferTypeEn bufferType, const std::string &name)
+
+void * IRGenerator::CreateBufferAlloca(BufferSt s, BufferTypeEn bufferType)
 {
     //bufferType
-    size_t typeSize = tEnSizeof(type);
-    void * ptr= malloc(typeSize * length);
+    size_t typeSize = tEnSizeof(s.type);
+    s.ptr=malloc(typeSize * s.length);
 
-    BufferSt s={ ptr,(ex_size_t)length,0,0,name,type};
 
-    switch (bufferType){
+    switch (bufferType) {
     case BufferTypeEn::input:    inputBuffers.push_back(s); break;
     case BufferTypeEn::internal: internalBuffers.push_back(s); break;
     case BufferTypeEn::output:   outputBuffers.push_back(s); break;
     default: break;
     }
-    return ptr;
+    return s.ptr;
 }
 
 

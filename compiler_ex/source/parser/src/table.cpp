@@ -1,14 +1,13 @@
 
-#include "table.h"
-#include "variable.h"
-#include "Body.h"
-#include "llvmHdrs.h"
 #include <sstream>
 
+#include "table.h"
+#include "variable.h"
+#include "body.h"
+#include "llvmHdrs.h"
+#include "ioIfs.h"
 
 using namespace llvm;
-//void print_IR_error(const std::string &content);
-//void print_SA_error(const std::string &content);
 
 
 SubBlock::SubBlock(Variable * var)
@@ -283,11 +282,11 @@ Value * genConvolve(IRGenerator & builder, llvm::Type* type, uintptr_t addr) {
 }
 
 
-std::vector <BufferSt >  *g_inputBuffers=NULL;
-std::vector <BufferSt >  *g_internalBuffers=NULL;
-std::vector <BufferSt >  *g_outputBuffers=NULL;
+std::vector <BufferSt> const  *g_inputBuffers=NULL;
+std::vector <BufferSt> const  *g_internalBuffers=NULL;
+std::vector <BufferSt> const  *g_outputBuffers=NULL;
 
-Parameters*  activParameters =NULL;
+ParametersIO_IFS*  g_IO_IFS =NULL;
 
 bool isInvalidBuffers() {
     return 
@@ -301,7 +300,7 @@ void initBuffers() {
         return;
 
     for (auto i : *g_inputBuffers) 
-        activParameters->read(i.ptr,-i.leftOffset, i.leftOffset+i.rightOffset+i.length);
+        g_IO_IFS->read(i.ptr,-i.leftOffset, i.leftOffset+i.rightOffset+i.length);
         //isDouble
 }
 
@@ -315,12 +314,11 @@ void updateBuffer() {
 }
 
 
-//Table:: Table section 
-//
-//
-//
-void    Table::setUint(Variable * var){
+///Table:: Table section 
+///
 
+// add variable to table 
+void    Table::setUint(Variable * var){
     auto  varLength= var->getLength();
     if (isConst(var)) {
         constList.push(var);
@@ -443,15 +441,11 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
             llvm::outs() << "maxBufferLength = subMaxBufferLength;\n";
             maxBufferLength = subMaxBufferLength;
         }
-        
         iterations =  j.maxLength / maxBufferLength;
-
         j.iterations =  j.maxLength / maxBufferLength;
 
         for (auto i : j.columnList){
-            i->setBufferLength(
-                maxBufferLength / (j.maxLength / i->getLength())
-            );
+            i->setBufferLength(maxBufferLength / (j.maxLength / i->getLength()));
         }
     }
     if (groupList.size() !=1)
@@ -486,14 +480,12 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     for (auto i : smallArrayList)
         i->calculate();
 
-        //i.
-       //i->setupIR(builder);
+
+    //i->setupIR(builder);
 
 
-
-
-    //the main "For loop"
-    // creating jump commands for init cycle
+    ///the main "For loop"
+    ///creating jump commands for init cycle
     builder.SetCurrentFunction(currentFunction);
     BasicBlock* bb= BasicBlock::Create(context, "init_block", currentFunction);
     builder.SetInitInsertPoint(bb);
@@ -501,7 +493,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     for (auto i : columnList) 
        i->generateIR(builder,CycleStageEn::start);
 
-    // creating jump commands for init cycle
+    ///creating jump commands for init cycle
     builder.CreateStartBRs();
     //cond jump to Main Cycle Enter
     BasicBlock* bbLoopEnter = BasicBlock::Create(context, "loop_enter_block", builder.getCurrentFunction());
@@ -524,8 +516,8 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbCycleExit);
     builder.SetCycleExitInsertPoint(bbCycleExit);
 
-    //global index increment, and index comparsion with max iteration number
-    //increasing the global index and comparing the index with the max iteration number
+    ///global index increment, and index comparsion with max iteration number
+    ///increasing the global index and comparing the index with the max iteration number
     Value* nextGlobIndex =builder.CreateAdd(globIndex, builder.getInt64(1));
     builder.CreateStore(nextGlobIndex, globIndexAlloca);
     builder.SetCurrentCMPRes(
@@ -552,18 +544,23 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
    
     builder.CreateRet(builder.getInt32(1));
 
-    //create jump from init block to the next
+    ///create jump from init block to the next
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
+
+
+    g_inputBuffers = builder.getBuffer(BufferTypeEn::input);
+    g_internalBuffers = builder.getBuffer(BufferTypeEn::internal);
+    g_outputBuffers = builder.getBuffer(BufferTypeEn::internal);
     return true;
 }
 
 
 
-// Implementation of Value, Operation, Line and Call  members, 
-// which provide llvm IR generation.
-//
-//
+/// Implementation of Value, Operation, Line and Call  members, 
+/// which provide llvm IR generation.
+///
+///
 Value* Variable::getIRValue(IRGenerator & builder, int64_t parentLevel) {
     Value * ret=NULL;
     if (isBuffered() & (parentLevel != level_) ) {
@@ -590,9 +587,6 @@ void  Variable::setupIR(IRGenerator & builder) {
     IRValue_=builder.CreateConst(binaryValue_, type_, "");
 }
 
-
-
-
 void  Operation::setupIR(IRGenerator & builder){
 
 #define OP(i)     (operand[(i)]->getAssignedVal(true)->getIRValue(builder,level_) )
@@ -614,7 +608,7 @@ void  Operation::setupIR(IRGenerator & builder){
          
     }
     else if (isConvolve(opCode)) {
-        outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
+        //outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
         
         IRValue_ =builder.CreateConvolve(OP_PTR(0), OP_PTR(0), getUniqueName());
     }
@@ -632,7 +626,7 @@ void  Operation::setupIR(IRGenerator & builder){
     if (isBuffered()|isReturned()) {
         if (!is_initialized) {
             BufferTypeEn bufferType=isReturned()? BufferTypeEn::output: BufferTypeEn::internal;
-            builder.CreateBufferAlloca(type_, length_, bufferType);
+            builder.CreateBufferAlloca({ NULL, length_, leftBufferLength_ ,rightBufferLength_ ,type_ }, bufferType);
             IRBufferRefPtr_=builder.CreateBufferInit(type_,"internal_");
             is_initialized=true;
         }
@@ -654,9 +648,9 @@ void  Line::setupIR(IRGenerator & builder) {
         //setBuffered();
         Type * volatile t= builder.getLLVMType(type_);
         if (!is_initialized) {
-            builder.CreateBufferAlloca(type_, length_, BufferTypeEn::input,getName());
+            builder.CreateBufferAlloca({ NULL,length_, leftBufferLength_ ,rightBufferLength_ ,type_ ,linkName_ }, BufferTypeEn::input);
             IRBufferRefPtr_ =builder.CreateBufferInit(type_, "external_");
-            is_initialized=true;
+            is_initialized = true;
         }
         auto valPtr    =builder.CreatePositionalInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
         IRValue_       =builder.CreatePositionalLoad(valPtr, "arg_buffer_");

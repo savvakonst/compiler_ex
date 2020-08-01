@@ -6,7 +6,6 @@
 using namespace llvm;
 
 cl::OptionCategory MainCategory("Compiler Options", "Main Options ");
-
 /*
 enum Opts {
     // 'inline' is a C++ keyword, so name it 'inlining'
@@ -28,6 +27,8 @@ static cl::opt<std::string>  ExprORFilename("expr", cl::desc("script filename or
 static cl::opt<uint32_t>     DataSize("s", cl::desc("Data   size"), cl::value_desc("len in bytes"), cl::Required, cl::cat(MainCategory));
 static cl::list<std::string> OutputFile("o", cl::desc("output filename"), cl::value_desc("filename"), cl::multi_val(1), cl::Required, cl::cat(MainCategory));
 static cl::list<std::string> InputFile("i", cl::desc("Input  files"), cl::value_desc("filename type"), cl::multi_val(2), cl::OneOrMore, cl::cat(MainCategory)); //, cl::OneOrMore cl::CommaSeparated ,
+
+
 
 //cl::list<std::string, cl::list<std::string>> List("list",cl::desc("option list -- This option turns on options a when 'foo' is included in list"), cl::CommaSeparated,  cl::callback([&](const std::string& Str) {if (Str == "foo") OptA = true; }), cl::cat(MainCategory));
 //static cl::opt<std::string>InputSize      ("s", cl::desc("Data   size")     , cl::value_desc("filenames"), cl::Required  , cl::cat(MainCategory));

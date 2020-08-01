@@ -1,6 +1,14 @@
 #ifndef TYPES_JTS_H
 #define TYPES_JTS_H
 #include "llvm/Support/JSON.h"
+typedef  int64_t  ex_size_t;
+
+
+typedef int (*jit_f)(int *, int *);
+typedef int (*jit_fptr)(int, int *);
+typedef int (*Jit_Call_t)(int**);
+
+
 
 enum class unknownTypeOpEn {
     uNEG,

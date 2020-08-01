@@ -132,7 +132,6 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
     json::ObjectMapper O(DataFragment);
     O.map("Index", dataIndex);
 
-
     for (auto i : DataFilesList) {
         json::ObjectMapper O(i);
         int64_t fileDataIndex;
@@ -147,7 +146,7 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
     return dataInterval;
 }
 
-std::vector<ParameterInfo>  readParametersList(std::string databaseFName) {
+ void readParametersList(std::string databaseFName, std::vector<ParameterInfo>& parameterInfoList) {
     std::ifstream ifs(databaseFName);
     std::string content(
         (std::istreambuf_iterator<char>(ifs)),
@@ -163,7 +162,6 @@ std::vector<ParameterInfo>  readParametersList(std::string databaseFName) {
 
     json::Object* parameter        = (*parametersList)[0].getAsObject();
 
-    std::vector<ParameterInfo>  parameterInfoList;
     for (auto i : *parametersList) {
         json::Object   pObject=*i.getAsObject();
         ParameterInfo  parameterInfo;
@@ -181,5 +179,12 @@ std::vector<ParameterInfo>  readParametersList(std::string databaseFName) {
 
         parameterInfoList.push_back(parameterInfo);
     }
+
+}
+
+
+std::vector<ParameterInfo>  readParametersList(std::string databaseFName) {
+    std::vector<ParameterInfo>  parameterInfoList;
+    readParametersList(databaseFName, parameterInfoList);
     return parameterInfoList;
 }

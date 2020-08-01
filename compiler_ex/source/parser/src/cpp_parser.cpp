@@ -14,6 +14,7 @@
 #include "parser.h"
 #include "llvmHdrs.h"
 #include "llvm/Support/JSON.h"
+#include "llvm/Support/CommandLine.h"
 #include "ioIfs.h"
 
 
@@ -30,6 +31,7 @@ void jit_init() {
 //static std::unique_ptr<legacy::FunctionPassManager> TheFPM;
 
 void configOptimization(legacy::FunctionPassManager* TheFPM) {
+    TheFPM->add(createPartiallyInlineLibCallsPass());
     TheFPM->add(createPromoteMemoryToRegisterPass());
     TheFPM->add(createInstructionCombiningPass());
     TheFPM->add(createReassociatePass());
@@ -40,107 +42,73 @@ void configOptimization(legacy::FunctionPassManager* TheFPM) {
 
 
 
-
-class KEXParser{
-public:
-
-    KEXParser(std::string fileName) {
-        std::ifstream ifs(fileName);
-        std::string content(
-            (std::istreambuf_iterator<char>(ifs)),
-            (std::istreambuf_iterator<char>())
-        );
-
-        //ANTLRInputStream    input(content + "\n");
-        
-        //EGrammarLexer       lexer(&input);
-        //CommonTokenStream   tokens(&lexer);
-        //EGrammarParser      parser(&tokens);
-
-        input_  =new ANTLRInputStream(content + "\n");
-        lexer_  =new EGrammarLexer(input_);
-        tokens_ =new CommonTokenStream(lexer_);
-        parser_ =new EGrammarParser(tokens_);
-
-        parser_->removeErrorListeners();
-        errorListner_ = new EErrorListener ;
-        parser_->addErrorListener(errorListner_);
-
-        tree_ = parser_->start();
-    }
-    ~KEXParser() {
-        //delete tree_;
-        delete errorListner_;
-        delete parser_;
-        delete tokens_;
-        delete lexer_;
-        delete input_;
-    }
-
-    TreeShapeListener* getListener() {
-        return &listener_;
-    }
-
-    tree::ParseTree* getTree() {
-        return tree_;
-    }
-
-    void walk() {
-        tree::ParseTreeWalker::DEFAULT.walk(&listener_, tree_);
-    }
-
-    Body*  getActivBody() {
-        return listener_.activBody_;
-    }
-
-private:
-    ANTLRInputStream   *   input_;
-    EGrammarLexer      *   lexer_;
-    CommonTokenStream  *   tokens_;
-    EGrammarParser     *   parser_;
-    EErrorListener     *   errorListner_;
-
-    tree::ParseTree*  tree_;
-    TreeShapeListener listener_;
-};
-
-
-
+bool         g_ansiEscapeCodes;
 
 int main(int argc, const char* argv[]) {
-    InitializeNativeTarget();
-    InitializeNativeTargetAsmPrinter();
+    cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
 
-    const std::string delimiter = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+    enum  ShowNames {
+        nameList, untypedFSR, activeNameList, allFSR, redusedFSR , tableSSR, llvmIRcode
+    };
+    cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
 
-    if (argc ==1)  return 1;
-    const char* fileName=argv[1];
+
+    cl::opt<std::string>  inputFile("i", cl::desc("input source file"), cl::value_desc("filename"), cl::Required, cl::cat(mainCategory));
+    cl::opt<bool>         optimizationEnable("opt", cl::desc("optimization enable"), cl::Optional, cl::cat(mainCategory));
+    cl::opt<bool>         ansiEscapeCodes("ansi", cl::desc("enable ANSI escape codes"), cl::Optional, cl::cat(mainCategory));
+    cl::list<std::string> libraryPath("dir", cl::desc("list of available directories"), cl::value_desc("filename"), cl::ZeroOrMore, cl::cat(mainCategory));
+    cl::list<std::string> inputDataBaseFile("db", cl::desc("input data base files"), cl::value_desc("directory"), cl::ZeroOrMore, cl::cat(mainCategory));
+    cl::bits<ShowNames>   showBits( cl::desc("show:"), cl::cat(mainCategory), cl::ZeroOrMore,
+        cl::values(
+            clEnumVal(nameList, "names list"),
+            clEnumVal(untypedFSR, "FSR(first stage representation) without type calculation"),
+            clEnumVal(activeNameList, "Procedure Integration"),
+            clEnumVal(allFSR, "full FSR(first stage representation)"),
+            clEnumVal(redusedFSR, "redused FSR code"),
+            clEnumVal(tableSSR, "table (second stage) representation"),
+            clEnumVal(llvmIRcode,  "llvm IR ")) );
+
 
     
+    cl::HideUnrelatedOptions(mainCategory);
+    cl::ParseCommandLineOptions(argc, argv, "express jit");
+
+    g_ansiEscapeCodes=ansiEscapeCodes;
+
+    InitializeNativeTarget();
+    InitializeNativeTargetAsmPrinter();
+    ExColors colorReset =ExColors::RESET;
+    ExColors colorGreen =ExColors::GREEN;
+    Delimiter delimiter=Delimiter::GREEN;
+    if (ansiEscapeCodes) {
+        colorReset =ExColors::AnsiRESET;
+        colorGreen =ExColors::AnsiGREEN;
+        delimiter =Delimiter::AnsiGREEN;
+    }
+
+
     std::vector<ParameterInfo> parametersList;
-    if (argc>2)
-        parametersList  = readParametersList(argv[2]);
-    else
-        parametersList  = readParametersList("A01_3.json");
+    for(auto fname: inputDataBaseFile)
+        readParametersList(fname, parametersList); //readParametersList("A01_3.json");
 
-
-    Parameters parameters(parametersList,"");
-
-    KEXParser parser(fileName);
+    ParametersIO_IFS parameters(parametersList,"");
+    KEXParser  parser(inputFile);
 
     LLVMContext* context = new LLVMContext() ;
-    std::unique_ptr<Module> moduleUPtr = std::make_unique<Module>("test", *context);
+    std::unique_ptr<Module> moduleUPtr                  = std::make_unique<Module>("test", *context);
     std::unique_ptr<legacy::FunctionPassManager> theFPM = std::make_unique<legacy::FunctionPassManager>(moduleUPtr.get());
+
     configOptimization(theFPM.get());
 
     try{
         parser.walk();
       
         auto body= parser.getActivBody();
+
         std::map<std::string, std::string> parameterNameList = body->getParameterLinkNames();
 
-        llvm::outs() << delimiter <<"names list: \n  "<< parameterNameList <<" \n";
-
+        if(showBits.isSet(nameList))
+            llvm::outs()<< delimiter <<"names list: \n  "<< parameterNameList <<" \n";
 
         stack<Variable*> args;
         for (auto i : parameterNameList) {
@@ -149,51 +117,80 @@ int main(int argc, const char* argv[]) {
                 args.push(new Line(i.first, p));
         }
 
+        if (showBits.isSet(untypedFSR))
+            llvm::outs() << delimiter << body->print("")<< delimiter <<"\n";
 
-        llvm::outs() << delimiter << body->print("")<< delimiter<<"\n";
+
+        if (0 == inputDataBaseFile.size()) {
+            llvm::outs() << raw_ostream::RED << "there are no input database file\n" << raw_ostream::RESET;
+            return 1;
+        }
+
+
         body=parser.getActivBody()->genBodyByPrototype(args, false);
-        llvm::outs() << delimiter << body->print("");
-        return 1;
-
-        body=parser.getActivBody()->genBodyByPrototype(args,false);
         body->symplyfy();
 
+        /// print block 
+        ///
+        ///
+        if (showBits.isSet(activeNameList))
+            llvm::outs() << delimiter << "names list: \n  " << body->getParameterLinkNames(true) << " \n";
+
+        if (showBits.isSet(allFSR))
+            llvm::outs() << delimiter << body->print("");
+
+        if (showBits.isSet(redusedFSR))
+            llvm::outs() << delimiter << body->print("", false, true);
 
 
-        llvm::outs()<< delimiter << body->print("", false, true);
+
+
         body->reduce(); //atavism
 
 
-        Table* table = new Table(moduleUPtr.get());
-        TableGenContext context= TableGenContext(table);
+        Module *M=moduleUPtr.get();
+
+        Table*            table = new Table(M);
+        TableGenContext context = TableGenContext(table);
         
         body->genTable(&context);
 
-        llvm::outs() << delimiter<< table->print();
+
+        if (showBits.isSet(tableSSR))
+            llvm::outs() << delimiter << table->print();
+
+
         table->calculateBufferLength();
-
         table->generateIR();
-        auto mainF=moduleUPtr->getFunction("main");
-        theFPM->run(*mainF);
-        llvm::outs() << "\n\n---------\nWe just constructed this LLVM module:\n\n---------\n" << *mainF<<"\n\n";
 
 
+
+        auto mainF=M->getFunction("main");
+
+        if(optimizationEnable)
+            theFPM->run(*mainF);
+
+        if (showBits.isSet(llvmIRcode))
+            llvm::outs() << colorGreen << "\n\n---------We just constructed this LLVM module:--------- \n" << colorReset << *mainF<<"\n\n";
+
+        
         std::string errStr;
         ExecutionEngine* EE = EngineBuilder(std::move(moduleUPtr)).setErrorStr(&errStr).create();
         if (!EE) {
             llvm::outs() << ": Failed to construct ExecutionEngine: " << errStr << "\n";
             return 1;
         }
-
+        
         if (verifyFunction(*mainF, &llvm::outs())) {
             llvm::outs() << ": Error constructing FooF function!\n\n";
             return 1;
         }
-
-        if (verifyModule(*moduleUPtr)) {
+        
+        if (verifyModule(*M)) {
             llvm::outs() << ": Error constructing module!\n";
             return 1;
         }
+
         llvm::outs() << "complete";
     }catch(size_t ){
 

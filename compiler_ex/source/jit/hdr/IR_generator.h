@@ -8,23 +8,9 @@
 #include "types_jty.h"
 #include "ioIfs.h"
 
-typedef  int64_t  ex_size_t;
-
 
 class Table;
 class Variable;
-
-
-
-
-typedef struct {
-    void * ptr =NULL;
-    ex_size_t length = 0;
-    ex_size_t leftOffset = 0;
-    ex_size_t rightOffset = 0;
-    std::string name = "" ;
-    TypeEn      type = TypeEn::unknown_jty;
-}BufferSt;
 
 enum class BufferTypeEn {
     input,
@@ -32,6 +18,24 @@ enum class BufferTypeEn {
     output
 };
 
+inline llvm::raw_ostream &stream(llvm::raw_ostream &OS, const BufferSt & arg, std::string offset="") {
+    OS << offset << "BufferSt{\n";
+    OS << offset << "  ptr: " << arg.ptr << "\n";
+    OS << offset << "  length: " ;
+    OS.write_hex(arg.length); 
+    OS << "\n";
+    OS << offset << "  leftOffset: " << arg.leftOffset << "\n";
+    OS << offset << "  rightOffset: " << arg.rightOffset << "\n";
+    OS << offset << "  type: " << toString(arg.type) << "\n";
+    OS << offset << "  name: " << arg.name << "\n";
+    OS << offset << "}\n";
+    return OS;
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream & OS, BufferSt & arg) {
+    stream(OS,arg);
+    return OS;
+}
 
 class IRGenerator : public llvm::IRBuilder <>
 {
@@ -70,8 +74,7 @@ public:
     void          CreateStartBRs();
     void          CreateMidleBRs();
 
-
-    void        * CreateBufferAlloca(TypeEn type, size_t length, BufferTypeEn bufferType, const std::string &name="");
+    void        * CreateBufferAlloca(BufferSt s, BufferTypeEn bufferType);
 
     void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };
@@ -119,7 +122,14 @@ public:
     llvm::Function* getCurrentFunction() { return currentFunction; }
 
 
-
+     std::vector<BufferSt > const * getBuffer(BufferTypeEn bufferType=BufferTypeEn::input)const  {
+        switch (bufferType) {
+        case BufferTypeEn::input:    return &inputBuffers;
+        case BufferTypeEn::internal: return &internalBuffers;
+        case BufferTypeEn::output:   return &outputBuffers;
+        default: return &inputBuffers;
+        }
+    }
 
 
 private:

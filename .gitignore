@@ -2,6 +2,7 @@
 .idea/**
 /**/.vs/
 /**/.vs/**
+llvmLib.7z
 
 llvmLib/**
 /**/*.ipch

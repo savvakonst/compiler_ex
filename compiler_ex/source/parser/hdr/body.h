@@ -36,11 +36,12 @@ public:
 
 
 
-    std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames() {
+    std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames(bool hideUnused = false) {
         std::map<std::string, std::string > ret;
         for (auto& value : lines_)
             if (value->isArg())
-                ret[value->getName(true)]=value->getLinkName();
+                if( ! (hideUnused && value->isUnused()))
+                    ret[value->getName(true)]=value->getLinkName();
         return ret;
     }
 

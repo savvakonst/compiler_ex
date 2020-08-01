@@ -174,12 +174,12 @@ protected:
     string   textValue_ = "" ;
     string   uniqueName_ = "" ;
 
-    uint64_t length_     = 1;
+    int64_t  length_     = 1;
     int64_t  decimation_ = 0;
     int64_t  level_      = 0;
 
-    uint64_t leftBufferLength_  = 0;
-    uint64_t rightBufferLength_ = 0;
+    int64_t  leftBufferLength_  = 0;
+    int64_t  rightBufferLength_ = 0;
 
     uint64_t binaryValue_  = 0;
     uint64_t usageCounter_ = 0;

@@ -5,10 +5,10 @@
 #include <vector>
 #include "types_jty.h"
 #include "llvm/Support/JSON.h"
+
+
+
 using namespace llvm;
-
-
-
 void print_IR_error(const std::string &content);
 
 // Sync
@@ -38,6 +38,14 @@ enum class RPMTypesEn : uint64_t{
 };
 
 
+typedef struct {
+    void*       ptr =NULL;
+    ex_size_t   length = 0;
+    ex_size_t   leftOffset = 0;
+    ex_size_t   rightOffset = 0;
+    TypeEn      type = TypeEn::unknown_jty;
+    std::string name = std::string();
+}BufferSt;
 
 typedef struct {
     double                       bgn=0.0;
@@ -66,11 +74,10 @@ typedef struct {
     TypeEn                      jitType=TypeEn::unknown_jty;
 }ExtendedInfo;
 
-
 typedef struct {
-    std::string                 parameterName="";
+    std::string                 parameterName = "";
     std::vector<DataInterval>   intervalList=std::vector<DataInterval>();
-    ExtendedInfo *              extendedInfo=NULL;
+    ExtendedInfo *              extendedInfo = NULL;
 } ParameterInfo;
 
 
@@ -87,34 +94,34 @@ llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo & di, std::s
 
 bool         fromJSON(const json::Value &DataFragment, DataInterval & dataInterval);
 DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesList);
+
+void                       readParametersList(std::string databaseFName, std::vector<ParameterInfo>& parameterInfoList);
 std::vector<ParameterInfo> readParametersList(std::string databaseFName);
 
 
 
 
-
-
-class Parameters
+class ParametersIO_IFS
 {
 public:
-    Parameters(ParameterInfo &parameterInfo, std::string code){
-        inputParameters.push_back(parameterInfo);
-        calcExtendedInfo(inputParameters[0]);
+    ParametersIO_IFS(ParameterInfo &parameterInfo, std::string code){
+        dbParameters.push_back(parameterInfo);
+        calcExtendedInfo(dbParameters[0]);
     }
 
-    Parameters(ParameterInfo* parameterInfo, std::string code){
-        inputParameters.push_back(*parameterInfo);
+    ParametersIO_IFS(ParameterInfo* parameterInfo, std::string code){
+        dbParameters.push_back(*parameterInfo);
         calcExtendedInfo( *parameterInfo);
     }
 
-    Parameters(std::vector<ParameterInfo> &parameterInfoList, std::string code){
-        inputParameters=parameterInfoList;
-        for (auto &i : inputParameters)
+    ParametersIO_IFS(std::vector<ParameterInfo> &parameterInfoList, std::string code){
+        dbParameters=parameterInfoList;
+        for (auto &i : dbParameters)
             calcExtendedInfo(i);
     }
 
-    ~Parameters(){
-        for (auto &i : inputParameters)  
+    ~ParametersIO_IFS(){
+        for (auto &i : dbParameters)  
             delete i.extendedInfo;
         for (auto &i : outputParameters) 
             delete i.extendedInfo;
@@ -124,25 +131,30 @@ public:
 
     }
 
+    void setInputParameters(std::vector<BufferSt> args) {
+        for (auto i : args)
+            inputParameters.push_back(operator[](i.name));
+    }
+
     int64_t read(void *bufferPtr,int64_t pos, int64_t size){
         return 0;
     }
 
     const std::vector<std::string> getNamesList() {
         std::vector<std::string> namesList;
-        for (auto i : inputParameters)
+        for (auto i : dbParameters)
             namesList.push_back(i.parameterName);
         return namesList;
     }
 
     llvm::raw_ostream &stream(llvm::raw_ostream &OS,  std::string offset="") {
-        for (auto i : inputParameters)
+        for (auto i : dbParameters)
             ::stream(OS,i);
         return OS;
     }
 
     inline ParameterInfo operator[] (std::string name) {
-        for (auto &i : inputParameters)
+        for (auto &i : dbParameters)
             if (i.parameterName == name)
                 return ParameterInfo(i);
         return ParameterInfo();
@@ -168,6 +180,9 @@ private:
         extendedInfo->virtualSize=(int64_t)(extendedInfo->frequency * (extendedInfo->timeInterval.end - extendedInfo->timeInterval.bgn));
     }
 
+    std::vector<ParameterInfo> dbParameters;
+
+
     std::vector<ParameterInfo> inputParameters;
     std::vector<ParameterInfo> outputParameters;
 };
@@ -191,8 +206,79 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::map<Key_T
     return OS;
 }
 
+enum class Delimiter {
+    BLACK = 0,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    SAVEDCOLOR,
+
+
+    AnsiBLACK = 32,
+    AnsiRED,
+    AnsiGREEN,
+    AnsiYELLOW,
+    AnsiBLUE,
+    AnsiMAGENTA,
+    AnsiCYAN,
+    AnsiWHITE
+};
+
+enum class ExColors {
+    BLACK = 0,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    SAVEDCOLOR,
+    RESET,
+
+    AnsiBLACK = 32,
+    AnsiRED,
+    AnsiGREEN,
+    AnsiYELLOW,
+    AnsiBLUE,
+    AnsiMAGENTA,
+    AnsiCYAN,
+    AnsiWHITE,
+    AnsiSAVEDCOLOR,
+    AnsiRESET
+};
+
+extern bool g_ansiEscapeCodes;
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ExColors & arg) {
+    if(((int)arg)<=((int)ExColors::RESET))
+        if (g_ansiEscapeCodes) {
+            if (arg == ExColors::RESET)
+                OS << "\u001b[0m";
+            else
+                OS << "\u001b[3" + std::to_string((int)arg ) + "m";
+        }
+        else
+            OS << (llvm::raw_ostream::Colors)(arg);
+    else {
+        if (arg == ExColors::AnsiRESET)
+            OS << "\u001b[0m";
+        else
+            OS << "\u001b[3"+ std::to_string(   (int)arg - (int)ExColors::AnsiBLACK )  +"m";
+    }
+    return OS;
+}
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Delimiter & arg) {
+    OS.SetUnbuffered();
+    
+    OS <<(ExColors)(arg)<< "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << (((int)arg <= (int)ExColors::RESET) ? ExColors::RESET: ExColors::AnsiRESET )<<"\n";
+    return OS;
+}
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const RPMTypesEn & arg) {
-    OS<<toString(arg);
+    OS << toString(arg);
     return OS;
 }
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ParameterInfo & arg) {
@@ -203,7 +289,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const DataInterval &
     stream(OS, arg);
     return OS;
 }
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, Parameters & arg) {
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersIO_IFS & arg) {
     arg.stream(OS);
     return OS;
 }

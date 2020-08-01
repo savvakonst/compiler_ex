@@ -67,4 +67,68 @@ public:
 private:
 };
 
+class KEXParser {
+public:
+
+    KEXParser(std::string fileName) {
+        std::ifstream ifs(fileName);
+        std::string content(
+            (std::istreambuf_iterator<char>(ifs)),
+            (std::istreambuf_iterator<char>())
+        );
+
+        //ANTLRInputStream    input(content + "\n");
+
+        //EGrammarLexer       lexer(&input);
+        //CommonTokenStream   tokens(&lexer);
+        //EGrammarParser      parser(&tokens);
+
+        input_  =new ANTLRInputStream(content + "\n");
+        lexer_  =new EGrammarLexer(input_);
+        tokens_ =new CommonTokenStream(lexer_);
+        parser_ =new EGrammarParser(tokens_);
+
+        parser_->removeErrorListeners();
+        errorListner_ = new EErrorListener;
+        parser_->addErrorListener(errorListner_);
+
+        tree_ = parser_->start();
+    }
+    ~KEXParser() {
+        //delete tree_;
+        delete errorListner_;
+        delete parser_;
+        delete tokens_;
+        delete lexer_;
+        delete input_;
+    }
+
+    TreeShapeListener* getListener() {
+        return &listener_;
+    }
+
+    tree::ParseTree* getTree() {
+        return tree_;
+    }
+
+    void walk() {
+        tree::ParseTreeWalker::DEFAULT.walk(&listener_, tree_);
+    }
+
+    Body*  getActivBody() {
+        return listener_.activBody_;
+    }
+
+private:
+    ANTLRInputStream   *   input_;
+    EGrammarLexer      *   lexer_;
+    CommonTokenStream  *   tokens_;
+    EGrammarParser     *   parser_;
+    EErrorListener     *   errorListner_;
+
+    tree::ParseTree*  tree_;
+    TreeShapeListener listener_;
+};
+
+
 #endif
