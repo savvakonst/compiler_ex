@@ -1,1 +1,0 @@
-cmd /k /s compiler_ex.exe -i formula2.kex -db A01_3.json
