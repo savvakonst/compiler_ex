@@ -66,7 +66,7 @@ int main(int argc, const char* argv[]) {
             clEnumVal(allFSR, "full FSR(first stage representation)"),
             clEnumVal(redusedFSR, "redused FSR code"),
             clEnumVal(tableSSR, "table (second stage) representation"),
-            clEnumVal(llvmIRcode,  "llvm IR ")) );
+            clEnumVal(llvmIRcode,  "llvm IR ")));
 
 
     
@@ -77,18 +77,17 @@ int main(int argc, const char* argv[]) {
 
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
-    ExColors colorReset =ExColors::RESET;
-    ExColors colorRed =ExColors::RED;
-    ExColors colorGreen =ExColors::GREEN;
-    Delimiter delimiter=Delimiter::GREEN;
-
+    ExColors colorReset = ExColors::RESET;
+    ExColors colorRed   = ExColors::RED;
+    ExColors colorGreen = ExColors::GREEN;
+    Delimiter delimiter =Delimiter::GREEN;
 
 
     std::vector<ParameterInfo> parametersList;
     for(auto fname: inputDataBaseFile)
-        readParametersList(fname, parametersList); //readParametersList("A01_3.json");
+        readParametersList(fname, parametersList);
 
-    ParametersIO_IFS parameters(parametersList,"");
+    ParametersDB_IFS parameters(parametersList,"");
     KEXParser  parser(inputFile);
 
     LLVMContext* context = new LLVMContext() ;

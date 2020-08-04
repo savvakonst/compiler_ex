@@ -18,8 +18,8 @@ enum class BufferTypeEn {
     output
 };
 
-inline llvm::raw_ostream &stream(llvm::raw_ostream &OS, const BufferSt & arg, std::string offset="") {
-    OS << offset << "BufferSt{\n";
+inline llvm::raw_ostream &stream(llvm::raw_ostream &OS, const BufferInfo & arg, std::string offset="") {
+    OS << offset << "BufferInfo{\n";
     OS << offset << "  ptr: " << arg.ptr << "\n";
     OS << offset << "  length: " ;
     OS.write_hex(arg.length); 
@@ -32,7 +32,7 @@ inline llvm::raw_ostream &stream(llvm::raw_ostream &OS, const BufferSt & arg, st
     return OS;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream & OS, BufferSt & arg) {
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream & OS, BufferInfo & arg) {
     stream(OS,arg);
     return OS;
 }
@@ -74,7 +74,7 @@ public:
     void          CreateStartBRs();
     void          CreateMidleBRs();
 
-    void        * CreateBufferAlloca(BufferSt s, BufferTypeEn bufferType);
+    void        * CreateBufferAlloca(BufferInfo s, BufferTypeEn bufferType);
 
     void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };
@@ -122,7 +122,7 @@ public:
     llvm::Function* getCurrentFunction() { return currentFunction; }
 
 
-     std::vector<BufferSt > const * getBuffer(BufferTypeEn bufferType=BufferTypeEn::input)const  {
+     std::vector<BufferInfo > const * getBuffer(BufferTypeEn bufferType=BufferTypeEn::input)const  {
         switch (bufferType) {
         case BufferTypeEn::input:    return &inputBuffers;
         case BufferTypeEn::internal: return &internalBuffers;
@@ -147,9 +147,9 @@ private:
         SetInsertPoint(bb);
     }
 
-    std::vector <BufferSt >  inputBuffers;
-    std::vector <BufferSt >  internalBuffers;
-    std::vector <BufferSt >  outputBuffers;
+    std::vector <BufferInfo >  inputBuffers;
+    std::vector <BufferInfo >  internalBuffers;
+    std::vector <BufferInfo >  outputBuffers;
 
 
 

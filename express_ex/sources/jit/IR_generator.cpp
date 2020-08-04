@@ -203,7 +203,7 @@ Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
     std::string numberOfBufferTxt=std::to_string(numberOfBuffer);
 
     SetInitInsertPoint();
-    Value* arg              =currentFunction->getArg(0);
+    Value* arg              = currentFunction->getArg(0);
 
     Value* untypedBufferPtr =CreateInBoundsGEP(
         getInt64Ty()->getPointerTo(),
@@ -211,16 +211,16 @@ Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
         getInt32(numberOfBuffer),
         name + "untyped_buffer_ptr_"+ numberOfBufferTxt);
 
-    Value* untypedBuffer    =CreateLoad(
+    Value* untypedBuffer    = CreateLoad(
         untypedBufferPtr,
         true,
         name+"untyped_buffer_"+ numberOfBufferTxt);
 
-    Value* buffer           =CreateBitCast(
+
+    Value* buffer           = CreateBitCast(
         untypedBuffer,
         getLLVMType(targetTy)->getPointerTo(),
         name + "buffer_"+ numberOfBufferTxt);
-
     
     buffersList.push_back(buffer);
 
@@ -252,7 +252,7 @@ void IRGenerator::CreateMidleBRs()
 }
 
 
-void * IRGenerator::CreateBufferAlloca(BufferSt s, BufferTypeEn bufferType)
+void * IRGenerator::CreateBufferAlloca(BufferInfo s, BufferTypeEn bufferType)
 {
     //bufferType
     size_t typeSize = tEnSizeof(s.type);

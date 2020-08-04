@@ -10,11 +10,15 @@
 !/express_ex/include/**
 !/express_ex/sources/
 !/express_ex/sources/**
+!/express_ex/Release/
+!/express_ex/Release/**
 
 !/express_ex/CMakeLists.txt
 !/express_ex/cmake_.bat
 !/express_ex/remove.bat
 
+!/syntaxhighlighter
+!/syntaxhighlighter/*
 
 
 !setup.bat

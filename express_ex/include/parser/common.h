@@ -7,9 +7,6 @@
 #include "types_jty.h"
 
 
-
-
-
 void print_error(const std::string &content);
 void print_IR_error(const std::string &content);
 void print_SA_error(const std::string &content);
@@ -20,6 +17,7 @@ class Variable;
 
 template< typename T > class stack :public  std::vector<T> {
 public:
+
     T pop() {
         if (std::vector<T> ::size() == 0) {
             std::cout << "Error : stack is empty-\n";
@@ -40,6 +38,7 @@ public:
     }
 
     void push(T var) { std::vector<T> ::push_back(var); }
+
 };
 
 

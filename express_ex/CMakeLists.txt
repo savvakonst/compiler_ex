@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-# add the executable
 
 
 
@@ -14,13 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 if(MSVC AND NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11))
-  # set stack reserved size to ~10MB
-  # CMake previously automatically set this value for MSVC builds, but the
-  # behavior was changed in CMake 2.8.11 (Issue 12437) to use the MSVC default
-  # value (1 MB) which is not enough for us in tasks such as parsing recursive
-  # C++ templates in Clang.
   set(CMAKE_CXX_STACK_SIZE "10000000")
 endif()
+
+
 
 set(EGrammarDir ../EGrammar)
 set(llvmDir ../llvm)
@@ -69,8 +65,11 @@ set_target_properties(express_ex        PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE    "Release"
 )
 
-
 if(MSVC) 
+    if(NOT CMAKE_CL_64)
+        message(FATAL_ERROR  "WIN32 target is not supported yet" )   
+    endif()
+
     target_compile_options(express_ex PRIVATE 
         /wd4141   #(level 1)  'modifier' : used more than once  inline inline void func ()
         /wd4146   #(level 2)   unary minus operator applied to unsigned type, result still unsigned
@@ -189,20 +188,17 @@ if(MSVC)
         COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
     )
     set_property(TARGET express_ex APPEND PROPERTY
-        COMPILE_DEFINITIONS "$<$<CONFIG:Debug>:_ITERATOR_DEBUG_LEVEL=0" >
+        COMPILE_DEFINITIONS "$<$<CONFIG:Debug>: _ITERATOR_DEBUG_LEVEL=0>" 
     )
-    set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT express_ex)
-
-
-
-
+    
 
     add_custom_command(TARGET express_ex PRE_BUILD 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${antlrLibPath}/antlr4-runtime.dll
-            $<TARGET_FILE_DIR:express_ex>)
+            $<TARGET_FILE_DIR:express_ex>) 
 
-
+    #set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT "express_ex")
+    set_property (DIRECTORY PROPERTY VS_STARTUP_PROJECT "express_ex")
 else()
     message(FATAL_ERROR  "compilers other than MSVC are not supported" )   
 endif()

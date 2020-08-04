@@ -45,7 +45,7 @@ typedef struct {
     ex_size_t   rightOffset = 0;
     TypeEn      type = TypeEn::unknown_jty;
     std::string name = std::string();
-}BufferSt;
+}BufferInfo;
 
 typedef struct {
     double                       bgn=0.0;
@@ -98,32 +98,47 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
 void                       readParametersList(std::string databaseFName, std::vector<ParameterInfo>& parameterInfoList);
 std::vector<ParameterInfo> readParametersList(std::string databaseFName);
 
+class Parameter_IFS {
+    Parameter_IFS() {
 
-
-
-class ParametersIO_IFS
-{
-public:
-    ParametersIO_IFS(ParameterInfo &parameterInfo, std::string code){
-        dbParameters.push_back(parameterInfo);
-        calcExtendedInfo(dbParameters[0]);
     }
 
-    ParametersIO_IFS(ParameterInfo* parameterInfo, std::string code){
-        dbParameters.push_back(*parameterInfo);
+    int64_t readSync(void * dataBufferPtr, size_t pointsNumber) {
+        return 0;
+    }
+
+    int64_t readAsync(void * data_buffer_ptr, void * time_buffer_ptr, size_t size) {
+        return 0;
+    }
+
+    BufferInfo     bufferInfo;
+    ParameterInfo  parameterInfo;
+};
+
+
+class ParametersDB_IFS
+{
+public:
+    ParametersDB_IFS(ParameterInfo &parameterInfo, std::string code){
+        dbParameters_.push_back(parameterInfo);
+        calcExtendedInfo(dbParameters_[0]);
+    }
+
+    ParametersDB_IFS(ParameterInfo* parameterInfo, std::string code){
+        dbParameters_.push_back(*parameterInfo);
         calcExtendedInfo( *parameterInfo);
     }
 
-    ParametersIO_IFS(std::vector<ParameterInfo> &parameterInfoList, std::string code){
-        dbParameters=parameterInfoList;
-        for (auto &i : dbParameters)
+    ParametersDB_IFS(std::vector<ParameterInfo> &parameterInfoList, std::string code){
+        dbParameters_=parameterInfoList;
+        for (auto &i : dbParameters_)
             calcExtendedInfo(i);
     }
 
-    ~ParametersIO_IFS(){
-        for (auto &i : dbParameters)  
+    ~ParametersDB_IFS(){
+        for (auto &i : dbParameters_)  
             delete i.extendedInfo;
-        for (auto &i : outputParameters) 
+        for (auto &i : outputParameters_) 
             delete i.extendedInfo;
     }
 
@@ -131,10 +146,11 @@ public:
 
     }
 
-    void setInputParameters(std::vector<BufferSt> args) {
+    void setInputParameters(std::vector<BufferInfo> args) {
         for (auto i : args)
-            inputParameters.push_back(operator[](i.name));
+            inputParameters_.push_back(operator[](i.name));
     }
+
 
     int64_t read(void *bufferPtr,int64_t pos, int64_t size){
         return 0;
@@ -142,19 +158,19 @@ public:
 
     const std::vector<std::string> getNamesList() {
         std::vector<std::string> namesList;
-        for (auto i : dbParameters)
+        for (auto i : dbParameters_)
             namesList.push_back(i.parameterName);
         return namesList;
     }
 
     llvm::raw_ostream &stream(llvm::raw_ostream &OS,  std::string offset="") {
-        for (auto i : dbParameters)
+        for (auto i : dbParameters_)
             ::stream(OS,i);
         return OS;
     }
 
     inline ParameterInfo operator[] (std::string name) {
-        for (auto &i : dbParameters)
+        for (auto &i : dbParameters_)
             if (i.parameterName == name)
                 return ParameterInfo(i);
         return ParameterInfo();
@@ -180,11 +196,18 @@ private:
         extendedInfo->virtualSize=(int64_t)(extendedInfo->frequency * (extendedInfo->timeInterval.end - extendedInfo->timeInterval.bgn));
     }
 
-    std::vector<ParameterInfo> dbParameters;
+    void initInputParameters(std::vector<BufferInfo> args) {
+        //for (auto &i : inputParameters)
+          //  i.
+    }
+
+    /// dbParameters contains all parametersInfo from 
+    /// all available data sets
+    std::vector<ParameterInfo> dbParameters_;
 
 
-    std::vector<ParameterInfo> inputParameters;
-    std::vector<ParameterInfo> outputParameters;
+    std::vector<ParameterInfo> inputParameters_;
+    std::vector<ParameterInfo> outputParameters_;
 };
 
 
@@ -289,7 +312,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const DataInterval &
     stream(OS, arg);
     return OS;
 }
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersIO_IFS & arg) {
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersDB_IFS & arg) {
     arg.stream(OS);
     return OS;
 }

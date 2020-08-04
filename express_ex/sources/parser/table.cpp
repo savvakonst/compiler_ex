@@ -282,11 +282,11 @@ Value * genConvolve(IRGenerator & builder, llvm::Type* type, uintptr_t addr) {
 }
 
 
-std::vector <BufferSt> const  *g_inputBuffers=NULL;
-std::vector <BufferSt> const  *g_internalBuffers=NULL;
-std::vector <BufferSt> const  *g_outputBuffers=NULL;
+std::vector <BufferInfo> const  *g_inputBuffers=NULL;
+std::vector <BufferInfo> const  *g_internalBuffers=NULL;
+std::vector <BufferInfo> const  *g_outputBuffers=NULL;
 
-ParametersIO_IFS*  g_IO_IFS =NULL;
+ParametersDB_IFS*  g_IO_IFS =NULL;
 
 bool isInvalidBuffers() {
     return 
