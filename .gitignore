@@ -18,7 +18,7 @@
 !/express_ex/remove.bat
 
 !/syntaxhighlighter
-!/syntaxhighlighter/*
+!/syntaxhighlighter/**
 
 
 !setup.bat
