@@ -1,0 +1,9 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource>
+    <file>icons/cross.png</file>
+    <file>icons/upArrow.png</file>
+    <file>icons/downArrow.png</file>
+    <file>icons/work.png</file>
+</qresource>
+</RCC>

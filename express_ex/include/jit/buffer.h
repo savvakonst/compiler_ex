@@ -8,7 +8,6 @@
 TypeEn      RPMType2JITType(RPMTypesEn arg);
 
 
-
 /*
 typedef struct {
 	ex_size_t   length = 0;
