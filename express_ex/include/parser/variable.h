@@ -5,10 +5,11 @@
 #include "types_jty.h"
 #include "common.h"
 #include "table.h"
-#include "IR_generator.h"
+//#include "IR_generator.h"
 
 using std::string;
 class Body;
+class IRGenerator;
 
 class BodyGenContext {
 public:

@@ -7,14 +7,14 @@ project(express_ex)
 
 
 
-# specify the C++ standard
+# specify the C++ standard 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 if(MSVC AND NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11))
   set(CMAKE_CXX_STACK_SIZE "10000000")
-endif()
+endif()  
 
 
 
@@ -32,6 +32,7 @@ include_directories(${antlr4Dir}/antlr4-runtime)
 include_directories(include/ifs)
 include_directories(include/jit)
 include_directories(include/parser)
+include_directories(include/ifs)
 
 
 set(sourcesDir sources)
@@ -39,21 +40,24 @@ set(sourcesDir sources)
 aux_source_directory(${EGrammarDir} EGrammar)
 aux_source_directory(${sourcesDir}/jit jit)
 aux_source_directory(${sourcesDir}/parser parser)
+aux_source_directory(${sourcesDir}/ifs ifs)
 
 file(GLOB EGrammarHeaders ${EGrammarDir}/*.h)
 file(GLOB jitHeaders include/jit/*.h)
 file(GLOB parserHeaders include/parser/*.h)
+file(GLOB ifsHeaders include/ifs/*.h)
 
-add_executable(express_ex ${EGrammar} ${jit} ${parser} ${EGrammarHeaders} ${jitHeaders} ${parserHeaders}  )
+add_executable(express_ex ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders}  )
 #add_library()
 
-source_group( "EGrammar\\header"    FILES ${EGrammarHeaders} )
+source_group( "EGrammar\\headers"    FILES ${EGrammarHeaders} )
 source_group( "EGrammar\\sources"   FILES ${EGrammar} )
-source_group( "jit\\header"         FILES ${jitHeaders} )
+source_group( "jit\\headers"         FILES ${jitHeaders} )
 source_group( "jit\\sources"        FILES ${jit})
-source_group( "parser\\header"      FILES ${parserHeaders} )
+source_group( "parser\\headers"      FILES ${parserHeaders} )
 source_group( "parser\\sources"     FILES ${parser})
-
+source_group( "ifs\\headers"      FILES ${ifsHeaders} )
+source_group( "ifs\\sources"     FILES ${ifs})
 
 message("------ EGrammarHeaders:   " "${EGrammarHeaders}")
 

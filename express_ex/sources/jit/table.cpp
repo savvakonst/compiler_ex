@@ -1,11 +1,13 @@
 
 #include <sstream>
 
-#include "table.h"
-#include "variable.h"
+
+
+#include "buffer.h"
 #include "body.h"
+#include "table.h"
 #include "llvmHdrs.h"
-#include "ioIfs.h"
+#include "IR_generator.h"
 
 using namespace llvm;
 
@@ -282,35 +284,28 @@ Value * genConvolve(IRGenerator & builder, llvm::Type* type, uintptr_t addr) {
 }
 
 
-std::vector <BufferInfo> const  *g_inputBuffers=NULL;
-std::vector <BufferInfo> const  *g_internalBuffers=NULL;
-std::vector <BufferInfo> const  *g_outputBuffers=NULL;
+std::vector <Buffer* >   *g_buffers=NULL;
+
 
 ParametersDB_IFS*  g_IO_IFS =NULL;
 
 bool isInvalidBuffers() {
     return 
-        NULL == g_inputBuffers ||
-        NULL == g_internalBuffers ||
-        NULL == g_outputBuffers;
+        NULL == g_buffers ;
 }
 
 void initBuffers() {
     if (isInvalidBuffers())
         return;
-
-    for (auto i : *g_inputBuffers) 
-        g_IO_IFS->read(i.ptr,-i.leftOffset, i.leftOffset+i.rightOffset+i.length);
-        //isDouble
+    for (auto i : *g_buffers)
+        i->init();
 }
 
 void updateBuffer() {
     if (isInvalidBuffers()) 
         return;
-
-    if (g_inputBuffers)
-        for (auto i : *g_inputBuffers) 
-            NULL;
+    for (auto i : *g_buffers)
+        i->update();
 }
 
 
@@ -549,9 +544,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.CreateBr(builder.getBlock(1));
 
 
-    g_inputBuffers = builder.getBuffer(BufferTypeEn::input);
-    g_internalBuffers = builder.getBuffer(BufferTypeEn::internal);
-    g_outputBuffers = builder.getBuffer(BufferTypeEn::internal);
+    //g_buffers    = builder.getBuffer();
     return true;
 }
 
@@ -609,7 +602,6 @@ void  Operation::setupIR(IRGenerator & builder){
     }
     else if (isConvolve(opCode)) {
         //outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
-        
         IRValue_ =builder.CreateConvolve(OP_PTR(0), OP_PTR(0), getUniqueName());
     }
     else if (isSlice(opCode)) {
@@ -626,7 +618,11 @@ void  Operation::setupIR(IRGenerator & builder){
     if (isBuffered()|isReturned()) {
         if (!is_initialized) {
             BufferTypeEn bufferType=isReturned()? BufferTypeEn::output: BufferTypeEn::internal;
-            builder.CreateBufferAlloca({ NULL, length_, leftBufferLength_ ,rightBufferLength_ ,type_ }, bufferType);
+            if (isReturned())
+                builder.AddBufferAlloca(new Buffer(this));
+            else 
+                builder.AddBufferAlloca(new Buffer(this));
+            //builder.CreateBufferAlloca({ NULL, length_, leftBufferLength_ ,rightBufferLength_ ,type_ }, bufferType);
             IRBufferRefPtr_=builder.CreateBufferInit(type_,"internal_");
             is_initialized=true;
         }
@@ -648,12 +644,12 @@ void  Line::setupIR(IRGenerator & builder) {
         //setBuffered();
         Type * volatile t= builder.getLLVMType(type_);
         if (!is_initialized) {
-            builder.CreateBufferAlloca({ NULL,length_, leftBufferLength_ ,rightBufferLength_ ,type_ ,linkName_ }, BufferTypeEn::input);
-            IRBufferRefPtr_ =builder.CreateBufferInit(type_, "external_");
-            is_initialized = true;
+            builder.AddBufferAlloca(new InputBuffer(parameter_, this));
+            IRBufferRefPtr_ = builder.CreateBufferInit(type_, "external_");
+            is_initialized  = true;
         }
-        auto valPtr    =builder.CreatePositionalInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
-        IRValue_       =builder.CreatePositionalLoad(valPtr, "arg_buffer_");
+        auto valPtr    = builder.CreatePositionalInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
+        IRValue_       = builder.CreatePositionalLoad(valPtr, "arg_buffer_");
     }
 }
 

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include "variable.h"
-
+#include "ioIfs.h"
 
 class Line : public Variable
 {
@@ -46,14 +46,29 @@ public:
     Line(std::string name, ParameterInfo parameterInfo) {
         names_.push_back(name);
         name_       = name;
-        linkName_   = parameterInfo.parameterName;
-        type_       = parameterInfo.extendedInfo->jitType;
-        length_     = parameterInfo.extendedInfo->virtualSize;
+        linkName_   = parameterInfo.parameter_name;
+        type_       = parameterInfo.extended_info->jit_type;
+        length_     = parameterInfo.extended_info->virtual_size;
         dsType_     = DataStructTypeEn::largeArr_dsty;
         is_arg      = true;
          
-        parameterInfo_ = parameterInfo;
+        parameter_     = new Parameter_IFS(parameterInfo);
+    } //to remove
+
+    Line(std::string name, Parameter_IFS * parameter) {
+        names_.push_back(name);
+        name_       = name;
+        linkName_   = parameter->getName();
+        type_       = RPMType2JITType(parameter->getRPMType());
+        length_     = parameter->getVirtualSize();
+        dsType_     = DataStructTypeEn::largeArr_dsty;
+        is_arg      = true;
+
+        parameter_  = parameter;
     }
+
+
+
 
     Line(std::string name) {
         names_.push_back(name);
@@ -105,8 +120,7 @@ private:
     std::string name_        = std::string();
     std::string linkName_    = std::string();
 
-    ParameterInfo parameterInfo_ ;
-
+    Parameter_IFS * parameter_= NULL;
 };
 
 #endif

@@ -1,17 +1,14 @@
 #ifndef IOIFS_H
 #define IOIFS_H
 #include <string>
-#include <algorithm>
+//#include <algorithm>
 #include <vector>
+
+#include <iostream>     
+#include <fstream>      
 #include "types_jty.h"
-#include "llvm/Support/JSON.h"
 
 
-
-using namespace llvm;
-void print_IR_error(const std::string &content);
-
-// Sync
 enum class RPMTypesEn : uint64_t{
 
     PRM_TYPE_U08            = 0x0001,   // 1
@@ -38,14 +35,7 @@ enum class RPMTypesEn : uint64_t{
 };
 
 
-typedef struct {
-    void*       ptr =NULL;
-    ex_size_t   length = 0;
-    ex_size_t   leftOffset = 0;
-    ex_size_t   rightOffset = 0;
-    TypeEn      type = TypeEn::unknown_jty;
-    std::string name = std::string();
-}BufferInfo;
+
 
 typedef struct {
     double                       bgn=0.0;
@@ -55,31 +45,36 @@ typedef struct {
 
 typedef struct {
     union {
-        int64_t     intRepresintationType;
+        int64_t     int_type_represintation;
         RPMTypesEn  type;
     };
-
     int64_t                     offs;
     int64_t                     size;
     double                      frequency;
-    TimeInterval                timeInterval;
-    std::string                 fileName;
+    TimeInterval                time_interval;
+    std::string                 file_name;
     bool                        local;
 } DataInterval;
 
+
 typedef struct {
-    int64_t                     virtualSize;
+    int64_t                     virtual_size;
     int64_t                     frequency;
-    TimeInterval                timeInterval;
-    TypeEn                      jitType=TypeEn::unknown_jty;
+    TimeInterval                time_interval;
+    TypeEn                      jit_type=TypeEn::unknown_jty;
 }ExtendedInfo;
 
 typedef struct {
-    std::string                 parameterName = "";
-    std::vector<DataInterval>   intervalList=std::vector<DataInterval>();
-    ExtendedInfo *              extendedInfo = NULL;
+    std::string                 parameter_name = "";
+    TimeInterval                time_interval;
+    std::vector<DataInterval>   interval_list=std::vector<DataInterval>();                
+    ExtendedInfo *              extended_info = NULL;
 } ParameterInfo;
 
+
+inline int64_t sizeOfTy(RPMTypesEn  arg) {
+    return ((int64_t) arg) & 0xf;
+}
 
 
 
@@ -87,70 +82,247 @@ TypeEn      RPMType2JITType(RPMTypesEn arg);
 std::string toString(RPMTypesEn arg);
 
 
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ParameterInfo & di, std::string offset="");
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const DataInterval & dataInterval, std::string offset="");
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo & di, std::string offset="");
 
 
-bool         fromJSON(const json::Value &DataFragment, DataInterval & dataInterval);
-DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesList);
+void                       readParametersList(std::string database_Fame, std::vector<ParameterInfo>& parameter_info_list);
+std::vector<ParameterInfo> readParametersList(std::string database_Fame);
 
-void                       readParametersList(std::string databaseFName, std::vector<ParameterInfo>& parameterInfoList);
-std::vector<ParameterInfo> readParametersList(std::string databaseFName);
 
 class Parameter_IFS {
-    Parameter_IFS() {
+public:
+
+    Parameter_IFS(const ParameterInfo & parameter_info) {
+        parameter_info_     = parameter_info;
+        frequency_          = parameter_info_.extended_info->frequency;
+        numer_of_intervals_ = parameter_info_.interval_list.size();
+        sizeof_data_type_   = sizeOfTy(parameter_info_.interval_list.front().type);
+    }
+
+    ~Parameter_IFS() {
 
     }
 
-    int64_t readSync(void * dataBufferPtr, size_t pointsNumber) {
-        return 0;
+
+    typedef struct {
+        double	val_max;
+        double  val_min;
+        double  time;
+    } Dot;
+
+
+    std::vector<int64_t>  read_dots( Dot * dot_buffer, size_t max_point_number, double from, double to) {
+        //std::ifstream
+        return {-1};
+    }
+    
+    std::vector<int64_t>  read_dots(
+        double * top_buffer_ptr, double * bottom_buffer_ptr, double * time_buffer_ptr,
+        double from, double to, size_t max_point_number_to_read) {
+        return {-1};
     }
 
-    int64_t readAsync(void * data_buffer_ptr, void * time_buffer_ptr, size_t size) {
-        return 0;
+    bool open() {
+        if (is_opened_)
+            return false;
+
+        seek(0);
+        is_opened_=true;
+        return is_opened_;
     }
 
-    BufferInfo     bufferInfo;
-    ParameterInfo  parameterInfo;
+    bool close() {
+        if (is_opened_) {
+            if (ifs_) ifs_->close();
+            is_opened_=false;
+            return true;
+        }
+        
+        return false;
+    }
+
+
+    bool seek(int64_t point_umber) {
+
+        point_number_ = point_umber;
+        const double current_time = parameter_info_.time_interval.bgn + ((double)point_number_) / frequency_;
+        current_interval_index_ = getDataIntervalIndex(current_time);
+        
+        if (current_interval_index_!=-1) {
+            openNewInterval(current_interval_index_);
+            int64_t local_start_pos =    (int)((current_time - getTimeInterval(current_interval_index_).bgn) * frequency_);
+            ifs_->seekg(local_start_pos * sizeof_data_type_);
+        }
+        return true;
+    }
+
+    int64_t write(char * data_buffer_ptr, int64_t point_number) {
+        return { 0 };
+    }
+
+    int64_t read(char * data_buffer_ptr, int64_t point_number) {
+        if (!is_opened_)
+            open();
+
+
+        const double &frequency = parameter_info_.extended_info->frequency; 
+        int64_t points_to_read = point_number;
+        char*   ptr=data_buffer_ptr;
+        std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
+
+        
+        while (points_to_read) {
+            const double current_time = parameter_info_.time_interval.bgn + ((double)point_number_) / frequency;
+            int64_t di_index = getDataIntervalIndex(current_time);
+            int64_t local_points_to_read;
+
+            if (di_index == - 1) {
+ 
+                double end_time;
+                bool is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
+                if (is_last_interval)
+                    end_time = parameter_info_.time_interval.end;
+                else 
+                    end_time = getTimeInterval(current_interval_index_+1).bgn;
+
+                local_points_to_read = (int)((end_time - current_time) * frequency);
+
+                if (points_to_read <= local_points_to_read)
+                    local_points_to_read = points_to_read;
+                else if (is_last_interval) {
+                    memset(ptr, 0, local_points_to_read * sizeof_data_type_);
+                    return point_number - points_to_read + local_points_to_read;
+                }
+
+                memset(ptr, 0, local_points_to_read * sizeof_data_type_);
+
+            }
+            else {
+                const DataInterval &di =parameter_info_.interval_list[di_index];
+
+                int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency);
+                local_points_to_read =  (int)((di.time_interval.end - current_time) * frequency);
+
+                if (di_index != current_interval_index_) {
+                    openNewInterval(di_index);
+                    ifs_->seekg(local_start_pos * sizeof_data_type_);
+                }
+
+                if (points_to_read <= local_points_to_read)
+                    local_points_to_read = points_to_read;
+
+                ifs_->read(ptr, local_points_to_read * sizeof_data_type_);
+            }
+
+            ptr +=            local_points_to_read * sizeof_data_type_;
+            points_to_read -= local_points_to_read;
+        }
+        
+        return point_number - points_to_read;
+    }
+
+
+    std::string getName(){
+        return parameter_info_.parameter_name;
+    }
+
+    RPMTypesEn getRPMType() {
+        return parameter_info_.interval_list[0].type;
+    }
+
+    int64_t getVirtualSize() {
+        return frequency_ * (parameter_info_.time_interval.end - parameter_info_.time_interval.bgn);
+    }
+
+
+protected:
+    inline const TimeInterval &getTimeInterval(int64_t nterval_index) {
+        return parameter_info_.interval_list[nterval_index].time_interval;
+    }
+
+    inline const DataInterval &getCufrrentInterval() {
+        return parameter_info_.interval_list[current_interval_index_];
+    }
+
+    inline int64_t getDataIntervalIndex(double time) {
+        for (int64_t i =current_interval_index_; i< numer_of_intervals_; i++) {
+            DataInterval &a =parameter_info_.interval_list[i];
+            if ((a.time_interval.bgn <= time) && (time < a.time_interval.end)) return i;
+        }
+        return -1;
+    }
+
+    inline void openNewInterval(double di_index) {
+        current_interval_index_=di_index;
+        ifs_->close();
+        delete ifs_;
+        ifs_ =new std::ifstream(getCufrrentInterval().file_name, std::ios::binary);
+
+    }
+
+
+    double         frequency_=0.0;
+
+    int64_t        current_interval_index_=0;
+    int64_t        numer_of_intervals_=0;
+
+    ParameterInfo  parameter_info_;
+
+    int64_t        sizeof_data_type_=0;
+    int64_t        point_number_=0;
+
+
+    std::ifstream* ifs_=NULL;
+
+    bool           is_opened_=true;
 };
 
 
 class ParametersDB_IFS
 {
+
 public:
     ParametersDB_IFS(ParameterInfo &parameterInfo, std::string code){
-        dbParameters_.push_back(parameterInfo);
-        calcExtendedInfo(dbParameters_[0]);
+        db_parameters_.push_back(parameterInfo);
+        calcExtendedInfo(db_parameters_[0]);
     }
 
     ParametersDB_IFS(ParameterInfo* parameterInfo, std::string code){
-        dbParameters_.push_back(*parameterInfo);
+        db_parameters_.push_back(*parameterInfo);
         calcExtendedInfo( *parameterInfo);
     }
 
     ParametersDB_IFS(std::vector<ParameterInfo> &parameterInfoList, std::string code){
-        dbParameters_=parameterInfoList;
-        for (auto &i : dbParameters_)
+        db_parameters_=parameterInfoList;
+        for (auto &i : db_parameters_)
             calcExtendedInfo(i);
     }
 
     ~ParametersDB_IFS(){
-        for (auto &i : dbParameters_)  
-            delete i.extendedInfo;
-        for (auto &i : outputParameters_) 
-            delete i.extendedInfo;
+        for (auto &i : db_parameters_)  
+            delete i.extended_info;
+        for (auto &i : output_parameters_) 
+            delete i.extended_info ;
     }
 
     std::vector<ParameterInfo> &getOutputParameters() {
 
     }
 
-    void setInputParameters(std::vector<BufferInfo> args) {
-        for (auto i : args)
-            inputParameters_.push_back(operator[](i.name));
-    }
+    typedef struct {
+        void*       ptr =NULL;
+        ex_size_t   length = 0;
+        ex_size_t   left_offset = 0;
+        ex_size_t   right_offset = 0;
+        TypeEn      type = TypeEn::unknown_jty;
+        std::string name = std::string();
+    }BufferInfo;
 
+    void setInputParameters(std::vector<BufferInfo> args) {
+        for (auto i : args) {
+            const ParameterInfo &p_info =operator[](i.name);
+            input_parameters_ifs_.push_back(Parameter_IFS(p_info));
+        }
+    }
 
     int64_t read(void *bufferPtr,int64_t pos, int64_t size){
         return 0;
@@ -158,42 +330,49 @@ public:
 
     const std::vector<std::string> getNamesList() {
         std::vector<std::string> namesList;
-        for (auto i : dbParameters_)
-            namesList.push_back(i.parameterName);
+        for (auto i : db_parameters_)
+            namesList.push_back(i.parameter_name);
         return namesList;
     }
 
+
+    const std::vector<ParameterInfo>  & getDBParameterList() const  {
+        return db_parameters_;
+    }
+    /*
     llvm::raw_ostream &stream(llvm::raw_ostream &OS,  std::string offset="") {
-        for (auto i : dbParameters_)
+        for (auto i : db_parameters_)
             ::stream(OS,i);
         return OS;
     }
-
+    */
     inline ParameterInfo operator[] (std::string name) {
-        for (auto &i : dbParameters_)
-            if (i.parameterName == name)
+        for (auto &i : db_parameters_)
+            if (i.parameter_name == name)
                 return ParameterInfo(i);
         return ParameterInfo();
     }
 
 private:
-    void calcExtendedInfo(ParameterInfo &arg) {
-        auto extendedInfo = new ExtendedInfo;
-        arg.extendedInfo=extendedInfo;
+    bool calcExtendedInfo(ParameterInfo &arg) {
+        auto extended_info = new ExtendedInfo;
+        arg.extended_info=extended_info;
 
-        if(arg.intervalList.size()){ 
-            extendedInfo->timeInterval.bgn=arg.intervalList.front().timeInterval.bgn;
-            extendedInfo->timeInterval.end=arg.intervalList.back().timeInterval.end;
-            extendedInfo->frequency=arg.intervalList.front().frequency;
-            extendedInfo->jitType = RPMType2JITType(arg.intervalList.front().type);
+        if(arg.interval_list.size()){ 
+            extended_info->time_interval.bgn=arg.interval_list.front().time_interval.bgn;
+            extended_info->time_interval.end=arg.interval_list.back().time_interval.end;
+            extended_info->frequency=arg.interval_list.front().frequency;
+            extended_info->jit_type = RPMType2JITType(arg.interval_list.front().type);
         }
 
-        for (auto i : arg.intervalList)
-            if (extendedInfo->frequency != i.frequency)
-                print_IR_error("calcExtendedInfo - different frequencys");
-
-
-        extendedInfo->virtualSize=(int64_t)(extendedInfo->frequency * (extendedInfo->timeInterval.end - extendedInfo->timeInterval.bgn));
+        for (auto i : arg.interval_list)
+            if (extended_info->frequency != i.frequency) {
+                error_info_ = "calcExtendedInfo - different frequencys";
+                return false;
+            }
+                
+        extended_info->virtual_size=(int64_t)(extended_info->frequency * (arg.time_interval.end - arg.time_interval.bgn));
+        return true;
     }
 
     void initInputParameters(std::vector<BufferInfo> args) {
@@ -201,120 +380,24 @@ private:
           //  i.
     }
 
+
+
     /// dbParameters contains all parametersInfo from 
     /// all available data sets
-    std::vector<ParameterInfo> dbParameters_;
+    std::vector<ParameterInfo> db_parameters_;
 
+    std::vector<ParameterInfo> output_parameters_;
 
-    std::vector<ParameterInfo> inputParameters_;
-    std::vector<ParameterInfo> outputParameters_;
+    std::vector<Parameter_IFS> input_parameters_ifs_;
+
+    std::string error_info_ = "";
 };
 
 
 inline bool isEmpty(ParameterInfo & arg) {
-    return arg.intervalList.size() == 0;
+    return arg.interval_list.size() == 0;
 }
 
-template<typename T>
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<T> & arg) {
-    for (auto i : arg)
-        OS << i << " ";
-    return OS;
-}
 
-template<typename Key_T, typename _T>
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::map<Key_T, _T> & arg) {
-    for (auto i : arg)
-        OS << i.first <<": " <<i.second<<" ";
-    return OS;
-}
-
-enum class Delimiter {
-    BLACK = 0,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE,
-    SAVEDCOLOR,
-
-
-    AnsiBLACK = 32,
-    AnsiRED,
-    AnsiGREEN,
-    AnsiYELLOW,
-    AnsiBLUE,
-    AnsiMAGENTA,
-    AnsiCYAN,
-    AnsiWHITE
-};
-
-enum class ExColors {
-    BLACK = 0,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE,
-    SAVEDCOLOR,
-    RESET,
-
-    AnsiBLACK = 32,
-    AnsiRED,
-    AnsiGREEN,
-    AnsiYELLOW,
-    AnsiBLUE,
-    AnsiMAGENTA,
-    AnsiCYAN,
-    AnsiWHITE,
-    AnsiSAVEDCOLOR,
-    AnsiRESET
-};
-
-extern bool g_ansiEscapeCodes;
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ExColors & arg) {
-    if(((int)arg)<=((int)ExColors::RESET))
-        if (g_ansiEscapeCodes) {
-            if (arg == ExColors::RESET)
-                OS << "\u001b[0m";
-            else
-                OS << "\u001b[3" + std::to_string((int)arg ) + "m";
-        }
-        else
-            OS << (llvm::raw_ostream::Colors)(arg);
-    else {
-        if (arg == ExColors::AnsiRESET)
-            OS << "\u001b[0m";
-        else
-            OS << "\u001b[3"+ std::to_string(   (int)arg - (int)ExColors::AnsiBLACK )  +"m";
-    }
-    return OS;
-}
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Delimiter & arg) {
-    OS.SetUnbuffered();
-    
-    OS <<(ExColors)(arg)<< "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << (((int)arg <= (int)ExColors::RESET) ? ExColors::RESET: ExColors::AnsiRESET )<<"\n";
-    return OS;
-}
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const RPMTypesEn & arg) {
-    OS << toString(arg);
-    return OS;
-}
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ParameterInfo & arg) {
-    stream(OS, arg);
-    return OS;
-}
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const DataInterval & arg) {
-    stream(OS, arg);
-    return OS;
-}
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersDB_IFS & arg) {
-    arg.stream(OS);
-    return OS;
-}
 
 #endif

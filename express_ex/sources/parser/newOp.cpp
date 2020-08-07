@@ -68,6 +68,7 @@ Variable* newTypeConvOp(TypeEn targetType, Variable* arg1)
 			return new Operation(OpCodeEn::sext, arg1, targetType);
 	}
 	else print_error("newTypeConvOp");
+	return NULL;
 }
 
 //#include "llvm/Support/raw_ostream.h"

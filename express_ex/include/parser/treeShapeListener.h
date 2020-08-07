@@ -70,8 +70,8 @@ private:
 class KEXParser {
 public:
 
-    KEXParser(std::string fileName) {
-        std::ifstream ifs(fileName);
+    KEXParser(std::string file_name) {
+        std::ifstream ifs(file_name);
         std::string content(
             (std::istreambuf_iterator<char>(ifs)),
             (std::istreambuf_iterator<char>())

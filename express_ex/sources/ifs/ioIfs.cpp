@@ -1,9 +1,15 @@
-#include <iostream>
-#include <strstream>
-#include <fstream>
+
+//#include <strstream>
+
 #include "ioIfs.h"
+#include "common.h"
 #include "llvm/Support/JSON.h"
 using namespace llvm;
+
+bool         fromJSON(const json::Value &data_fragment, DataInterval &data_interval);
+DataInterval getDataInterval(json::Value &data_fragment, json::Array &data_files_list);
+
+
 
 TypeEn RPMType2JITType(RPMTypesEn arg) {
 
@@ -62,50 +68,6 @@ std::string toString(RPMTypesEn arg) {
 #undef CASE_OP
 }
 
-
-
-llvm::raw_ostream &stream(llvm::raw_ostream &OS,const ParameterInfo & di, std::string offset) {
-    OS << offset << "ParameterInfo{\n";
-    OS << offset << "  parameterName: " << di.parameterName << "\n";
-    OS << offset << "  intervalList: [" << "\n";
-    for (auto interval : di.intervalList)
-        stream(OS,interval,"    ");
-    OS << offset << "  ]\n";
-    if (di.extendedInfo){
-        OS << offset << "  extendedInfo: "  << "\n";
-        stream(OS, *(di.extendedInfo), "    ");
-    }
-    else
-        OS << offset << "  extendedInfo: " << di.extendedInfo << "\n";
-    OS << offset << "}\n";
-    return OS;
-}
-
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const DataInterval & di,std::string offset) {
-    OS << offset << "DataInterval{\n";
-    OS << offset << "  type: " << di.type << "\n";
-    OS << offset << "  offs: " << di.offs << "\n";
-    OS << offset << "  size: " << di.size << "\n";
-    OS << offset << "  frequency: " << di.frequency << "\n";
-    OS << offset << "  timeInterval.end: " << di.timeInterval.end << "\n";
-    OS << offset << "  timeInterval.bgn: " << di.timeInterval.bgn << "\n";
-    OS << offset << "  fileName: " << di.fileName << "\n";
-    OS << offset << "}\n";
-    return OS;
-}
-
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo & di, std::string offset) {
-    OS << offset << "ExtendedInfo{\n";
-    OS << offset << "  virtualSize: " << di.virtualSize << "\n";
-    OS << offset << "  frequency: " << di.frequency << "\n";
-    OS << offset << "  timeInterval.end: " << di.timeInterval.end << "\n";
-    OS << offset << "  timeInterval.bgn: " << di.timeInterval.bgn << "\n";
-    OS << offset << "  jitType: " << toString(di.jitType) << "\n";
-    OS << offset << "}\n";
-    return OS;
-}
-
-
 bool fromJSON(const json::Value &DataFragment, DataInterval & dataInterval) {
 
     json::ObjectMapper O(DataFragment);
@@ -114,10 +76,10 @@ bool fromJSON(const json::Value &DataFragment, DataInterval & dataInterval) {
     ret&=O.map("Frequency", dataInterval.frequency);
     ret&=O.map("Offset", dataInterval.offs);
     ret&=O.map("Size", dataInterval.size);
-    ret&=O.map("Type", dataInterval.intRepresintationType);
+    ret&=O.map("Type", dataInterval.int_type_represintation);
 
-    ret&=O.map("sTime.Begin", dataInterval.timeInterval.bgn);
-    ret&=O.map("sTime.End", dataInterval.timeInterval.end);
+    ret&=O.map("sTime.Begin", dataInterval.time_interval.bgn);
+    ret&=O.map("sTime.End", dataInterval.time_interval.end);
 
     return ret;
 }
@@ -138,7 +100,7 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
         O.map("Index", fileDataIndex);
 
         if (dataIndex == fileDataIndex) {
-            O.map("Name", dataInterval.fileName);
+            O.map("Name", dataInterval.file_name);
             O.map("Local", dataInterval.local);
         }
     }
@@ -166,14 +128,14 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
         json::Object   pObject=*i.getAsObject();
         ParameterInfo  parameterInfo;
 
-        parameterInfo.parameterName     =   pObject[" Name"].getAsString().getValue();
+        parameterInfo.parameter_name     =   pObject[" Name"].getAsString().getValue();
         json::Array & DataFilesList     = *(pObject["Data.Files.List"].getAsArray());
         json::Array & DataFragmentsList = *(pObject["Data.Fragments.List"].getAsArray());
 
 
         for (auto k : DataFragmentsList) {
             DataInterval di= getDataInterval(k, DataFilesList);
-            parameterInfo.intervalList.push_back(di);
+            parameterInfo.interval_list.push_back(di);
 
         }
 

@@ -301,6 +301,13 @@ inline size_t tEnSizeof(TypeEn type) {
 }
 
 
+inline size_t sizeOfTy(TypeEn type) {
+    size_t size=0;
+#define OP(T)  size=sizeof(T)
+    SWITCH_TYPE_OP(type, ;)
+#undef OP
+        return size;
+}
 
 
 

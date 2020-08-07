@@ -27,6 +27,7 @@
 #include "llvm/Transforms/Utils.h"
 #include "IR_generator.h"
 #include "table.h"
+
 using namespace llvm;
 
 
@@ -36,7 +37,8 @@ IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(conte
 }
 
 IRGenerator::~IRGenerator(){
-
+    for (auto i : buffer_list)
+        delete i;
 }
 
 Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::string &name) {
@@ -252,20 +254,13 @@ void IRGenerator::CreateMidleBRs()
 }
 
 
-void * IRGenerator::CreateBufferAlloca(BufferInfo s, BufferTypeEn bufferType)
+
+
+
+void * IRGenerator::AddBufferAlloca(Buffer *s)
 {
-    //bufferType
-    size_t typeSize = tEnSizeof(s.type);
-    s.ptr=malloc(typeSize * s.length);
-
-
-    switch (bufferType) {
-    case BufferTypeEn::input:    inputBuffers.push_back(s); break;
-    case BufferTypeEn::internal: internalBuffers.push_back(s); break;
-    case BufferTypeEn::output:   outputBuffers.push_back(s); break;
-    default: break;
-    }
-    return s.ptr;
+    buffer_list.push_back(s);
+    return NULL;
 }
 
 

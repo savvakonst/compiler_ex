@@ -4,36 +4,22 @@
 
 #include <iostream>
 #include <vector>
-#include "llvm/IR/IRBuilder.h"
 #include "types_jty.h"
+#include "buffer.h"
 #include "ioIfs.h"
+#include "llvm/IR/IRBuilder.h"
+
 
 
 class Table;
 class Variable;
 
-enum class BufferTypeEn {
-    input,
-    internal,
-    output
-};
 
-inline llvm::raw_ostream &stream(llvm::raw_ostream &OS, const BufferInfo & arg, std::string offset="") {
-    OS << offset << "BufferInfo{\n";
-    OS << offset << "  ptr: " << arg.ptr << "\n";
-    OS << offset << "  length: " ;
-    OS.write_hex(arg.length); 
-    OS << "\n";
-    OS << offset << "  leftOffset: " << arg.leftOffset << "\n";
-    OS << offset << "  rightOffset: " << arg.rightOffset << "\n";
-    OS << offset << "  type: " << toString(arg.type) << "\n";
-    OS << offset << "  name: " << arg.name << "\n";
-    OS << offset << "}\n";
-    return OS;
-}
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream & OS, BufferInfo & arg) {
-    stream(OS,arg);
+
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream & OS, Buffer & arg) {
+    arg.stream(OS);
     return OS;
 }
 
@@ -74,7 +60,7 @@ public:
     void          CreateStartBRs();
     void          CreateMidleBRs();
 
-    void        * CreateBufferAlloca(BufferInfo s, BufferTypeEn bufferType);
+    void        * AddBufferAlloca(Buffer * s);
 
     void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };
@@ -122,19 +108,13 @@ public:
     llvm::Function* getCurrentFunction() { return currentFunction; }
 
 
-     std::vector<BufferInfo > const * getBuffer(BufferTypeEn bufferType=BufferTypeEn::input)const  {
-        switch (bufferType) {
-        case BufferTypeEn::input:    return &inputBuffers;
-        case BufferTypeEn::internal: return &internalBuffers;
-        case BufferTypeEn::output:   return &outputBuffers;
-        default: return &inputBuffers;
-        }
+     
+    std::vector<Buffer*>  * getBuffer(BufferTypeEn bufferType = BufferTypeEn::input)  {
+        return &buffer_list;
     }
 
 
 private:
-
-
     typedef llvm::BasicBlock* BasicBlockPtr;
 
     void SetCInsertPoint(BasicBlockPtr & prot, llvm::BasicBlock * bb=NULL) {
@@ -147,9 +127,8 @@ private:
         SetInsertPoint(bb);
     }
 
-    std::vector <BufferInfo >  inputBuffers;
-    std::vector <BufferInfo >  internalBuffers;
-    std::vector <BufferInfo >  outputBuffers;
+
+    std::vector <Buffer *>  buffer_list;
 
 
 
