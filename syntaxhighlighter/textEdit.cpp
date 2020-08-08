@@ -1,5 +1,85 @@
-
+#include "highlightListener.h"
 #include "textEdit.h"
+
+KexEdit::KexEdit(): TemplateTextEdit() {
+    highlighter = new Highlighter(this->document());
+    highlightStyle =new HighlightStyle();
+    connect(this, SIGNAL(textChanged()), this, SLOT(rehighlight()));
+
+    lineNumberArea = new LineNumberArea(this);
+
+    connect(this, &KexEdit::blockCountChanged, this, &KexEdit::updateLineNumberAreaWidth);
+    connect(this, &KexEdit::updateRequest, this, &KexEdit::updateLineNumberArea);
+    connect(this, &KexEdit::cursorPositionChanged, this, &KexEdit::highlightCurrentLine);
+
+    updateLineNumberAreaWidth(0);
+    highlightCurrentLine();
+
+    setTabStopWidth(fontMetrics().width(' ') * tabWidth);
+    delete runOutputHighlighter;
+    runOutputHighlighter=highlighter;
+}
+
+
+
+KexEdit::~KexEdit() {
+    //delete highlighter;
+    //delete highlightStyle;
+    //delete lineNumberArea;
+}
+
+void KexEdit::rehighlight(){
+    //qDebug()<<"--------------------------- "<<"\n";
+    if (rehighlightInProgress==true) return ;
+    rehighlightInProgress=true;
+    auto content=this->toPlainText().toStdString()+"\n";
+
+    antlr4::ANTLRInputStream input(content);
+    EGrammarLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    EGrammarParser parser(&tokens);
+
+    parser.removeErrorListeners();
+    EErrorListener errorListner(highlightStyle);
+    parser.addErrorListener(&errorListner);
+
+
+    antlr4::tree::ParseTree* tree=NULL;
+    try{
+        tree = parser.start();
+    }catch(antlr4::NoViableAltException ){
+        return;
+    }
+
+
+    TreeShapeListener listener(highlightStyle);
+    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
+
+    highlighter->setListener(&listener);
+    highlighter->rehighlight();
+    rehighlightInProgress=false;
+}
+
+void KexEdit::wheelEvent(QWheelEvent* event) {
+    TemplateTextEdit::wheelEvent(event);
+    if ((event->modifiers() == Qt::ControlModifier)){
+        if (event->delta()>0)
+            zoomIn(1);
+        else
+            zoomOut(1);
+    }
+}
+
+void KexEdit::changeEvent(QEvent *event) {
+    TemplateTextEdit::changeEvent(event);
+}
+
+void KexEdit::keyPressEvent(QKeyEvent* event)  {
+    if (spacesInsteadOfTabs && (event->key()==Qt::Key_Tab))
+        insertPlainText(QString(tabWidth, ' '));
+    else
+        TemplateTextEdit::keyPressEvent(event);
+}
 
 
 void KexEdit::updateLineNumberAreaWidth(int /* newBlockCount */){

@@ -149,6 +149,9 @@ void MainWindow::runScript(){
     currentProcess->start(exeFileName,args);
 }
 
+
+
+
 void MainWindow::search(){
 
    if(editor->isSelectd())

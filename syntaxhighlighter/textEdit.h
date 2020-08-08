@@ -1,7 +1,7 @@
 #ifndef TEXTEDIT_H
 #define TEXTEDIT_H
 
-#include "highlightListener.h"
+//#include "highlightListener.h"
 #include "highlighter.h"
 #include <QMainWindow>
 #include <QtWidgets>
@@ -27,8 +27,6 @@ public:
         connect(crossButton, SIGNAL (clicked()),this->parent(), SLOT (hideSearchWidgetAndSetFocus()));
         connect(downButton, SIGNAL (clicked()),this->parent(), SLOT (findDown()));
         connect(upButton, SIGNAL (clicked()),this->parent(), SLOT (findUp()));
-
-
 
 
         this->setStyleSheet("QWidget{background-color: #F0F0F0;}");
@@ -241,63 +239,19 @@ private:
 };
 
 
+class HighlightStyle;
+
 class KexEdit:public TemplateTextEdit{
     Q_OBJECT
 public:
-    KexEdit(): TemplateTextEdit() {
-        highlighter = new Highlighter(this->document());
-        highlightStyle =HighlightStyle();
-        connect(this, SIGNAL(textChanged()), this, SLOT(rehighlight()));
-
-        lineNumberArea = new LineNumberArea(this);
-
-        connect(this, &KexEdit::blockCountChanged, this, &KexEdit::updateLineNumberAreaWidth);
-        connect(this, &KexEdit::updateRequest, this, &KexEdit::updateLineNumberArea);
-        connect(this, &KexEdit::cursorPositionChanged, this, &KexEdit::highlightCurrentLine);
-
-        updateLineNumberAreaWidth(0);
-        highlightCurrentLine();
-
-        setTabStopWidth(fontMetrics().width(' ') * tabWidth);
-        delete runOutputHighlighter;
-        runOutputHighlighter=highlighter;
-    }
+    KexEdit();
+    ~KexEdit();
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int  lineNumberAreaWidth();
 
 public Q_SLOTS:
 
-    void rehighlight(){
-        //qDebug()<<"--------------------------- "<<"\n";
-        if (rehighlightInProgress==true) return ;
-        rehighlightInProgress=true;
-        auto content=this->toPlainText().toStdString()+"\n";
-
-        antlr4::ANTLRInputStream input(content);
-        EGrammarLexer lexer(&input);
-        antlr4::CommonTokenStream tokens(&lexer);
-        EGrammarParser parser(&tokens);
-
-        parser.removeErrorListeners();
-        EErrorListener errorListner(&highlightStyle);
-        parser.addErrorListener(&errorListner);
-
-
-        antlr4::tree::ParseTree* tree=NULL;
-        try{
-            tree = parser.start();
-        }catch(antlr4::NoViableAltException ){
-            return;
-        }
-
-
-        TreeShapeListener listener(&highlightStyle);
-        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-
-        highlighter->setListener(&listener);
-        highlighter->rehighlight();
-        rehighlightInProgress=false;
-    }
+    void rehighlight();
 
     virtual void highlitText(const QString &text) override{
         highlighter->setPattern(text);
@@ -313,26 +267,11 @@ protected:
     //void changeEvent(QEvent *event);
     void resizeEvent(QResizeEvent *event) override;
 
-    void wheelEvent(QWheelEvent* event) override{
-        TemplateTextEdit::wheelEvent(event);
-        if ((event->modifiers() == Qt::ControlModifier)){
-            if (event->delta()>0)
-                zoomIn(1);
-            else
-                zoomOut(1);
-        }
-    }
+    void wheelEvent(QWheelEvent* event) override;
 
-    void changeEvent(QEvent *event) override{
-        TemplateTextEdit::changeEvent(event);
-    }
+    void changeEvent(QEvent *event) override;
 
-    void keyPressEvent(QKeyEvent* event) override {
-        if (spacesInsteadOfTabs && (event->key()==Qt::Key_Tab))
-            insertPlainText(QString(tabWidth, ' '));
-        else
-            TemplateTextEdit::keyPressEvent(event);
-    }
+    void keyPressEvent(QKeyEvent* event) override ;
 
 private:
     bool rehighlightInProgress= false;
@@ -340,7 +279,7 @@ private:
     int  tabWidth=2;
 
     Highlighter*        highlighter;
-    HighlightStyle      highlightStyle;
+    HighlightStyle*     highlightStyle;
     QWidget*            lineNumberArea;
 };
 

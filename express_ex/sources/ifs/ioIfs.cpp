@@ -113,8 +113,10 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
 
 
 
-void readParametersList(std::string databaseFName, std::vector<Parameter_IFS*>& parameterList) {
+bool readParametersList(std::string databaseFName, std::vector<Parameter_IFS*>& parameterList) {
     std::ifstream ifs(databaseFName);
+    if (ifs.bad())
+        return false;
     std::string content(
         (std::istreambuf_iterator<char>(ifs)),
         (std::istreambuf_iterator<char>())
@@ -154,6 +156,7 @@ void readParametersList(std::string databaseFName, std::vector<Parameter_IFS*>& 
 
         parameterList.push_back(parameter);
     }
+    return true;
 }
 
 
@@ -162,4 +165,20 @@ std::vector<Parameter_IFS*>  readParametersList(std::string databaseFName) {
     std::vector<Parameter_IFS *>  parameterInfoList;
     readParametersList(databaseFName, parameterInfoList);
     return parameterInfoList;
+}
+
+
+DataInterval createInterval(TimeInterval time_interval, double frequency, RPMTypesEn target_ty, const std::string &filename="", bool local = true) {
+    DataInterval interval;
+
+    interval.type=target_ty;
+    interval.offs=0;
+    interval.size=sizeOfTy(target_ty) * (int64_t)((time_interval.end - time_interval.bgn) * frequency);
+    interval.frequency=frequency;
+    interval.time_interval=time_interval;
+
+    interval.file_name=filename;
+    interval.local=local;
+
+    return interval;
 }

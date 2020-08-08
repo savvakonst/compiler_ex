@@ -63,7 +63,6 @@ TypeEn      RPMType2JITType(RPMTypesEn arg);
 std::string toString(RPMTypesEn arg);
 
 
-
 inline std::stringstream &stream(std::stringstream & OS
     , const DataInterval & di, std::string offset) {
 
@@ -83,9 +82,6 @@ inline bool isEmpty(TimeInterval i) {
     return i.bgn <= i.end;
 }
 
-
-
-
 inline TimeInterval operator& (DataInterval a, DataInterval b) {
     TimeInterval ret ={ std::max(a.time_interval.bgn, a.time_interval.bgn)  , std::min(a.time_interval.end, a.time_interval.end) };
     return ret;
@@ -100,6 +96,7 @@ inline TimeInterval operator|| (DataInterval a, DataInterval b) {
 
 
 
+DataInterval createInterval(TimeInterval time_interval, double frequency, RPMTypesEn target_ty, const std::string &filename="", bool local = true);
 /*
 typedef struct {
     int64_t                     virtual_size;
@@ -267,7 +264,7 @@ public:
         return frequency_ * (time_interval_.end - time_interval_.bgn);
     }    
 
-    friend  void readParametersList(std::string databaseFName, std::vector<Parameter_IFS>& parameterList);
+
 
     std::stringstream &stream(std::stringstream & OS,  std::string offset="") const {
         OS << offset << "ParameterInfo{\n";
@@ -284,6 +281,47 @@ public:
         work_directory = dirname;
     }
 
+    Parameter_IFS *  intersection( Parameter_IFS  *b,   RPMTypesEn target_ty = RPMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="") {
+        auto parameter_a = this;
+        auto parameter_b = b;
+        if (parameter_a == parameter_b)
+            return this;
+
+        if (parameter_a->frequency_ != parameter_b->frequency_) {
+            error_info_ = "different frequencys is not supported yet ";
+            return NULL;
+        }
+        else if (parameter_a->frequency_ <= 0.0) {
+            error_info_ = "async parameter is not supported yet";
+            return NULL;
+        }
+
+        auto frequency = parameter_a->frequency_;
+
+        std::vector<DataInterval> ret;
+
+        for (auto a : parameter_a->interval_list_) {
+            for (auto b : parameter_b->interval_list_) {
+                auto t =a & b;
+                if (!isEmpty(t)) {
+                    auto interval = createInterval(t, frequency, target_ty);
+                    if (!ret.empty()) {
+                        auto t2 = ret.back() || interval;
+                        if (!isEmpty(t))
+                            ret.back() = createInterval(t2, frequency, target_ty);
+                        else
+                            ret.push_back(interval);
+                    }
+                    else
+                        ret.push_back(interval);
+                }
+            }
+        }
+        return new Parameter_IFS(name, time_interval_, ret);
+    }
+
+    friend  void readParametersList(std::string databaseFName, std::vector<Parameter_IFS>& parameterList);
+    friend class ParametersDB_IFS;
 protected:
 
     bool calcExtendedInfo() {
@@ -320,12 +358,10 @@ protected:
         ifs_->close();
         delete ifs_;
         ifs_ =new std::ifstream(getCufrrentInterval().file_name, std::ios::binary);
-
     }
 
 
 
-    friend class ParametersDB_IFS;
 
     std::ifstream*              ifs_  = NULL;
 
@@ -354,7 +390,10 @@ protected:
 };
 
 
-void                        readParametersList(std::string database_Fame, std::vector<Parameter_IFS* >& parameter_list);
+
+
+
+bool                        readParametersList(std::string database_Fame, std::vector<Parameter_IFS* >& parameter_list);
 std::vector<Parameter_IFS*> readParametersList(std::string database_Fame);
 
 class ParametersDB_IFS
@@ -392,12 +431,14 @@ public:
     }
 
     bool addParametersSet(const std::string &file_name) {
-        readParametersList(file_name, db_parameters_);
+        return readParametersList(file_name, db_parameters_);
     }
 
     bool addParametersSet(const std::vector<std::string> &file_name_list) {
+        auto ret= true;
         for(auto file_name : file_name_list)
-            readParametersList(file_name, db_parameters_);
+            ret&=readParametersList(file_name, db_parameters_);
+        return ret;
     }
 
     const std::vector<std::string>  getNamesList() {
@@ -406,7 +447,6 @@ public:
             namesList.push_back(i->getName());
         return namesList;
     }
-
 
     const std::vector<Parameter_IFS*>& getDBParameterList() const  {
         return db_parameters_;
@@ -447,20 +487,7 @@ public:
 
 private:
 
-    DataInterval createInterval(TimeInterval time_interval ,double frequency, RPMTypesEn target_ty ,const std::string &filename="" ,bool local = true){
-        DataInterval interval;
 
-        interval.type=target_ty;
-        interval.offs=0;
-        interval.size=sizeOfTy(target_ty)*(int64_t)((time_interval.end - time_interval.bgn) * frequency);
-        interval.frequency=frequency;
-        interval.time_interval=time_interval;
-
-        interval.file_name=filename;
-        interval.local=local;
-
-        return interval;
-    }
 
     bool intersection(std::vector<DataInterval> &ret,Parameter_IFS* parameter_a, Parameter_IFS* parameter_b, const std::string &name="", RPMTypesEn target_ty = RPMTypesEn::PRM_TYPE_UNKNOWN) {
         if (parameter_a->frequency_ != parameter_b->frequency_) {
@@ -472,7 +499,6 @@ private:
             return false;
         }
         auto frequency = parameter_a->frequency_;
-
 
         for (auto a : parameter_a->interval_list_) {
             for (auto b : parameter_b->interval_list_) {
@@ -491,8 +517,6 @@ private:
                 }   
             }
         }
-        
-
 
         return true;
     }
