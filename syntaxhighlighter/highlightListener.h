@@ -44,9 +44,21 @@ private:
 
 class EErrorListener : public antlr4::BaseErrorListener
 {
+public:
+    EErrorListener(HighlightStyle * style){
+        highlightStyle=style;
+    }
+private:
     virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol, size_t line, size_t charPositionInLine, const std::string & msg, std::exception_ptr e) override{
-        qDebug()<<"line " << line << "; pos " << charPositionInLine << ":" << "_" << ". \n";
+        //qDebug()<<"line " << line << "; pos " << charPositionInLine << ":" << "_" << ". \n";
         //errorMessage = "line " << line << "; pos " << charPositionInLine << ":" << "_" << ". ";
+
+        int start   =(int)charPositionInLine;
+        int length  =(int)(offendingSymbol->getText().size());
+        auto format= &highlightStyle->unknownIdFormat;
+
+        formatMap[line].push_back({start,length,format});
+
         out << "line " << line << "; pos " << charPositionInLine << ":" << "_" << ". ";
         out << "error: ";
         out << msg.c_str() << ".\n";
@@ -66,6 +78,9 @@ public:
 private:
     bool error=false;
     std::stringstream out;
+    HighlightStyle * highlightStyle;
+public:
+    std::map<int, std::vector<HighlightUint> >    formatMap ;
     //QString errorMessage;
 
 };

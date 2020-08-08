@@ -68,6 +68,9 @@ std::string toString(RPMTypesEn arg) {
 #undef CASE_OP
 }
 
+
+
+
 bool fromJSON(const json::Value &DataFragment, DataInterval & dataInterval) {
 
     json::ObjectMapper O(DataFragment);
@@ -108,7 +111,9 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
     return dataInterval;
 }
 
- void readParametersList(std::string databaseFName, std::vector<ParameterInfo>& parameterInfoList) {
+
+
+void readParametersList(std::string databaseFName, std::vector<Parameter_IFS*>& parameterList) {
     std::ifstream ifs(databaseFName);
     std::string content(
         (std::istreambuf_iterator<char>(ifs)),
@@ -118,35 +123,43 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
     auto e =json::parse(content);
     json::Value &jValue=e.get();
 
-    json::Object* jObject          = jValue.getAsObject();
+    json::Object* jObject          =   jValue.getAsObject();
     json::Array*  parametersList   = (*jObject)["Parameters.List"].getAsArray();
-
 
     json::Object* parameter        = (*parametersList)[0].getAsObject();
 
     for (auto i : *parametersList) {
         json::Object   pObject=*i.getAsObject();
-        ParameterInfo  parameterInfo;
 
-        parameterInfo.parameter_name     =   pObject[" Name"].getAsString().getValue();
         json::Array & DataFilesList     = *(pObject["Data.Files.List"].getAsArray());
         json::Array & DataFragmentsList = *(pObject["Data.Fragments.List"].getAsArray());
 
 
-        for (auto k : DataFragmentsList) {
-            DataInterval di= getDataInterval(k, DataFilesList);
-            parameterInfo.interval_list.push_back(di);
+        std::vector<DataInterval> interval_list;
+        for (auto k : DataFragmentsList)
+            interval_list.push_back(getDataInterval(k, DataFilesList));
 
-        }
 
-        parameterInfoList.push_back(parameterInfo);
+        json::ObjectMapper O(i);
+        std::string  name;
+        TimeInterval time_interval;
+
+
+        bool ret= true;
+        ret &=O.map(" name", name);
+        ret &=O.map("sTime.Begin", time_interval.bgn);
+        ret &=O.map("sTime.End", time_interval.end);
+
+        Parameter_IFS * parameter= new Parameter_IFS(name, time_interval, interval_list);
+
+        parameterList.push_back(parameter);
     }
-
 }
 
 
-std::vector<ParameterInfo>  readParametersList(std::string databaseFName) {
-    std::vector<ParameterInfo>  parameterInfoList;
+
+std::vector<Parameter_IFS*>  readParametersList(std::string databaseFName) {
+    std::vector<Parameter_IFS *>  parameterInfoList;
     readParametersList(databaseFName, parameterInfoList);
     return parameterInfoList;
 }

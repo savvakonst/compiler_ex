@@ -3,23 +3,16 @@
 #include <strstream>
 #include <fstream>
 
-
-#include "antlr4-runtime.h"
-#include "EGrammarLexer.h"
-#include "EGrammarParser.h"
-#include "EGrammarBaseListener.h"
-
-#include "body.h"
-#include "Line.h"
-#include "treeShapeListener.h"
-#include "llvmHdrs.h"
-#include "llvm/Support/JSON.h"
-#include "llvm/Support/CommandLine.h"
 #include "ioIfs.h"
 #include "printIfs.h"
+
+#include "body.h"
+#include "treeShapeListener.h"
+#include "llvmHdrs.h"
+#include "llvm/Support/CommandLine.h"
+
  
 using namespace llvm;
-
 
 
 void jit_init() {
@@ -80,14 +73,12 @@ int main(int argc, const char* argv[]) {
     ExColors colorReset = ExColors::RESET;
     ExColors colorRed   = ExColors::RED;
     ExColors colorGreen = ExColors::GREEN;
-    Delimiter delimiter =Delimiter::GREEN;
+    Delimiter delimiter = Delimiter::GREEN;
 
 
-    std::vector<ParameterInfo> parametersList;
-    for(auto fname: inputDataBaseFile)
-        readParametersList(fname, parametersList);
 
-    ParametersDB_IFS parameters(parametersList,"");
+    ParametersDB_IFS parameterDB(inputDataBaseFile);
+
     KEXParser  parser(inputFile);
 
     LLVMContext* context = new LLVMContext() ;
@@ -98,7 +89,6 @@ int main(int argc, const char* argv[]) {
 
     try{
         parser.walk();
-      
         auto body= parser.getActivBody();
 
         std::map<std::string, std::string> parameterNameList = body->getParameterLinkNames();
@@ -108,8 +98,8 @@ int main(int argc, const char* argv[]) {
 
         stack<Variable*> args;
         for (auto i : parameterNameList) {
-            auto p =parameters[i.second];
-            if (!isEmpty(p))
+            auto p =parameterDB[i.second];
+            if (p!=NULL)
                 args.push(new Line(i.first, p));
         }
 
@@ -121,7 +111,6 @@ int main(int argc, const char* argv[]) {
             llvm::outs() << colorRed << "there are no input database file\n" << colorReset;
             return 1;
         }
-
 
         body=parser.getActivBody()->genBodyByPrototype(args, false);
         body->symplyfy();
@@ -138,13 +127,9 @@ int main(int argc, const char* argv[]) {
         if (showBits.isSet(redusedFSR))
             llvm::outs() << delimiter << body->print("", false, true);
 
-
-
-
         body->reduce(); //atavism
 
-
-        Module *M=moduleUPtr.get();
+        Module *M = moduleUPtr.get();
 
         Table*            table = new Table(M);
         TableGenContext context = TableGenContext(table);
@@ -158,8 +143,6 @@ int main(int argc, const char* argv[]) {
 
         table->calculateBufferLength();
         table->generateIR();
-
-
 
         auto mainF=M->getFunction("main");
 

@@ -56,6 +56,9 @@ public:
   virtual void enterCallConvolve(EGrammarParser::CallConvolveContext *ctx) = 0;
   virtual void exitCallConvolve(EGrammarParser::CallConvolveContext *ctx) = 0;
 
+  virtual void enterMoreLess(EGrammarParser::MoreLessContext *ctx) = 0;
+  virtual void exitMoreLess(EGrammarParser::MoreLessContext *ctx) = 0;
+
   virtual void enterParens(EGrammarParser::ParensContext *ctx) = 0;
   virtual void exitParens(EGrammarParser::ParensContext *ctx) = 0;
 
@@ -80,6 +83,9 @@ public:
   virtual void enterSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext *ctx) = 0;
   virtual void exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext *ctx) = 0;
 
+  virtual void enterMoreeqLesseq(EGrammarParser::MoreeqLesseqContext *ctx) = 0;
+  virtual void exitMoreeqLesseq(EGrammarParser::MoreeqLesseqContext *ctx) = 0;
+
   virtual void enterCallFunc(EGrammarParser::CallFuncContext *ctx) = 0;
   virtual void exitCallFunc(EGrammarParser::CallFuncContext *ctx) = 0;
 
@@ -100,6 +106,9 @@ public:
 
   virtual void enterId(EGrammarParser::IdContext *ctx) = 0;
   virtual void exitId(EGrammarParser::IdContext *ctx) = 0;
+
+  virtual void enterEquality(EGrammarParser::EqualityContext *ctx) = 0;
+  virtual void exitEquality(EGrammarParser::EqualityContext *ctx) = 0;
 
 
 };

@@ -2,12 +2,12 @@
 #include "textEdit.h"
 
 
-void TextEdit::updateLineNumberAreaWidth(int /* newBlockCount */){
+void KexEdit::updateLineNumberAreaWidth(int /* newBlockCount */){
 
     setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 }
 
-void TextEdit::updateLineNumberArea(const QRect &rect, int dy){
+void KexEdit::updateLineNumberArea(const QRect &rect, int dy){
 
     if (dy)
         lineNumberArea->scroll(0, dy);
@@ -18,7 +18,7 @@ void TextEdit::updateLineNumberArea(const QRect &rect, int dy){
         updateLineNumberAreaWidth(0);
 }
 
-void TextEdit::resizeEvent(QResizeEvent *e){
+void KexEdit::resizeEvent(QResizeEvent *e){
 
     TemplateTextEdit::resizeEvent(e);
 
@@ -27,7 +27,7 @@ void TextEdit::resizeEvent(QResizeEvent *e){
     setTabStopWidth(fontMetrics().width(' ') * tabWidth);
 }
 
-void TextEdit::highlightCurrentLine(){
+void KexEdit::highlightCurrentLine(){
 
     QList<QTextEdit::ExtraSelection> extraSelections;
 
@@ -47,7 +47,7 @@ void TextEdit::highlightCurrentLine(){
 }
 
 
-void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
+void KexEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
     QPainter painter(lineNumberArea);
     painter.fillRect(event->rect(), Qt::lightGray);
@@ -75,7 +75,7 @@ void TextEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
     }
 }
 
-int TextEdit::lineNumberAreaWidth()
+int KexEdit::lineNumberAreaWidth()
 {
     int digits = 1;
     int max = qMax(1, blockCount());
@@ -93,7 +93,7 @@ int TextEdit::lineNumberAreaWidth()
 
 
 
-LineNumberArea::LineNumberArea(TextEdit *editor) : QWidget(editor), editor(editor){}
+LineNumberArea::LineNumberArea(KexEdit *editor) : QWidget(editor), editor(editor){}
 
 QSize LineNumberArea::sizeHint() const {
     return QSize(editor->lineNumberAreaWidth(), 0);

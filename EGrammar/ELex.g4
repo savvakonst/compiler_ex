@@ -15,14 +15,23 @@ C_INT64:    'int64';
 
 SPEC_SYMBOL : 'func' | 'return ' | 'convolve' | 'range' | 'shift'| 'param' | 'out';
 
-MUL :   '*' ; // assigns token name to '*' used above in grammar
-DIV :   '/' ;
-ADD :   '+' ;
-SUB :   '-' ;
+MUL :     '*' ;
+DIV :     '/' ;
+ADD :     '+' ;
+SUB :     '-' ;
+EQ :      '==';
+NEQ :     '!=';
+LESS_ :    '<' ;
+MORE_ :    '>' ;
+LSH :     '<<';
+RSH :     '>>';
+LESSEQ :  '<=';
+MOREEQ :  '=>';
+
 ID  :   [a-zA-Z][a-zA-Z0-9_]* ;
 
 
- 
+
 
 
 INT64 : [0-9]+'i64'  ;
@@ -40,9 +49,4 @@ STRINGLITERAL :   '"' ~ [\r\n"]* '"' ;
 COMMENT       :   '#' ~ [\r\n]* -> skip;
 
 NEWLINE       :   ('\r'? '\n')  ;     // return newlines to parser (is end-statement signal)
-WS            :   [ \t]+ -> skip ;  // toss out whitespace
-
-
-
-
-
+WS            :   [ \t]+ -> skip ;  

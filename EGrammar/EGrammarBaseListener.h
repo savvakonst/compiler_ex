@@ -58,6 +58,9 @@ public:
   virtual void enterCallConvolve(EGrammarParser::CallConvolveContext * /*ctx*/) override { }
   virtual void exitCallConvolve(EGrammarParser::CallConvolveContext * /*ctx*/) override { }
 
+  virtual void enterMoreLess(EGrammarParser::MoreLessContext * /*ctx*/) override { }
+  virtual void exitMoreLess(EGrammarParser::MoreLessContext * /*ctx*/) override { }
+
   virtual void enterParens(EGrammarParser::ParensContext * /*ctx*/) override { }
   virtual void exitParens(EGrammarParser::ParensContext * /*ctx*/) override { }
 
@@ -82,6 +85,9 @@ public:
   virtual void enterSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext * /*ctx*/) override { }
   virtual void exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext * /*ctx*/) override { }
 
+  virtual void enterMoreeqLesseq(EGrammarParser::MoreeqLesseqContext * /*ctx*/) override { }
+  virtual void exitMoreeqLesseq(EGrammarParser::MoreeqLesseqContext * /*ctx*/) override { }
+
   virtual void enterCallFunc(EGrammarParser::CallFuncContext * /*ctx*/) override { }
   virtual void exitCallFunc(EGrammarParser::CallFuncContext * /*ctx*/) override { }
 
@@ -102,6 +108,9 @@ public:
 
   virtual void enterId(EGrammarParser::IdContext * /*ctx*/) override { }
   virtual void exitId(EGrammarParser::IdContext * /*ctx*/) override { }
+
+  virtual void enterEquality(EGrammarParser::EqualityContext * /*ctx*/) override { }
+  virtual void exitEquality(EGrammarParser::EqualityContext * /*ctx*/) override { }
 
 
   virtual void enterEveryRule(antlr4::ParserRuleContext * /*ctx*/) override { }

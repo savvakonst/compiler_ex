@@ -15,11 +15,12 @@ public:
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
     T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
     T__14 = 15, T__15 = 16, T__16 = 17, T__17 = 18, T__18 = 19, T__19 = 20, 
-    T__20 = 21, LOG = 22, LOG10 = 23, COS = 24, SIN = 25, EXP = 26, C_FLOAT = 27, 
-    C_INT = 28, C_DOUBLE = 29, C_INT64 = 30, SPEC_SYMBOL = 31, MUL = 32, 
-    DIV = 33, ADD = 34, SUB = 35, ID = 36, INT64 = 37, INT = 38, DOUBLE = 39, 
-    FLOAT = 40, DoublePostfix = 41, FloatPostfix = 42, STRINGLITERAL = 43, 
-    COMMENT = 44, NEWLINE = 45, WS = 46
+    T__20 = 21, T__21 = 22, LOG = 23, LOG10 = 24, COS = 25, SIN = 26, EXP = 27, 
+    C_FLOAT = 28, C_INT = 29, C_DOUBLE = 30, C_INT64 = 31, SPEC_SYMBOL = 32, 
+    MUL = 33, DIV = 34, ADD = 35, SUB = 36, EQ = 37, NEQ = 38, LESS_ = 39, 
+    MORE_ = 40, LSH = 41, RSH = 42, LESSEQ = 43, MOREEQ = 44, ID = 45, INT64 = 46, 
+    INT = 47, DOUBLE = 48, FLOAT = 49, DoublePostfix = 50, FloatPostfix = 51, 
+    STRINGLITERAL = 52, COMMENT = 53, NEWLINE = 54, WS = 55
   };
 
   enum {
@@ -276,6 +277,19 @@ public:
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
+  class  MoreLessContext : public ExprContext {
+  public:
+    MoreLessContext(ExprContext *ctx);
+
+    antlr4::Token *op = nullptr;
+    std::vector<ExprContext *> expr();
+    ExprContext* expr(size_t i);
+    antlr4::tree::TerminalNode *MORE_();
+    antlr4::tree::TerminalNode *LESS_();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
   class  ParensContext : public ExprContext {
   public:
     ParensContext(ExprContext *ctx);
@@ -363,6 +377,18 @@ public:
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
+  class  MoreeqLesseqContext : public ExprContext {
+  public:
+    MoreeqLesseqContext(ExprContext *ctx);
+
+    antlr4::Token *op = nullptr;
+    std::vector<ExprContext *> expr();
+    ExprContext* expr(size_t i);
+    antlr4::tree::TerminalNode *LESSEQ();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
   class  CallFuncContext : public ExprContext {
   public:
     CallFuncContext(ExprContext *ctx);
@@ -433,6 +459,19 @@ public:
     IdContext(ExprContext *ctx);
 
     antlr4::tree::TerminalNode *ID();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  EqualityContext : public ExprContext {
+  public:
+    EqualityContext(ExprContext *ctx);
+
+    antlr4::Token *op = nullptr;
+    std::vector<ExprContext *> expr();
+    ExprContext* expr(size_t i);
+    antlr4::tree::TerminalNode *EQ();
+    antlr4::tree::TerminalNode *NEQ();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };

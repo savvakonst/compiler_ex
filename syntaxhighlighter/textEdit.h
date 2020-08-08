@@ -6,7 +6,7 @@
 #include <QMainWindow>
 #include <QtWidgets>
 
-class TextEdit;
+class KexEdit;
 class TemplateTextEdit;
 class SearchWidget : public QWidget {
     Q_OBJECT
@@ -90,14 +90,14 @@ private:
 class LineNumberArea : public QWidget
 {
 public:
-    LineNumberArea(TextEdit *editor);
+    LineNumberArea(KexEdit *editor);
     QSize sizeHint() const override  ;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    TextEdit *editor;
+    KexEdit *editor;
 };
 
 
@@ -241,19 +241,19 @@ private:
 };
 
 
-class TextEdit:public TemplateTextEdit{
+class KexEdit:public TemplateTextEdit{
     Q_OBJECT
 public:
-    TextEdit(): TemplateTextEdit() {
+    KexEdit(): TemplateTextEdit() {
         highlighter = new Highlighter(this->document());
         highlightStyle =HighlightStyle();
         connect(this, SIGNAL(textChanged()), this, SLOT(rehighlight()));
 
         lineNumberArea = new LineNumberArea(this);
 
-        connect(this, &TextEdit::blockCountChanged, this, &TextEdit::updateLineNumberAreaWidth);
-        connect(this, &TextEdit::updateRequest, this, &TextEdit::updateLineNumberArea);
-        connect(this, &TextEdit::cursorPositionChanged, this, &TextEdit::highlightCurrentLine);
+        connect(this, &KexEdit::blockCountChanged, this, &KexEdit::updateLineNumberAreaWidth);
+        connect(this, &KexEdit::updateRequest, this, &KexEdit::updateLineNumberArea);
+        connect(this, &KexEdit::cursorPositionChanged, this, &KexEdit::highlightCurrentLine);
 
         updateLineNumberAreaWidth(0);
         highlightCurrentLine();
@@ -279,7 +279,7 @@ public Q_SLOTS:
         EGrammarParser parser(&tokens);
 
         parser.removeErrorListeners();
-        EErrorListener errorListner;
+        EErrorListener errorListner(&highlightStyle);
         parser.addErrorListener(&errorListner);
 
 

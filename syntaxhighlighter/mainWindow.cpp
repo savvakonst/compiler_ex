@@ -77,7 +77,7 @@ void MainWindow::setupEditor(){
 
     font.setPointSizeF(11.0);
 
-    editor = new TextEdit;
+    editor = new KexEdit;
     editor->setFont(font);
     editor->setStyleSheet("QPlainTextEdit{"
                           "font-family:'Consolas';"

@@ -38,7 +38,7 @@ private:
 
     RunOutputBrowser*   runOutput;
 
-    TextEdit*           editor;
+    KexEdit*           editor;
     QProcess*           currentProcess =NULL;
 
     QMap<QString,QCheckBox*> properties;

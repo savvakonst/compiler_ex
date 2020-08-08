@@ -1,8 +1,8 @@
 grammar EGrammar;
 import ELex;
 
-//C:\Qt\Examples\Qt-5.12.8\widgets\richtext\syntaxhighlighter
-//C:\Express_expr_compiler\cpp_parser
+
+
 start:  NEWLINE* (stat? NEWLINE)* EOF;
 
 stat:   func                                                                                # defFunc
@@ -40,6 +40,9 @@ expr:   ID '(' (expr (','expr)*) ')'                                # callFunc
     |   expr ('**'|'^')   expr                                      # pow
     |   expr op=('*'|'/') expr                                      # mulDiv
     |   expr op=('+'|'-') expr                                      # addSub
+    |   expr op=('>'|'<') expr                                      # moreLess
+    |   expr op=('>='|'<=') expr                                    # moreeqLesseq
+    |   expr  op=('=='|'!=') expr                                   # equality
     |   expr '?' left_expr ':' right_expr                           # condExpr
     |   '-' expr                                                    # inv
     |   (DOUBLE|FLOAT|INT64|INT)                                    # const
@@ -47,6 +50,3 @@ expr:   ID '(' (expr (','expr)*) ')'                                # callFunc
     |   '(' expr ')'                                                # parens
     |   '[' (expr (','expr)*) ']'                                   # smallArrayDefinition
     ;
-
-
-

@@ -1,5 +1,6 @@
 #ifndef LINE_H
 #define LINE_H
+
 #include <iostream>
 #include <vector>
 #include "variable.h"
@@ -42,7 +43,7 @@ public:
         dsType_ = dsty;
         is_arg = true;
     }
-
+    /*
     Line(std::string name, ParameterInfo parameterInfo) {
         names_.push_back(name);
         name_       = name;
@@ -54,7 +55,7 @@ public:
          
         parameter_     = new Parameter_IFS(parameterInfo);
     } //to remove
-
+    */
     Line(std::string name, Parameter_IFS * parameter) {
         names_.push_back(name);
         name_       = name;

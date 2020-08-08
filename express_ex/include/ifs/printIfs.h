@@ -5,11 +5,9 @@
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/JSON.h"
 
-
-
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ParameterInfo &di, std::string offset="");
+llvm::raw_ostream &stream(llvm::raw_ostream &OS, const Parameter_IFS &di, std::string offset="");
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const DataInterval &data_interval, std::string offset="");
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo &di, std::string offset="");
+//llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo &di, std::string offset="");
 
 template<typename T>
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<T> & arg) {
@@ -90,28 +88,33 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ExColors & arg
     }
     return OS;
 }
+
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Delimiter & arg) {
     OS.SetUnbuffered();
 
     OS << (ExColors)(arg) << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << (((int)arg <= (int)ExColors::RESET) ? ExColors::RESET : ExColors::AnsiRESET) << "\n";
     return OS;
 }
+
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const RPMTypesEn & arg) {
     OS << toString(arg);
     return OS;
 }
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ParameterInfo & arg) {
-    stream(OS, arg);
-    return OS;
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Parameter_IFS & arg) {
+    std::stringstream stream;
+    arg.stream(stream);
+    return OS << stream.str();
 }
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const DataInterval & arg) {
     stream(OS, arg);
     return OS;
 }
+
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersDB_IFS & arg) {
     auto db_parameters_  =arg.getDBParameterList();
     for (auto i : db_parameters_)
-        ::stream(OS, i);
+        ::stream(OS, *i);
     return OS;
 }
 
