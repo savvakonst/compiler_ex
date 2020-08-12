@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include "types_jty.h"
-
+#include "ParameterIfs.h"
 
 void print_error(const std::string &content);
 void print_IR_error(const std::string &content);
@@ -309,6 +309,9 @@ inline size_t sizeOfTy(TypeEn type) {
         return size;
 }
 
+
+TypeEn      RPMType2JITType(RPMTypesEn arg);
+RPMTypesEn  JITType2RPMType(TypeEn arg);
 
 
 #endif // COMMON_H

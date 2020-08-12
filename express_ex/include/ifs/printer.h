@@ -1,11 +1,12 @@
 #ifndef PRINTIFS_H
 #define PRINTIFS_H
 
-#include "ioIfs.h"
+#include <map>
+#include "ParameterIO.h"
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/JSON.h"
 
-llvm::raw_ostream &stream(llvm::raw_ostream &OS, const Parameter_IFS &di, std::string offset="");
+llvm::raw_ostream &stream(llvm::raw_ostream &OS, const SyncParameter &di, std::string offset="");
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const DataInterval &data_interval, std::string offset="");
 //llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo &di, std::string offset="");
 
@@ -15,6 +16,22 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<T>
         OS << i << " ";
     return OS;
 }
+
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<ParameterIfs*> & arg) {
+    std::stringstream stream;
+    for (auto i : arg)
+        if (i!=NULL)
+            OS << i->stream(stream).str() << " ";
+    return OS;
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParameterIfs & arg) {
+    std::stringstream stream;
+    OS << arg.stream(stream).str() << " ";
+    return OS;
+}
+
 
 template<typename Key_T, typename _T>
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::map<Key_T, _T> & arg) {
@@ -91,7 +108,6 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ExColors & arg
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Delimiter & arg) {
     OS.SetUnbuffered();
-
     OS << (ExColors)(arg) << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << (((int)arg <= (int)ExColors::RESET) ? ExColors::RESET : ExColors::AnsiRESET) << "\n";
     return OS;
 }
@@ -101,17 +117,18 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const RPMTypesEn & a
     return OS;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Parameter_IFS & arg) {
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const SyncParameter & arg) {
     std::stringstream stream;
     arg.stream(stream);
     return OS << stream.str();
 }
+
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const DataInterval & arg) {
     stream(OS, arg);
     return OS;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersDB_IFS & arg) {
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersDB & arg) {
     auto db_parameters_  =arg.getDBParameterList();
     for (auto i : db_parameters_)
         ::stream(OS, *i);

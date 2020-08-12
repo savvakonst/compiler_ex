@@ -121,6 +121,7 @@ public:
             return decimationParameter;
         else 
             print_error("getSliceParameter");
+        return -1;
     }
 
 

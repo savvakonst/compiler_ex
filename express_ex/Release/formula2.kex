@@ -4,13 +4,11 @@ function calc(i, j,num)
   return v
 end
 
-
 function calc_new(i, j)
   a = 0*1
   v = i+j**i+cos(1)
   return a
 end
-
 
 function sgn(arg )
   return arg ? arg : 0
@@ -28,5 +26,4 @@ x  = convolve( f, x**19 )
 x  = x**2
 z2 = z**z
 
-return x ,z2
-
+return x ,z2+y

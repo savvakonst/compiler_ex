@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include "llvm/Support/raw_ostream.h"
 #include "variable.h"
 #include "line.h"
 #include "operations.h"
@@ -14,9 +15,6 @@ public:
 
     Body(std::string name = "main", bool isPrototype = false);
     ~Body();
-
-    Line*       getLastLineFromName(std::string name);
-    std::string getName() { return name_; };
 
 
     bool    isRetStackFull () {if (name_ != "main") return 0 < returnStack_.size(); else return false;}
@@ -68,8 +66,14 @@ public:
     //create call
     void addCall            (Body* body);
 
-    stack<Line*>  getRet     () { return returnStack_; }
-    int           getArgCount() { return argCount_; }
+
+    stack<Line*>               getRet                 () { return returnStack_; }
+    int                        getArgCount            () { return argCount_; }
+    Line*                      getLastLineFromName    (std::string name);
+    std::string                getName                () { return name_; };
+    const stack<ParameterIfs*> getOutputParameterList ();
+
+
 
     // tree walker methods
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
@@ -130,8 +134,7 @@ public:
         visitorStack->push(ret);
         ret->setBufferLength(this);
 
-        is_nused_ = false;
-        
+        is_nused_ = false; 
     }
 
     /*
@@ -144,7 +147,7 @@ public:
     }
     */
     virtual void genBlocksVisitExit  (TableGenContext*  context) override {
-
+         
          body_->genTable(context);
          uniqueName_ =(isLargeArr(this) ? "fb" : "fs") + std::to_string(context->getUniqueIndex());
          context->setUint(this);

@@ -238,6 +238,7 @@ void MainWindow::setupRunMenu()
     addToolBarBreak();
     addProperty("allFSR");
     addProperty("redusedFSR");
+    addProperty("outputPrm");
     addProperty("tableSSR");
     addProperty("llvmIRcode");
     properties["ansi"]->setChecked(true);

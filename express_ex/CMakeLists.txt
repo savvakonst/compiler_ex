@@ -163,9 +163,13 @@ if(MSVC)
 
 
     SET(llvmLibPath ${llvmDir}/Lib/x64)
-    SET(antlrLibPath ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
-    
-    target_link_directories(express_ex PUBLIC  ${llvmLibPath} ${antlrLibPath})
+
+    SET(antlrReleaseLibPath ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
+    SET(antlrDebugLibPath ${antlr4Dir}/lib/vs-2015/x64/Debug\ DLL)
+    SET(antlrLibPath    ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
+    #debug ${llvmLibPath} ${antlrDebugLibPath}
+    #target_link_directories(express_ex PUBLIC ${llvmLibPath} "$<$<CONFIG:Debug>: ${antlrDebugLibPath}>"  "$<$<CONFIG:Release>: ${antlrReleaseLibPath}>" )
+    target_link_directories(express_ex PUBLIC ${llvmLibPath}  ${antlrReleaseLibPath} )
     target_link_libraries(express_ex ${ObjNames} antlr4-runtime )
 
 
@@ -178,15 +182,15 @@ if(MSVC)
         _CRT_NONSTDC_NO_WARNINGS
         _SCL_SECURE_NO_DEPRECATE
         _SCL_SECURE_NO_WARNINGS
-        UNICODE
+        UNICODE 
         _UNICODE
         __STDC_CONSTANT_MACROS
         __STDC_FORMAT_MACROS
         __STDC_LIMIT_MACROS
     )
 
+   
     target_compile_options(express_ex PUBLIC "$<$<CONFIG:DEBUG>:/MD>")
-
 
     set_property(TARGET express_ex APPEND PROPERTY
         COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
@@ -196,10 +200,10 @@ if(MSVC)
     )
     
 
-    add_custom_command(TARGET express_ex PRE_BUILD 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${antlrLibPath}/antlr4-runtime.dll
-            $<TARGET_FILE_DIR:express_ex>) 
+    #add_custom_command(TARGET express_ex PRE_BUILD 
+    #    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    #        ${antlrLibPath}/antlr4-runtime.dll
+    #        $<TARGET_FILE_DIR:express_ex>) 
 
     #set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT "express_ex")
     set_property (DIRECTORY PROPERTY VS_STARTUP_PROJECT "express_ex")

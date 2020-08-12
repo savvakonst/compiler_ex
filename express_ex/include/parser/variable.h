@@ -1,11 +1,12 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
+
 #include <iostream>
 #include <string>
 #include "types_jty.h"
 #include "common.h"
 #include "table.h"
-//#include "IR_generator.h"
+#include "ParameterIO.h"
 
 using std::string;
 class Body;
@@ -14,9 +15,9 @@ class IRGenerator;
 class BodyGenContext {
 public:
     BodyGenContext (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr, bool isPrototype) {
-        varStack_=varStack;
-        namespace_ptr_=namespace_ptr;
-        isPrototype_=isPrototype;
+        varStack_       = varStack;
+        namespace_ptr_  = namespace_ptr;
+        isPrototype_    = isPrototype;
     }
     BodyGenContext (Body & body){}
     ~BodyGenContext() {}
@@ -72,8 +73,9 @@ public:
     Variable(Variable* arg1);
 
     virtual void setBuffered();
+    
     void setReturned() { is_returned=true; }
-
+    void setBufferLength(uint64_t central_length);
     void setBufferLength(uint64_t left, uint64_t right);
     void setBufferLength(Variable * var);
     void setLevel(int64_t var);
@@ -93,11 +95,14 @@ public:
     int64_t      getLength        () { return length_; }
     int64_t      getLevel         () { return level_; }
     int64_t      getDecimation    () { return decimation_; }
+    int64_t      getBufferLen     () { return bufferLength_; }
     int64_t      getLeftBufferLen () { return leftBufferLength_; }
     int64_t      getRightBufferLen() { return rightBufferLength_; }
     NodeTypeEn   getNodeType      () { return NodeTypeEn::terminalLine; }
     TypeEn       getType          () { return type_; }
     DataStructTypeEn getDSType    () { return dsType_; }
+    SyncParameter *  getPatameter () { return parameter_; }
+
 
     virtual Variable* getAssignedVal(bool deep = false) { return this; }
 
@@ -148,7 +153,9 @@ public:
 
     virtual void   calculate() override;
 
-    std::string printSmallArray();
+    std::string    printSmallArray();
+
+
 
 protected:
 
@@ -175,12 +182,16 @@ protected:
     string   textValue_ = "" ;
     string   uniqueName_ = "" ;
 
+
+
     int64_t  length_     = 1;
     int64_t  decimation_ = 0;
     int64_t  level_      = 0;
 
     int64_t  leftBufferLength_  = 0;
     int64_t  rightBufferLength_ = 0;
+
+    int64_t  bufferLength_ = 0;
 
     uint64_t binaryValue_  = 0;
     uint64_t usageCounter_ = 0;
@@ -190,6 +201,8 @@ protected:
     llvm::Value * IRValue_        = NULL;
     llvm::Value * IRLoadedBufferValue_ = NULL;
     llvm::Value * IRBufferRefPtr_ = NULL;
+
+    SyncParameter * parameter_= NULL;
 };
 
 
@@ -206,11 +219,6 @@ inline bool isLargeArr  (Variable* var1) { return var1 == DataStructTypeEn::larg
 inline bool isSimilar   (Variable* var1, Variable* var2) { return  (var1->getDSType() == var2->getDSType() && (var1->getLength() == var2->getLength())); }
 inline bool isÑompatible(Variable* var1, Variable* var2) { return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
 
-
-inline bool isUnknownTy (TypeEn type) { return type == TypeEn::unknown_jty; }
-inline bool isFloating  (TypeEn type) { return type >= TypeEn::float_jty; }
-inline bool isInteger   (TypeEn type) { return type <= TypeEn::int64_jty; }
-inline bool isUInteger  (TypeEn type) { return false; }
 
 inline bool isUnknownTy (Variable* var) { return var->getType() == TypeEn::unknown_jty; }
 inline bool isFloating  (Variable* var) { return var->getType() >= TypeEn::float_jty; }

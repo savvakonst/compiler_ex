@@ -18,18 +18,7 @@ Body::~Body()
 	}
 }
 
-Line* Body::getLastLineFromName(std::string name)
-{
-	if (lines_.size()<1)
-		return NULL;
-	for (int i = lines_.size()-1; i >= 0; i--) {
-		if (lines_[i]->haveTargetName(name)) 
-			return (lines_[i]);
-	}
-	print_error("unknown symbol " + name);
 
-	//auto  L = std::find_if(lines.rbegin(), lines.rend(), [&name](Line x) -> bool {return x.name == name; });
-}
 
 void Body::addLine(const std::string &name, Variable* var)
 {
@@ -237,6 +226,32 @@ void Body::addCall(Body* body){
 	auto b =isPrototype_? body : body->genBodyByPrototype(a,isPrototype_);
 	push(new Call(b,a));
 }
+
+
+
+Line* Body::getLastLineFromName(std::string name)
+{
+	if (lines_.size() < 1)
+		return NULL;
+	for (int i = lines_.size() - 1; i >= 0; i--) {
+		if (lines_[i]->haveTargetName(name))
+			return (lines_[i]);
+	}
+	print_error("unknown symbol " + name);
+	return NULL;
+}
+
+const stack<ParameterIfs*> Body::getOutputParameterList()
+{
+	stack<ParameterIfs*> pList;
+	for (auto i : returnStack_) {
+		pList.push(i->getAssignedVal(true)->getPatameter());
+	}
+	return pList;
+}
+
+
+
 // tree walker methods
 std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
@@ -417,6 +432,10 @@ void Body::genTable(TableGenContext * context){
 
 	stack<Variable*>  visitorStack;
 
+	if (name_ == "main")
+		for (auto& value : returnStack_) 
+			value->getAssignedVal(true)->setReturned();
+
 	for (auto& value : lines_) {
 		if (value->isArg() && (!value->isUnused())) {
 			context->setUint(value);
@@ -439,8 +458,8 @@ void Body::genTable(TableGenContext * context){
 
 		visitorStack.push(value->getAssignedVal());
 
-		if (name_ == "main")
-			value->getAssignedVal(true)->setReturned();
+		//if (name_ == "main")
+		//	value->getAssignedVal(true)->setReturned();
 
 		do {
 			auto var = visitorStack.pop();

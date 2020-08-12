@@ -1,20 +1,11 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "ioIfs.h"
+#include "ParameterIO.h"
 #include "common.h"
 #include "variable.h"
 
-TypeEn      RPMType2JITType(RPMTypesEn arg);
 
-
-/*
-typedef struct {
-	ex_size_t   length = 0;
-	ex_size_t   left_offset = 0;
-	ex_size_t   right_offset = 0;
-}BufferInfo;
-*/
 
 enum class BufferTypeEn {
 	input,
@@ -27,18 +18,12 @@ class Buffer {
 public:
 
 	Buffer(Variable * var) {
-		length_			  = var->getLength();
+		length_			  = var->getBufferLen();
 		left_offset_	  = var->getLeftBufferLen();
 		right_offset_	  = var->getRightBufferLen();
 		type_			  = TypeEn::unknown_jty;
 		type_			  = var->getType();
 		sizeof_data_type_ = sizeOfTy(type_);
-
-		ptr_ = new char[ sizeof_data_type_ * (length_ + left_offset_ + right_offset_) ];
-		//ptr_ = (char*)malloc(sizeof_data_type_ * (length_+ left_offset_ + right_offset_));
-		bottom_ptr_ = ptr_ + (left_offset_ + right_offset_) * sizeof_data_type_;
-		top_ptr_	= ptr_ + length_;
-
 	}
 
 	~Buffer(){
@@ -54,13 +39,24 @@ public:
 		return 0;
 	}
 
+	void setBufferLength(int64_t length) {
+		length_ = length;
+		ptr_ = new char[sizeof_data_type_ * (length_ + left_offset_ + right_offset_)];
+		bottom_ptr_ = ptr_ + (left_offset_ + right_offset_) * sizeof_data_type_;
+		top_ptr_	= ptr_ + length_;
+	}
+
 	virtual BufferTypeEn getBufferType() {
 		return BufferTypeEn::internal;
 	}
-
 	
-	template <typename T> 
-	T &stream(T &OS,  std::string offset="") {
+	virtual std::string  getName() { 
+		return "internal"; 
+	}
+
+
+	template <typename T>
+	T &stream(T &OS, std::string offset="") {
 		OS << offset << "BufferInfo{\n";
 		OS << offset << "  ptr: " << ptr_ << "\n";
 		OS << offset << "  length: ";
@@ -69,11 +65,12 @@ public:
 		OS << offset << "  left_offset: " << left_offset_ << "\n";
 		OS << offset << "  right_offset: " << right_offset_ << "\n";
 		OS << offset << "  type: " << toString(type_) << "\n";
-		OS << offset << "  name: " << "" << "\n";
+		//OS << offset << "  name: " << getName() << "\n";
+		OS << offset << "  name: " << getName() << "\n";
 		OS << offset << "}\n";
 		return OS;
 	}
-	
+
 
 protected:
 	TypeEn  type_=TypeEn::unknown_jty;
@@ -85,7 +82,7 @@ protected:
 	char* ptr_ =NULL;
 	char* bottom_ptr_=NULL;
 	char* top_ptr_=NULL;
-
+	std::string		link_name_ = std::string();
 };
 
 
@@ -93,7 +90,9 @@ protected:
 class InputBuffer: public Buffer {
 
 public:
-	InputBuffer(Parameter_IFS * parameter, Variable * var):Buffer(var) { parameter_ = parameter; }
+	InputBuffer( Variable * var):Buffer(var) {
+		parameter_ = var->getPatameter();
+	}
 	~InputBuffer(){ }
 
 	virtual int64_t init(){
@@ -112,9 +111,11 @@ public:
 		return BufferTypeEn::input;
 	}
 
+	virtual std::string  getName() { return parameter_->getName(); }
+
 protected:
-	Parameter_IFS * parameter_ = NULL;
-	std::string		link_name_ = std::string();
+	SyncParameter * parameter_ = NULL;
+
 };
 
 
@@ -122,16 +123,20 @@ protected:
 class OutputBuffer : public Buffer {
 
 public:
-	OutputBuffer(Variable * var) :Buffer(var) { }
-	~OutputBuffer() { }
+	OutputBuffer(Variable * var) :Buffer(var) {
+		parameter_ = var->getPatameter();
+	}
 
+	~OutputBuffer() { 
+		delete parameter_;
+	}
 
-	void addParameter(Parameter_IFS * parameter){
+	void addParameter(SyncParameter * parameter){
 		parameter_ = parameter;
 	}
 
 	virtual int64_t init() {
-		parameter_->open();
+		parameter_->open(true);
 		return 0;
 	}
 
@@ -144,8 +149,9 @@ public:
 		return BufferTypeEn::output;
 	}
 
+	virtual std::string  getName() { return parameter_->getName(); }
 protected:
-	Parameter_IFS * parameter_=NULL;
+	SyncParameter * parameter_=NULL;
 	std::string link_name_="";
 };
 

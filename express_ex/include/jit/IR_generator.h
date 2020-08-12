@@ -6,7 +6,7 @@
 #include <vector>
 #include "types_jty.h"
 #include "buffer.h"
-#include "ioIfs.h"
+#include "ParameterIO.h"
 #include "llvm/IR/IRBuilder.h"
 
 
@@ -109,7 +109,7 @@ public:
 
 
      
-    std::vector<Buffer*>  * getBuffer(BufferTypeEn bufferType = BufferTypeEn::input)  {
+    std::vector<Buffer*>  * getBufferList(BufferTypeEn bufferType = BufferTypeEn::input)  {
         return &buffer_list;
     }
 

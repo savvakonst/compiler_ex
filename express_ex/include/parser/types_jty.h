@@ -1,6 +1,6 @@
 #ifndef TYPES_JTS_H
 #define TYPES_JTS_H
-#include "llvm/Support/JSON.h"
+//#include "llvm/Support/JSON.h"
 typedef  int64_t  ex_size_t;
 
 
@@ -90,6 +90,7 @@ enum class OpCodeEn {
     convolve_f,
 
     decimation,
+    upsampling,
     shift,
 
     storeToBuffer,
@@ -177,6 +178,9 @@ inline bool isSlice(OpCodeEn x) {
 inline bool isDecimation(OpCodeEn x) {
     return x == OpCodeEn::decimation;
 }
+inline bool isUpsampling(OpCodeEn x) {
+    return x == OpCodeEn::upsampling;
+}
 inline bool isShift(OpCodeEn x) {
     return x == OpCodeEn::shift;
 }
@@ -215,15 +219,10 @@ inline std::string toString(TypeEn type)
 }
 
 
-class genContext
-{
-public:
-    genContext();
-    ~genContext();
-
-private:
-
-};
+inline bool isUnknownTy (TypeEn type) { return type == TypeEn::unknown_jty; }
+inline bool isFloating  (TypeEn type) { return type >= TypeEn::float_jty; }
+inline bool isInteger   (TypeEn type) { return type <= TypeEn::int64_jty; }
+inline bool isUInteger  (TypeEn type) { return false; }
 
 
 #endif // !1

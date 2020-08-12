@@ -25,8 +25,8 @@ SOURCES        += ../EGrammar/EGrammarBaseListener.cpp \
                   ../EGrammar/EGrammarParser.cpp
 
 
-LIBS += "$$PWD/../antlr4/lib/vs-2015/x64/Release DLL/antlr4-runtime.lib"
-
+Release:LIBS += "$$PWD/../antlr4/lib/vs-2015/x64/Release DLL/antlr4-runtime.lib"
+Debug::LIBS += "$$PWD/../antlr4/lib/vs-2015/x64/Debug DLL/antlr4-runtime.lib"
 
 
 # install
@@ -41,4 +41,4 @@ RESOURCES += \
     resource.qrc
 
 
-QMAKE_CXXFLAGS_DEBUG += /MT
+#QMAKE_CXXFLAGS_DEBUG += /MT

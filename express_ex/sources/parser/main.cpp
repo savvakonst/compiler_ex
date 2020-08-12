@@ -3,8 +3,8 @@
 #include <strstream>
 #include <fstream>
 
-#include "ioIfs.h"
-#include "printIfs.h"
+#include "ParameterIO.h"
+#include "printer.h"
 
 #include "body.h"
 #include "treeShapeListener.h"
@@ -33,25 +33,26 @@ void configOptimization(legacy::FunctionPassManager* TheFPM) {
     TheFPM->doInitialization();
 }
 
-
-
 bool         g_ansiEscapeCodes;
 
+
+
+
+
+
 int main(int argc, const char* argv[]) {
-    cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
 
     enum  ShowNames {
-        nameList, untypedFSR, activeNameList, allFSR, redusedFSR , tableSSR, llvmIRcode
+        nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
     };
-    cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
 
-
-    cl::opt<std::string>  inputFile("i", cl::desc("input source file"), cl::value_desc("filename"), cl::Required, cl::cat(mainCategory));
-    cl::opt<bool>         optimizationEnable("opt", cl::desc("optimization enable"), cl::Optional, cl::cat(mainCategory));
-    cl::opt<bool>         ansiEscapeCodes("ansi", cl::desc("enable ANSI escape codes"), cl::Optional, cl::cat(mainCategory));
-    cl::list<std::string> libraryPath("dir", cl::desc("list of available directories"), cl::value_desc("filename"), cl::ZeroOrMore, cl::cat(mainCategory));
-    cl::list<std::string> inputDataBaseFile("db", cl::desc("input data base files"), cl::value_desc("directory"), cl::ZeroOrMore, cl::cat(mainCategory));
-    cl::bits<ShowNames>   showBits( cl::desc("show:"), cl::cat(mainCategory), cl::ZeroOrMore,
+    static  cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
+    static  cl::opt<std::string>  inputFile("i", cl::desc("input source file"), cl::value_desc("filename"), cl::Required, cl::cat(mainCategory));
+    static  cl::opt<bool>         optimizationEnable("opt", cl::desc("optimization enable"), cl::Optional, cl::cat(mainCategory));
+    static  cl::opt<bool>         ansiEscapeCodes("ansi", cl::desc("enable ANSI escape codes"), cl::Optional, cl::cat(mainCategory));
+    static  cl::list<std::string> libraryPath("dir", cl::desc("list of available directories"), cl::value_desc("filename"), cl::ZeroOrMore, cl::cat(mainCategory));
+    static  cl::list<std::string> inputDataBaseFile("db", cl::desc("input data base files"), cl::value_desc("directory"), cl::ZeroOrMore, cl::cat(mainCategory));
+    static  cl::bits<ShowNames>   showBits(cl::desc("show:"), cl::cat(mainCategory), cl::ZeroOrMore,
         cl::values(
             clEnumVal(nameList, "names list"),
             clEnumVal(untypedFSR, "FSR(first stage representation) without type calculation"),
@@ -59,17 +60,21 @@ int main(int argc, const char* argv[]) {
             clEnumVal(allFSR, "full FSR(first stage representation)"),
             clEnumVal(redusedFSR, "redused FSR code"),
             clEnumVal(tableSSR, "table (second stage) representation"),
-            clEnumVal(llvmIRcode,  "llvm IR ")));
+            clEnumVal(outputPrm, "output parameters"),
+            clEnumVal(llvmIRcode, "llvm IR ")));
 
 
-    
+    cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
     cl::HideUnrelatedOptions(mainCategory);
     cl::ParseCommandLineOptions(argc, argv, "express jit");
+
 
     g_ansiEscapeCodes=ansiEscapeCodes;
 
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
+
+
     ExColors colorReset = ExColors::RESET;
     ExColors colorRed   = ExColors::RED;
     ExColors colorGreen = ExColors::GREEN;
@@ -77,7 +82,7 @@ int main(int argc, const char* argv[]) {
 
 
 
-    ParametersDB_IFS parameterDB(inputDataBaseFile);
+    ParametersDB parameterDB(inputDataBaseFile);
 
     KEXParser  parser(inputFile);
 
@@ -101,6 +106,8 @@ int main(int argc, const char* argv[]) {
             auto p =parameterDB[i.second];
             if (p!=NULL)
                 args.push(new Line(i.first, p));
+            else
+                print_error("can not find parameter " + i.second);
         }
 
         if (showBits.isSet(untypedFSR))
@@ -135,6 +142,19 @@ int main(int argc, const char* argv[]) {
         TableGenContext context = TableGenContext(table);
         
         body->genTable(&context);
+
+        
+
+        int index=0;
+        for (auto i : body->getOutputParameterList())
+            i->setName("out_" + std::to_string(index++));
+
+        if (showBits.isSet(outputPrm)) {
+            index=0;
+            for (auto i : body->getOutputParameterList()) {
+                llvm::outs() << delimiter << *i;
+            }
+        }
 
 
         if (showBits.isSet(tableSSR))

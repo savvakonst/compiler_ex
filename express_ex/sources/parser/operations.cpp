@@ -2,7 +2,7 @@
 #include "operations.h"
 #include <string>
 #include <sstream>
-
+#include <set>
 //void print_error(std::string &content);
 
 
@@ -106,13 +106,41 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 	uniqueName_ =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
 	context->setUint(this);
 	is_visited_ = false;
+
+	RPMTypesEn RPMType=JITType2RPMType(type_);
+
+	if (isSelect(opCode)	 || 
+		isArithetic(opCode)  || 
+		isBuiltInFunc(opCode)||
+		isSelect(opCode)	 ||
+		isConvolve(opCode)) {
+
+		std::vector<SyncParameter *> p_list;
+		for (auto i : operand) p_list.push_back(i->getAssignedVal(true)->getPatameter());
+		parameter_=intersection(p_list, RPMType, "");
+	}
+	else if (isTypeConv(opCode) ) {
+		parameter_ =retyping(operand.front()->getAssignedVal(true)->getPatameter(), RPMType, "");
+	}
+	else if (isSlice(opCode)) {
+
+	}
+
+	context->setParameter(parameter_);
+
+	if (isReturned()) {
+		parameter_ =new SyncParameter("", parameter_->getMainTimeInterval(), parameter_->getDataIntervalList(),false);
+		context->setParameter(parameter_);
+	}
+
+	if (parameter_!=NULL)
+		context->setParameter(parameter_);
 }
 
 void Operation::reduceLinksVisitExit()
 {
 	//for (size_t i=0; i<operand.size();i++)
 	//	operand[i]->getAssignedVal(true);
-
 	is_visited_ = false;
 }
 
@@ -123,6 +151,7 @@ void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
 	visitEnterStackUpdate(visitorStack);
 }
 */
+
 void Operation::visitEnter(stack<Variable*>* visitorStack){
 	is_visited_ = true;
 	visitorStack->push(this);

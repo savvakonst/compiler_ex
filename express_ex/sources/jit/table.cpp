@@ -1,13 +1,12 @@
 
 #include <sstream>
 
-
-
 #include "buffer.h"
 #include "body.h"
 #include "table.h"
 #include "llvmHdrs.h"
 #include "IR_generator.h"
+#include "printer.h"
 
 using namespace llvm;
 
@@ -22,14 +21,14 @@ SubBlock::SubBlock(Variable * var)
 
 void SubBlock::setUint(Variable * var)
 {
-    unitList.push(var);
+    uintList.push(var);
 }
 
 string SubBlock::print()
 {
     const size_t max_line_length=90;
     string out=std::string(4, ' ')+"L,R: " + std::to_string(leftLength) + "," + std::to_string(rightLength) + "\n";
-    for (auto i : unitList) {
+    for (auto i : uintList) {
         std::string txt       = i->printUint() + ";" + (i->isBuffered() ? " store" : "");
         std::string txtShifts = std::to_string(i->getLeftBufferLen()) + " : " + std::to_string(i->getRightBufferLen());
         std::string txtSkip   = std::string(max_line_length - ((txt.length() > max_line_length) ? 0 : txt.length()), ' ');
@@ -76,7 +75,7 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
             builder.getInt64(bufferLength + rightLength)));
     builder.SetCalcInsertPoint();
 
-    for (auto i : unitList)
+    for (auto i : uintList)
         i->setupIR(builder);
 
 
@@ -94,8 +93,17 @@ Block::Block(Variable* var) {
 }
 
 void Block::setUint(Variable * var){
-    unitList.push(var);
+    uintList.push(var);
     setUintToSubtable(var);
+}
+
+void Block::setBufferLength(uint64_t bufferLength_) {
+    bufferLength=bufferLength_;
+    for (auto i : subBlockList)
+        i->setBufferLength(bufferLength_);
+    for (auto i : uintList) {
+        i->setBufferLength(bufferLength_);
+    }
 }
 
 void Block::setUintToSubtable(Variable * var)
@@ -119,7 +127,7 @@ string  Block::print() {
         out+=i->print();
     }
     /*
-    for (auto i : unitList) {
+    for (auto i : uintList) {
         std::string txt       = i->printUint() + ";" + (i->isBuffered() ? " store" : "");
         std::string txtShifts = std::to_string(i->getLeftBufferLen()) + " : " + std::to_string(i->getRightBufferLen());
         std::string txtSkip   = std::string(max_line_length - ((txt.length() > max_line_length) ? 0 : txt.length()), ' ');
@@ -191,7 +199,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
         builder.SetCalcInsertPoint();
 
 
-        for (auto i : unitList)
+        for (auto i : uintList)
             i->setupIR(builder);
 
     }else if(type == CycleStageEn::start){
@@ -287,7 +295,7 @@ Value * genConvolve(IRGenerator & builder, llvm::Type* type, uintptr_t addr) {
 std::vector <Buffer* >   *g_buffers=NULL;
 
 
-ParametersDB_IFS*  g_IO_IFS =NULL;
+ParametersDB*  g_IO_IFS =NULL;
 
 bool isInvalidBuffers() {
     return 
@@ -323,12 +331,12 @@ void    Table::setUint(Variable * var){
         smallArrayList.push(var);
         return;
     }
-    for (auto i : columnList)
+    for (auto i : columnList_)
         if (i->getLength() == varLength) {
             i->setUint(var);
             return;
         }
-    columnList.push(new TableColumn(var));
+    columnList_.push(new TableColumn(var));
 }
 
 llvm::Function * Table::getFloatBIFunc(OpCodeEn op) { 
@@ -347,7 +355,7 @@ llvm::Function*  Table::getBIFunc(BuiltInFuncMap &UBIFMap, OpCodeEn op, Type * T
         return pos->second;
     }
     else {
-        Intrinsic::ID code =BIF2LLVMmap[op];
+        Intrinsic::ID code =BIF2LLVMmap_[op];
         Function* f=Intrinsic::getDeclaration(M, code, Ty);
         (UBIFMap)[op] = f;
         return f;
@@ -362,7 +370,7 @@ void    Table::declareFunctions() {
 }
 
 void    Table::declareBuiltInFunctions(BuiltInFuncMap &UBIFMap, Type * Ty) {
-    BIF2LLVMmap ={
+    BIF2LLVMmap_ ={
 {OpCodeEn::fpow, Intrinsic::pow},
 {OpCodeEn::cos, Intrinsic::cos},
 {OpCodeEn::sin, Intrinsic::sin},
@@ -385,7 +393,7 @@ string  Table::print() {
         out+="\t" + i->printUint() + ";\n";
     }
     out+="table:\n";
-    for (auto i : columnList) {
+    for (auto i : columnList_) {
         out+= i->print();
     }
     return out;
@@ -394,7 +402,7 @@ string  Table::print() {
 void Table::calculateBufferLength(std::string basicBlockPrefix){
 
     int maxLength=0;
-    int minLength=columnList[0]->getLength();
+    int minLength=columnList_[0]->getLength();
 
     typedef struct {
         uint64_t maxLength;
@@ -405,7 +413,7 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
 
     std::vector<group> groupList;
 
-    for (auto  i : columnList){
+    for (auto  i : columnList_){
         uint64_t length=i->getLength();
         bool exist=false;
        
@@ -420,7 +428,6 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
             }
         }
 
-
         if (!exist) {
             group g={ length ,length };
             g.columnList.push_back(i);
@@ -430,18 +437,19 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
 
     for (auto &j : groupList) {
 
-        int subMaxBufferLength = minBufferLength * j.maxLength / j.minLength;
+        int subMaxBufferLength = minBufferLength_ * j.maxLength / j.minLength;
         
-        if (subMaxBufferLength > maxBufferLength) {
+        if (subMaxBufferLength > maxBufferLength_) {
             llvm::outs() << "maxBufferLength = subMaxBufferLength;\n";
-            maxBufferLength = subMaxBufferLength;
+            maxBufferLength_ = subMaxBufferLength;
         }
-        iterations =  j.maxLength / maxBufferLength;
-        j.iterations =  j.maxLength / maxBufferLength;
+        iterations_ =  j.maxLength / maxBufferLength_;
+        j.iterations =  j.maxLength / maxBufferLength_;
 
         for (auto i : j.columnList){
-            i->setBufferLength(maxBufferLength / (j.maxLength / i->getLength()));
+            i->setBufferLength(maxBufferLength_ / (j.maxLength / i->getLength()));
         }
+
     }
     if (groupList.size() !=1)
         print_IR_error("non multiple large array lengths is not supported yet\n");
@@ -451,10 +459,13 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
 
 
 
+bool Table::generateIR(std::string basicBlockPrefix) {
 
-bool    Table::generateIR(std::string basicBlockPrefix) {
+
     LLVMContext & context = M->getContext();
-    IRGenerator builder(context, this);
+    if(builder_==NULL)
+        builder_=new IRGenerator(context, this);
+    IRGenerator &builder= *builder_;
 
     currentFunction = Function::Create(
         FunctionType::get(Type::getInt32Ty(context), {Type::getInt64PtrTy(context)->getPointerTo()}, false),
@@ -485,7 +496,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     BasicBlock* bb= BasicBlock::Create(context, "init_block", currentFunction);
     builder.SetInitInsertPoint(bb);
 
-    for (auto i : columnList) 
+    for (auto i : columnList_) 
        i->generateIR(builder,CycleStageEn::start);
 
     ///creating jump commands for init cycle
@@ -503,7 +514,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.SetLoopEnterInsertPoint(bbLoopEnter);
     Value* globIndex=builder.CreateLoad(globIndexAlloca, "glob_index");
 
-    for (auto i : columnList)
+    for (auto i : columnList_)
         i->generateIR(builder, CycleStageEn::midle);
    
     builder.CreateMidleBRs();
@@ -518,7 +529,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.SetCurrentCMPRes(
         builder.CreateICmpULT(
             nextGlobIndex,
-            builder.getInt64( (iterations-1) )));
+            builder.getInt64( (iterations_-1) )));
 
 
     BasicBlock* bbTerminalLoopEnter = BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
@@ -527,7 +538,7 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.DropBaseInsertPoint();
     
     bool  isNotIdle = false;
-    for (auto i : columnList)
+    for (auto i : columnList_)
         isNotIdle |= i->generateIR(builder, CycleStageEn::end);
    
     if (isNotIdle) {
@@ -543,10 +554,19 @@ bool    Table::generateIR(std::string basicBlockPrefix) {
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
 
+    g_buffers = builder.getBufferList();
+    
+    for (auto i : *g_buffers) 
+        if(i)
+            llvm::outs() << Delimiter::RED << *i;
+    
 
-    //g_buffers    = builder.getBuffer();
     return true;
 }
+
+
+
+
 
 
 
@@ -618,11 +638,12 @@ void  Operation::setupIR(IRGenerator & builder){
     if (isBuffered()|isReturned()) {
         if (!is_initialized) {
             BufferTypeEn bufferType=isReturned()? BufferTypeEn::output: BufferTypeEn::internal;
-            if (isReturned())
-                builder.AddBufferAlloca(new Buffer(this));
+            if (isReturned()) {
+                builder.AddBufferAlloca(new OutputBuffer(this));
+            }
             else 
                 builder.AddBufferAlloca(new Buffer(this));
-            //builder.CreateBufferAlloca({ NULL, length_, leftBufferLength_ ,rightBufferLength_ ,type_ }, bufferType);
+            
             IRBufferRefPtr_=builder.CreateBufferInit(type_,"internal_");
             is_initialized=true;
         }
@@ -637,6 +658,7 @@ void  Operation::setupIR(IRGenerator & builder){
 }
 
 void  Line::setupIR(IRGenerator & builder) {
+
     if (!is_arg) {
         //pass
     }
@@ -644,7 +666,7 @@ void  Line::setupIR(IRGenerator & builder) {
         //setBuffered();
         Type * volatile t= builder.getLLVMType(type_);
         if (!is_initialized) {
-            builder.AddBufferAlloca(new InputBuffer(parameter_, this));
+            builder.AddBufferAlloca(new InputBuffer(this));
             IRBufferRefPtr_ = builder.CreateBufferInit(type_, "external_");
             is_initialized  = true;
         }

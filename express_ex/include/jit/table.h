@@ -3,9 +3,11 @@
 
 #include <iostream>
 #include <vector>
-#include "common.h"
-#include <map> 
+#include <set>
+#include <map>
 
+#include "common.h"
+#include "ParameterIO.h"
 
 using std::string;
 class Variable;
@@ -43,7 +45,6 @@ public:
 
     void     setUint(Variable * var);
     void     setBufferLength(uint64_t bufferLength_) { bufferLength=bufferLength_; }
-
     uint64_t getLevel () { return 0; };
     uint64_t getLength() { return length; };
     uint64_t getLeftLength() { return leftLength; };
@@ -55,7 +56,7 @@ public:
         std::string basicBlockPrefix="", std::string basicBlockPostfix="");
 
 private:
-    stack<Variable*> unitList;
+    stack<Variable*> uintList;
 
     uint64_t leftLength;
     uint64_t rightLength;
@@ -73,12 +74,7 @@ public:
     ~Block() {}
 
     void     setUint(Variable * var);
-    void     setBufferLength(uint64_t bufferLength_) { 
-        for (auto i : subBlockList)
-            i->setBufferLength(bufferLength_);
-        bufferLength=bufferLength_; 
-    }
-
+    void     setBufferLength(uint64_t bufferLength_);
     uint64_t getLevel () { return level;  };
     uint64_t getLength() { return length; };
 
@@ -89,7 +85,7 @@ public:
 private:
     void setUintToSubtable(Variable * var);
 
-    stack<Variable*> unitList;
+    stack<Variable*> uintList;
     stack<SubBlock*> subBlockList;
     uint64_t level;
     uint64_t length;
@@ -106,8 +102,8 @@ public:
 
     ~TableColumn() {}
 
-    void        setUint(Variable * var);
-    void     setBufferLength(uint64_t bufferLength_) { 
+    void   setUint(Variable * var);
+    void   setBufferLength(uint64_t bufferLength_) { 
         for (auto i : blockList)
             i->setBufferLength(bufferLength_);
     }
@@ -137,28 +133,29 @@ private:
 class Table
 {
 public:
-    Table (llvm::Module * M_ , int maxBufferLength_=(1<<20),int minBufferLength_=0) {
+    Table (llvm::Module * M_ , int maxBufferLength=(1<<20),int minBufferLength=0) {
         M=M_; 
         declareFunctions();  
-        maxBufferLength=maxBufferLength_;
-        minBufferLength=minBufferLength_;
+        maxBufferLength_=maxBufferLength;
+        minBufferLength_=minBufferLength;
 
     }
-    ~Table() {}
+    ~Table() {
+        for (auto i : parameterSet_)
+            delete i;
+    }
 
     bool containsColumn(uint64_t length) {
-        for (auto i : columnList)
+        for (auto i : columnList_)
             if (i->getLength() == length) 
                 return true;
         return false;
     }
 
-
     void setUint(Variable * var);
 
-
     TableColumn * getColumn(uint64_t length){
-        for (auto i : columnList)
+        for (auto i : columnList_)
             if (i->getLength() == length) {
                 return i;
             }
@@ -169,7 +166,6 @@ public:
     llvm::Function* getDoubleBIFunc(OpCodeEn op);
     llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, OpCodeEn op, llvm::Type * Ty);
 
-
     void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
 
     string  print();
@@ -178,44 +174,51 @@ public:
 
     
 
+    friend class TableGenContext;
 private:
     void declareFunctions();
     llvm ::Module* M;
     llvm::Function* currentFunction;
 
+    IRGenerator* builder_=NULL;
+
     BuiltInFuncMap floatBIFuncMap;
     BuiltInFuncMap doubleBIFuncMap;
+
+
 
     llvm::Type * fTy = NULL;
     llvm::Type * dTy = NULL;
 
     stack<Variable *> constList;
     stack<Variable *> smallArrayList;
+
     uint64_t *maxColumnDepth=0;
-    stack<TableColumn *> columnList;
+    stack<TableColumn *> columnList_;
 
 
-    std::map<OpCodeEn, int> BIF2LLVMmap;
+    std::map<OpCodeEn, int> BIF2LLVMmap_;
+    std::set<SyncParameter *> parameterSet_;
 
-    int minBufferLength;
-    int maxBufferLength;
-    int iterations=0;
+    int minBufferLength_;
+    int maxBufferLength_;
+    int iterations_=0;
 };
 
 
 class TableGenContext
 {
 public:
-    TableGenContext (Table *arg) { table =arg; }
+    TableGenContext (Table *arg) { table =arg;  }
     ~TableGenContext() {}
     
     uint64_t          getUniqueIndex () { uniqueNameCounter++; return (uniqueNameCounter -1); }
     void              setUint(Variable * var) { table->setUint(var);};
-
+    void              setParameter(SyncParameter * var) { table->parameterSet_.insert(var); };
 private:
-
     Table * table;
     uint64_t uniqueNameCounter=0;
+
 };
 
 

@@ -80,6 +80,10 @@ void Variable::setBuffered() {
     }
 }
 
+void Variable::setBufferLength(uint64_t central_length) {
+    bufferLength_ = central_length;
+}
+
 void Variable::setBufferLength(uint64_t left, uint64_t right) {
     if (isLargeArr(this)) {
         leftBufferLength_=maxInt(leftBufferLength_, left);

@@ -30,8 +30,6 @@
 
 using namespace llvm;
 
-
-
 IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context){
     table=table_;
 }
@@ -42,10 +40,11 @@ IRGenerator::~IRGenerator(){
 }
 
 Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::string &name) {
-    if (table == NULL) return NULL;
+    if (table == NULL) 
+        return NULL;
 
     if (aOperand->getType() == getFloatTy())
-        return CreateCall(table->getFloatBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
+        return CreateCall(table->getFloatBIFunc(OpCodeEn::fpow),  { aOperand, bOperand }, name);
     else
         return CreateCall(table->getDoubleBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
 }

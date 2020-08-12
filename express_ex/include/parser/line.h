@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include "variable.h"
-#include "ioIfs.h"
+
 
 class Line : public Variable
 {
@@ -53,10 +53,10 @@ public:
         dsType_     = DataStructTypeEn::largeArr_dsty;
         is_arg      = true;
          
-        parameter_     = new Parameter_IFS(parameterInfo);
+        parameter_     = new SyncParameter(parameterInfo);
     } //to remove
     */
-    Line(std::string name, Parameter_IFS * parameter) {
+    Line(std::string name, SyncParameter * parameter) {
         names_.push_back(name);
         name_       = name;
         linkName_   = parameter->getName();
@@ -100,9 +100,9 @@ public:
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)                                   override;
     //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                                 override;
 
-    virtual void genBodyVisitExit(BodyGenContext*  context)                                             override;
+    virtual void genBodyVisitExit(BodyGenContext* context)                                              override;
     virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
-    virtual void genBlocksVisitExit  (TableGenContext*  context)                                        override;
+    virtual void genBlocksVisitExit  (TableGenContext* context)                                         override;
     virtual void setupIR(IRGenerator & builder)                                                         override;
     virtual void reduceLinksVisitExit() override { is_visited_ = false; }
 
@@ -121,7 +121,7 @@ private:
     std::string name_        = std::string();
     std::string linkName_    = std::string();
 
-    Parameter_IFS * parameter_= NULL;
+    
 };
 
 #endif
