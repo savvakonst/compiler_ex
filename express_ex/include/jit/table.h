@@ -5,7 +5,8 @@
 #include <vector>
 #include <set>
 #include <map>
-
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "common.h"
 #include "ParameterIO.h"
 
@@ -30,6 +31,10 @@ namespace llvm {
     class Value;
     template <typename T = ConstantFolder,
         typename Inserter = IRBuilderDefaultInserter> class IRBuilder;
+
+    namespace legacy {
+        class FunctionPassManager;
+    }
 }
 
 class IRGenerator;
@@ -129,13 +134,11 @@ private:
 
 
 
-
 class Table
 {
 public:
-    Table (llvm::Module * M_ , int maxBufferLength=(1<<20),int minBufferLength=0) {
-        M=M_; 
-        declareFunctions();  
+    Table ( int maxBufferLength=(1<<20),int minBufferLength=0) {
+        
         maxBufferLength_=maxBufferLength;
         minBufferLength_=minBufferLength;
 
@@ -170,15 +173,27 @@ public:
 
     string  print();
     void calculateBufferLength(std::string basicBlockPrefix="");
+
+    bool llvmInit();
     bool generateIR(std::string basicBlockPrefix="");
+
+    bool runOptimization();
+    bool run();
+
+    std::string printllvmIr();
 
     
 
     friend class TableGenContext;
 private:
     void declareFunctions();
-    llvm ::Module* M;
-    llvm::Function* currentFunction;
+    llvm::Module* M=NULL;
+    llvm::LLVMContext * context_=NULL;
+
+    std::unique_ptr<llvm::Module> moduleUPtr;
+    std::unique_ptr<llvm::legacy::FunctionPassManager> theFPM;
+
+    llvm::Function* mainFunction_;
 
     IRGenerator* builder_=NULL;
 
@@ -203,6 +218,10 @@ private:
     int minBufferLength_;
     int maxBufferLength_;
     int iterations_=0;
+
+
+
+    std::string error_info_    = "";
 };
 
 
@@ -212,15 +231,21 @@ public:
     TableGenContext (Table *arg) { table =arg;  }
     ~TableGenContext() {}
     
-    uint64_t          getUniqueIndex () { uniqueNameCounter++; return (uniqueNameCounter -1); }
+    uint64_t          getUniqueIndex () { uniqueNameCounter++; return (uniqueNameCounter -3); }
     void              setUint(Variable * var) { table->setUint(var);};
     void              setParameter(SyncParameter * var) { table->parameterSet_.insert(var); };
+    void              setMaxBufferLength(int64_t length) { 
+        int64_t temp = (int64_t)1 << (int8_t)(floor(log2(length)) - 1);
+        if (table->maxBufferLength_> temp)
+            table->maxBufferLength_= temp; 
+    };
+
 private:
     Table * table;
     uint64_t uniqueNameCounter=0;
 
 };
 
-
+void jit_init();
 
 #endif

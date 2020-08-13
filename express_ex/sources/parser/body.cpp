@@ -453,7 +453,7 @@ void Body::genTable(TableGenContext * context){
 			//context->setUint(value);
 		}
 	}
-
+	int64_t maxBufferLength = 0;
 	for (auto& value : returnStack_) {
 
 		visitorStack.push(value->getAssignedVal());
@@ -469,5 +469,13 @@ void Body::genTable(TableGenContext * context){
 				var->visitEnter(&visitorStack);
 		} while (!visitorStack.empty());
 		//code
+
+		auto temp= value->getLength();
+		if (maxBufferLength< temp)
+			maxBufferLength = temp;
 	}
+
+	if (name_ == "main")
+		context->setMaxBufferLength(maxBufferLength);
+
 }

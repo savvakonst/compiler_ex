@@ -77,6 +77,7 @@ public:
 
 
     void SetCurrentFunction(llvm::Function* currentFunction_) { currentFunction=currentFunction_; }
+    void SetBufferUpdateFunction(llvm::Value* bufferUpdateFunction_) { bufferUpdateFunction=bufferUpdateFunction_; }
     void SetDeclareConvolve(llvm::Type* type, uintptr_t addr);
 
     void SetCurrentOffsetValue(llvm::Value* currentOffsetValue_) { currentOffsetValue=currentOffsetValue; }
@@ -159,7 +160,7 @@ private:
 
     Table * table=NULL;
     llvm::Function* currentFunction=NULL;
-
+    llvm::Value* bufferUpdateFunction=NULL;
 
     std::vector<llvm::Value *> buffersList;
     //std::vector <void *> bufferList;

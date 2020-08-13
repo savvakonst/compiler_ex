@@ -89,10 +89,10 @@ Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, OpCodeEn
     case OpCodeEn::fpow: ret = CreateFPow(aOperand, bOperand, name); break;
     }
     return ret;
-
-
 }
 
+
+    //builder.CreateCall(UpdateBufferF, ConstVars[0]);
 Value * IRGenerator::CreateInv(Value *aOperand, OpCodeEn opCode, const std::string &name) {
     Value * ret = NULL;
 

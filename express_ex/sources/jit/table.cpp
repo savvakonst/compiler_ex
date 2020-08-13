@@ -78,7 +78,6 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     for (auto i : uintList)
         i->setupIR(builder);
 
-
     return true;
 }
 
@@ -302,18 +301,20 @@ bool isInvalidBuffers() {
         NULL == g_buffers ;
 }
 
-void initBuffers() {
+int32_t initBuffers() {
     if (isInvalidBuffers())
-        return;
+        return 1;
     for (auto i : *g_buffers)
         i->init();
+    return 0;
 }
 
-void updateBuffer() {
+int32_t updateBuffer() {
     if (isInvalidBuffers()) 
-        return;
+        return 1;
     for (auto i : *g_buffers)
         i->update();
+    return 0;
 }
 
 
@@ -458,6 +459,37 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
 }
 
 
+void jit_init() {
+    InitializeNativeTarget();
+    InitializeNativeTargetAsmPrinter();
+}
+
+
+//static std::unique_ptr<legacy::FunctionPassManager> TheFPM;
+
+void configOptimization(legacy::FunctionPassManager* TheFPM) {
+    TheFPM->add(createPartiallyInlineLibCallsPass());
+    TheFPM->add(createPromoteMemoryToRegisterPass());
+    TheFPM->add(createInstructionCombiningPass());
+    TheFPM->add(createReassociatePass());
+    TheFPM->add(createGVNPass());
+    TheFPM->add(createCFGSimplificationPass());
+    TheFPM->doInitialization();
+}
+
+bool Table::llvmInit() {
+    context_ = new LLVMContext();
+
+    moduleUPtr  = std::make_unique<Module>("test", *context_);
+    theFPM      = std::make_unique<legacy::FunctionPassManager>(moduleUPtr.get());
+    M = moduleUPtr.get();
+
+    configOptimization(theFPM.get());
+    declareFunctions();
+
+    return true;
+}
+
 
 bool Table::generateIR(std::string basicBlockPrefix) {
 
@@ -467,12 +499,37 @@ bool Table::generateIR(std::string basicBlockPrefix) {
         builder_=new IRGenerator(context, this);
     IRGenerator &builder= *builder_;
 
-    currentFunction = Function::Create(
+    /*
+    auto updateFunction = Function::Create(
+        FunctionType::get(Type::getInt32Ty(context), {  }, false),
+        Function::ExternalLinkage,
+        "updateBuffer",
+        M
+    );
+    */
+//auto externalFn_IR = cast<Function> (M->getOrInsertFunction("externalFn",Type::getDoubleTy(context), Type::getDoubleTy(context)));
+//Value* x = externalFn_IR->arg_begin();
+//x->setName("x");
+
+
+
+
+    mainFunction_ = Function::Create(
         FunctionType::get(Type::getInt32Ty(context), {Type::getInt64PtrTy(context)->getPointerTo()}, false),
         Function::ExternalLinkage,
         "main", 
         M
     );
+
+    Value* bufferUpdateFunction=builder.CreateIntToPtr(
+        ConstantInt::get(builder.getInt64Ty(), uintptr_t(updateBuffer)),
+        PointerType::getUnqual(
+            FunctionType::get(builder.getInt32Ty(),
+                { },
+                false)));
+
+    bufferUpdateFunction->setName("updateBuffer");
+
 
     builder.SetDeclareConvolve(builder.getInt16Ty(),  uintptr_t(convolveTemplate<int16_t>));
     builder.SetDeclareConvolve(builder.getInt32Ty(),  uintptr_t(convolveTemplate<int32_t>));
@@ -492,8 +549,9 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 
     ///the main "For loop"
     ///creating jump commands for init cycle
-    builder.SetCurrentFunction(currentFunction);
-    BasicBlock* bb= BasicBlock::Create(context, "init_block", currentFunction);
+    builder.SetBufferUpdateFunction(bufferUpdateFunction);
+    builder.SetCurrentFunction(mainFunction_);
+    BasicBlock* bb= BasicBlock::Create(context, "init_block", mainFunction_);
     builder.SetInitInsertPoint(bb);
 
     for (auto i : columnList_) 
@@ -502,8 +560,16 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     ///creating jump commands for init cycle
     builder.CreateStartBRs();
     //cond jump to Main Cycle Enter
+    
+    BasicBlock* bbUpdateBuffer = BasicBlock::Create(context, "update_buffer_block", builder.getCurrentFunction());
     BasicBlock* bbLoopEnter = BasicBlock::Create(context, "loop_enter_block", builder.getCurrentFunction());
-    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbLoopEnter);
+
+    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbUpdateBuffer);
+
+    builder.SetInsertPoint(bbUpdateBuffer);
+    builder.CreateCall(bufferUpdateFunction); //call buffer update
+    builder.CreateBr(bbLoopEnter);
+
     builder.SetLoopEnterInsertPoint(bbLoopEnter);
     builder.DropBaseInsertPoint();
 
@@ -533,6 +599,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 
 
     BasicBlock* bbTerminalLoopEnter = BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
+    builder.CreateCall(bufferUpdateFunction); //call buffer update
     builder.CreateCondBr(builder.getCurrentCMPRes(), bbLoopEnter, bbTerminalLoopEnter);
     builder.SetLoopEnterInsertPoint(bbTerminalLoopEnter);
     builder.DropBaseInsertPoint();
@@ -546,14 +613,19 @@ bool Table::generateIR(std::string basicBlockPrefix) {
         BasicBlock* bbExit = BasicBlock::Create(context, "exit_block", builder.getCurrentFunction());
         builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbExit);
         builder.SetExitInsertPoint(bbExit);
+        builder.CreateCall(bufferUpdateFunction); //call buffer update
     }
    
-    builder.CreateRet(builder.getInt32(1));
 
+
+    
+    builder.CreateRet(builder.getInt32(1));
     ///create jump from init block to the next
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
 
+
+    //
     g_buffers = builder.getBufferList();
     
     for (auto i : *g_buffers) 
@@ -564,10 +636,59 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     return true;
 }
 
+bool Table::runOptimization() {
+    theFPM->run(*mainFunction_);
+    return true;
+}
+
+bool Table::run() {
+
+    //auto mainF=M->getFunction("main");
+    std::string errStr;
+    ExecutionEngine* EE = EngineBuilder(std::move(moduleUPtr)) .setErrorStr(&errStr).create();
+    if (!EE) {
+        llvm::outs() << ": Failed to construct ExecutionEngine: " << errStr << "\n";
+        return false;
+    }
+
+    if (verifyFunction(*mainFunction_, &llvm::outs())) {
+        llvm::outs() << ": Error constructing FooF function!\n\n";
+        return false;
+    }
+
+    if (verifyModule(*M)) {
+        llvm::outs() << ": Error constructing module!\n";
+        return false;
+    }
+
+    EE->finalizeObject();
+
+    Jit_Call_t Call = (Jit_Call_t)EE->getPointerToFunction(mainFunction_);
 
 
+    char ** buffers_array = new char*[g_buffers->size()];
+    char ** buffers_array_temp=buffers_array;
+    for (auto &i : *g_buffers)
+        *(buffers_array_temp++)=i->getPtr();
 
+    //llvm::outs()<<buffers <<
 
+    initBuffers();
+    Call(buffers_array);
+
+    //updateBuffer();
+
+    for (auto &i : *g_buffers)
+        i->close();
+
+    delete [] buffers_array;
+    return  true;
+}
+
+std::string Table::printllvmIr() {
+    llvm::outs() << ExColors::GREEN << "\n\n---------We just constructed this LLVM module:--------- \n" << ExColors::RESET << *mainFunction_ << "\n\n";
+    return "";
+}
 
 
 /// Implementation of Value, Operation, Line and Call  members, 
@@ -651,6 +772,7 @@ void  Operation::setupIR(IRGenerator & builder){
         auto valPtr=builder.CreateInBoundsGEP(IRBufferRefPtr_, builder.getCurrentOffsetValue(), "offset_incr");
         builder.CreatePositionalStore(IRValue_, valPtr);
     }
+    
 
 #undef OP_PTR
 #undef OP

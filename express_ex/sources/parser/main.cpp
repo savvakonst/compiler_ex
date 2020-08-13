@@ -8,30 +8,14 @@
 
 #include "body.h"
 #include "treeShapeListener.h"
-#include "llvmHdrs.h"
+
 #include "llvm/Support/CommandLine.h"
 
  
 using namespace llvm;
 
 
-void jit_init() {
-    InitializeNativeTarget();
-    InitializeNativeTargetAsmPrinter();
-}
 
-
-//static std::unique_ptr<legacy::FunctionPassManager> TheFPM;
-
-void configOptimization(legacy::FunctionPassManager* TheFPM) {
-    TheFPM->add(createPartiallyInlineLibCallsPass());
-    TheFPM->add(createPromoteMemoryToRegisterPass());
-    TheFPM->add(createInstructionCombiningPass());
-    TheFPM->add(createReassociatePass());
-    TheFPM->add(createGVNPass());
-    TheFPM->add(createCFGSimplificationPass());
-    TheFPM->doInitialization();
-}
 
 bool         g_ansiEscapeCodes;
 
@@ -52,6 +36,7 @@ int main(int argc, const char* argv[]) {
     static  cl::opt<bool>         ansiEscapeCodes("ansi", cl::desc("enable ANSI escape codes"), cl::Optional, cl::cat(mainCategory));
     static  cl::list<std::string> libraryPath("dir", cl::desc("list of available directories"), cl::value_desc("filename"), cl::ZeroOrMore, cl::cat(mainCategory));
     static  cl::list<std::string> inputDataBaseFile("db", cl::desc("input data base files"), cl::value_desc("directory"), cl::ZeroOrMore, cl::cat(mainCategory));
+    static  cl::opt<bool>         runJit("runJit", cl::desc("run jit"), cl::Optional, cl::cat(mainCategory));
     static  cl::bits<ShowNames>   showBits(cl::desc("show:"), cl::cat(mainCategory), cl::ZeroOrMore,
         cl::values(
             clEnumVal(nameList, "names list"),
@@ -68,12 +53,7 @@ int main(int argc, const char* argv[]) {
     cl::HideUnrelatedOptions(mainCategory);
     cl::ParseCommandLineOptions(argc, argv, "express jit");
 
-
     g_ansiEscapeCodes=ansiEscapeCodes;
-
-    InitializeNativeTarget();
-    InitializeNativeTargetAsmPrinter();
-
 
     ExColors colorReset = ExColors::RESET;
     ExColors colorRed   = ExColors::RED;
@@ -86,11 +66,6 @@ int main(int argc, const char* argv[]) {
 
     KEXParser  parser(inputFile);
 
-    LLVMContext* context = new LLVMContext() ;
-    std::unique_ptr<Module> moduleUPtr                  = std::make_unique<Module>("test", *context);
-    std::unique_ptr<legacy::FunctionPassManager> theFPM = std::make_unique<legacy::FunctionPassManager>(moduleUPtr.get());
-
-    configOptimization(theFPM.get());
 
     try{
         parser.walk();
@@ -123,8 +98,6 @@ int main(int argc, const char* argv[]) {
         body->symplyfy();
 
         /// print block 
-        ///
-        ///
         if (showBits.isSet(activeNameList))
             llvm::outs() << delimiter << "names list: \n  " << body->getParameterLinkNames(true) << " \n";
 
@@ -136,14 +109,12 @@ int main(int argc, const char* argv[]) {
 
         body->reduce(); //atavism
 
-        Module *M = moduleUPtr.get();
 
-        Table*            table = new Table(M);
+        jit_init();
+        Table*            table = new Table();
         TableGenContext context = TableGenContext(table);
         
         body->genTable(&context);
-
-        
 
         int index=0;
         for (auto i : body->getOutputParameterList())
@@ -156,41 +127,21 @@ int main(int argc, const char* argv[]) {
             }
         }
 
-
         if (showBits.isSet(tableSSR))
             llvm::outs() << delimiter << table->print();
 
-
         table->calculateBufferLength();
+        table->llvmInit();
         table->generateIR();
 
-        auto mainF=M->getFunction("main");
-
-        if(optimizationEnable)
-            theFPM->run(*mainF);
+        if (optimizationEnable)
+            table->runOptimization();
 
         if (showBits.isSet(llvmIRcode))
-            llvm::outs() << colorGreen << "\n\n---------We just constructed this LLVM module:--------- \n" << colorReset << *mainF<<"\n\n";
+            table->printllvmIr();
 
-        
-        std::string errStr;
-        ExecutionEngine* EE = EngineBuilder(std::move(moduleUPtr)).setErrorStr(&errStr).create();
-        if (!EE) {
-            llvm::outs() << ": Failed to construct ExecutionEngine: " << errStr << "\n";
-            return 1;
-        }
-        
-        if (verifyFunction(*mainF, &llvm::outs())) {
-            llvm::outs() << ": Error constructing FooF function!\n\n";
-            return 1;
-        }
-        
-        if (verifyModule(*M)) {
-            llvm::outs() << ": Error constructing module!\n";
-            return 1;
-        }
-
-        Jit_Call_t Call = (Jit_Call_t)EE->getPointerToFunction(mainF);
+        if (runJit)
+            table->run();
 
         llvm::outs() << "complete";
     }catch(size_t ){

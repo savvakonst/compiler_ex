@@ -235,12 +235,14 @@ void MainWindow::setupRunMenu()
     addProperty("nameList");
     addProperty("untypedFSR");
     addProperty("activeNameList");
-    addToolBarBreak();
     addProperty("allFSR");
     addProperty("redusedFSR");
+    addToolBarBreak();
     addProperty("outputPrm");
     addProperty("tableSSR");
+    addProperty("opt");
     addProperty("llvmIRcode");
+    addProperty("runJit");
     properties["ansi"]->setChecked(true);
 }
 

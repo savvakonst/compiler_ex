@@ -1,21 +1,9 @@
- 
-function calc(i, j)
-  v=i+j**i
-  return v
-  end
 
 
-function calc_new(i, j)
-  a = 0*1
-  v=i+j**i+1
-  return a
-  end
-
-x, y, z = param( "1000", "2000", "1000")  #вызов 
+y = param( "#1_A01__1")  #коментарий 
 X = range (0,12*10+1)
 
 y = convolve(y,X)
-f = convolve(y,X)
 
 
-return f
+return y*10

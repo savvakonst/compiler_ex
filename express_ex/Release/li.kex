@@ -1,0 +1,4 @@
+
+x= param( "#1_A01__1" )  
+
+return exp(x*10)

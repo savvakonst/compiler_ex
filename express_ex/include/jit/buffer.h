@@ -18,16 +18,17 @@ class Buffer {
 public:
 
 	Buffer(Variable * var) {
-		length_			  = var->getBufferLen();
+		length_           = var->getBufferLen();
 		left_offset_	  = var->getLeftBufferLen();
 		right_offset_	  = var->getRightBufferLen();
 		type_			  = TypeEn::unknown_jty;
 		type_			  = var->getType();
 		sizeof_data_type_ = sizeOfTy(type_);
+		setBufferAlloca();
 	}
 
 	~Buffer(){
-		delete ptr_;
+		delete[] ptr_;
 	}
 
 	virtual int64_t init(){
@@ -39,8 +40,8 @@ public:
 		return 0;
 	}
 
-	void setBufferLength(int64_t length) {
-		length_ = length;
+	void setBufferAlloca() {
+
 		ptr_ = new char[sizeof_data_type_ * (length_ + left_offset_ + right_offset_)];
 		bottom_ptr_ = ptr_ + (left_offset_ + right_offset_) * sizeof_data_type_;
 		top_ptr_	= ptr_ + length_;
@@ -54,12 +55,19 @@ public:
 		return "internal"; 
 	}
 
+	char *  getPtr() {
+		return ptr_ ;
+	}
+
+	virtual int64_t close() {
+		return 0;
+	}
 
 	template <typename T>
 	T &stream(T &OS, std::string offset="") {
 		OS << offset << "BufferInfo{\n";
 		OS << offset << "  ptr: " << ptr_ << "\n";
-		OS << offset << "  length: ";
+		OS << offset << "  length: 0x";
 		OS.write_hex(length_);
 		OS << "\n";
 		OS << offset << "  left_offset: " << left_offset_ << "\n";
@@ -107,6 +115,11 @@ public:
 		return 0;
 	}
 
+	virtual int64_t close() {
+		parameter_->close();
+		return 0;
+	}
+
 	virtual BufferTypeEn getBufferType() {
 		return BufferTypeEn::input;
 	}
@@ -142,6 +155,11 @@ public:
 
 	virtual int64_t update() {
 		parameter_->write(ptr_, length_ );
+		return 0;
+	}
+
+	virtual int64_t close() {
+		parameter_->close();
 		return 0;
 	}
 

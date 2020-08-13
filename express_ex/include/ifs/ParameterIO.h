@@ -20,22 +20,8 @@ public:
 
     }
 
-    SyncParameter(std::string name,const TimeInterval &time_interval, const std::vector<DataInterval> &interval_list, bool save_fnames=true) {
-        name_=name;
-        //for (auto i : interval_list)
-        //    interval_list_.push_back(i);
-
-        interval_list_=interval_list;
-        if (save_fnames == false) {
-            for (auto &i : interval_list_) {
-                i.file_name = "";
-                i.local = true;
-            }
-        }
-
-        time_interval_ = time_interval;
-        calcExtendedInfo();
-    }
+    SyncParameter(std::string name, const TimeInterval &time_interval,
+        const std::vector<DataInterval> &interval_list, bool save_fnames=true);
 
     ~SyncParameter() {
 
@@ -55,10 +41,11 @@ public:
     }
 
     bool open(bool open_to_write = false) {
-        if (opened_to_read_| opened_to_write_)
+        if (opened_to_read_ | opened_to_write_)
             return false;
         ifs_ = NULL;
-        seek(0);
+
+        //seek(0);
         opened_to_read_ = !open_to_write;
         opened_to_write_= open_to_write;
         return opened_to_read_;
@@ -140,7 +127,8 @@ protected:
     }
 
     inline int64_t getDataIntervalIndex(double time) {
-        for (int64_t i =current_interval_index_; i< numer_of_intervals_; i++) {
+
+        for (int64_t i =current_interval_index_ <0?0:current_interval_index_; i< numer_of_intervals_; i++) {
             DataInterval &a =interval_list_[i];
             if ((a.time_interval.bgn <= time) && (time < a.time_interval.end)) return i;
         }
@@ -154,7 +142,14 @@ protected:
             delete ifs_;
             ifs_=NULL;
         }
-        ifs_ =new std::ifstream(getCufrrentInterval().file_name, std::ios::binary);
+        if (opened_to_read_) {
+            ifs_ = new std::fstream(getCufrrentInterval().file_name, std::ios::in | std::ios::binary);
+            bool op =ifs_->is_open();
+        }
+        else if(opened_to_write_)
+            ifs_ =new std::fstream(getCufrrentInterval().file_name, std::ios::out | std::ios::binary);
+        // std::ios::app |  std::ios::trunc
+
     }
 
     double  frequency_  = -1;

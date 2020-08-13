@@ -166,12 +166,37 @@ bool readParametersList(std::string databaseFName, std::vector<SyncParameter*>& 
     return true;
 }
 
-
-
 std::vector<SyncParameter*>  readParametersList(std::string databaseFName) {
     std::vector<SyncParameter *>  parameterInfoList;
     readParametersList(databaseFName, parameterInfoList);
     return parameterInfoList;
+}
+
+
+SyncParameter::SyncParameter(
+    std::string name, 
+    const TimeInterval &time_interval, 
+    const std::vector<DataInterval> &interval_list,
+    bool save_fnames
+) 
+{
+    name_=name;
+    //for (auto i : interval_list)
+    //    interval_list_.push_back(i);
+
+    interval_list_ = interval_list;
+    numer_of_intervals_ = interval_list.size();
+    if (save_fnames == false) {
+        for (auto &i : interval_list_) {
+            i.file_name = "";
+            i.local = true;
+        }
+    }
+    if (interval_list_.size())
+        sizeof_data_type_=sizeOfTy(interval_list_.front().type);
+
+    time_interval_ = time_interval;
+    calcExtendedInfo();
 }
 
 
@@ -230,17 +255,19 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
 
             if ((di_index != current_interval_index_) || (ifs_==NULL) ) {
                 openNewInterval(di_index);
-                ifs_->seekg(local_start_pos * sizeof_data_type_);
+                //ifs_->seekg(local_start_pos * sizeof_data_type_);
             }
 
             if (points_to_write <= local_points_to_write)
                 local_points_to_write = points_to_write;
             
-            ifs_->read(ptr, local_points_to_write * sizeof_data_type_);
+            
+            ifs_->write(ptr, local_points_to_write * sizeof_data_type_);
         }
 
         ptr +=            local_points_to_write * sizeof_data_type_;
         points_to_write -= local_points_to_write;
+        point_number_   += local_points_to_write;
     }
 
     return point_number - points_to_write;
@@ -253,7 +280,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
         open();
 
     int64_t points_to_read = point_number;
-    char*   ptr=data_buffer_ptr;
+    uint8_t*   ptr=(uint8_t*)data_buffer_ptr;
     //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
 
 
@@ -291,19 +318,20 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
 
             if (di_index != current_interval_index_ || (ifs_ == NULL)) {
                 openNewInterval(di_index);
-                ifs_->seekg(local_start_pos * sizeof_data_type_);
+                ifs_->seekp(local_start_pos * sizeof_data_type_);
             }
 
             if (points_to_read <= local_points_to_read)
                 local_points_to_read = points_to_read;
 
-            ifs_->read(ptr, local_points_to_read * sizeof_data_type_);
+            ifs_->read((char*)ptr, local_points_to_read * sizeof_data_type_);
         }
 
         ptr +=            local_points_to_read * sizeof_data_type_;
         points_to_read -= local_points_to_read;
+        point_number_  += local_points_to_read;
     }
-
+    
     return point_number - points_to_read;
 }
 
