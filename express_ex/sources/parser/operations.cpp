@@ -107,7 +107,7 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 	context->setUint(this);
 	is_visited_ = false;
 
-	RPMTypesEn RPMType=JITType2RPMType(type_);
+	PRMTypesEn RPMType=JITType2RPMType(type_);
 
 	if (isSelect(opCode)	 || 
 		isArithetic(opCode)  || 

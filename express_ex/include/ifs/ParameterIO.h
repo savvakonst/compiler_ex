@@ -67,7 +67,7 @@ public:
     int64_t write(char * data_buffer_ptr, int64_t point_number);
     int64_t read(char * data_buffer_ptr, int64_t point_number);
 
-    RPMTypesEn  getRPMType() { return interval_list_[0].type; }
+    PRMTypesEn  getRPMType() { return interval_list_[0].type; }
     int64_t     getVirtualSize() {return frequency_ * (time_interval_.end - time_interval_.bgn);}    
 
     void setName(const std::string &name) {
@@ -94,9 +94,9 @@ public:
     }
 
 
-    SyncParameter *  intersection(SyncParameter  *b, RPMTypesEn target_ty = RPMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="");
-    SyncParameter *  enlargeFrequency(int64_t arg,RPMTypesEn target_ty = RPMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="");
-    SyncParameter *  retyping(RPMTypesEn target_ty = RPMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="");
+    SyncParameter *  intersection(SyncParameter  *b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="");
+    SyncParameter *  enlargeFrequency(int64_t arg,PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="");
+    SyncParameter *  retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string &name="");
 
 
 
@@ -159,9 +159,9 @@ protected:
 
 bool                        readParametersList(std::string database_Fame, std::vector<SyncParameter* >& parameter_list);
 std::vector<SyncParameter*> readParametersList(std::string database_Fame);
-SyncParameter *             intersection(SyncParameter * a, SyncParameter * b, RPMTypesEn target_ty, const std::string & name);
-SyncParameter *             intersection(std::vector<SyncParameter*> arg_list, RPMTypesEn target_ty, const std::string &name);
-SyncParameter *             retyping(SyncParameter  *a, RPMTypesEn target_ty, const std::string & name);
+SyncParameter *             intersection(SyncParameter * a, SyncParameter * b, PRMTypesEn target_ty, const std::string & name);
+SyncParameter *             intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string &name);
+SyncParameter *             retyping(SyncParameter  *a, PRMTypesEn target_ty, const std::string & name);
 
 
 class ParametersDB
@@ -227,7 +227,7 @@ public:
         return NULL;
     }
 
-    bool createSyncParameter(std::string name, std::vector<SyncParameter*> prototype_parameter_list, RPMTypesEn target_ty=RPMTypesEn::PRM_TYPE_UNKNOWN) {
+    bool createSyncParameter(std::string name, std::vector<SyncParameter*> prototype_parameter_list, PRMTypesEn target_ty=PRMTypesEn::PRM_TYPE_UNKNOWN) {
 
         if (prototype_parameter_list.empty())
             return false;
@@ -254,7 +254,7 @@ public:
     }
 
 private:
-    bool intersection(std::vector<DataInterval> &ret,SyncParameter* parameter_a, SyncParameter* parameter_b, const std::string &name="", RPMTypesEn target_ty = RPMTypesEn::PRM_TYPE_UNKNOWN) {
+    bool intersection(std::vector<DataInterval> &ret,SyncParameter* parameter_a, SyncParameter* parameter_b, const std::string &name="", PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN) {
         if (parameter_a->frequency_ != parameter_b->frequency_) {
             error_info_ = "different frequencys is not supported yet ";
             return false;

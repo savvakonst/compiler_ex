@@ -112,7 +112,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const Delimiter & ar
     return OS;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const RPMTypesEn & arg) {
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const PRMTypesEn & arg) {
     OS << toString(arg);
     return OS;
 }

@@ -310,8 +310,8 @@ inline size_t sizeOfTy(TypeEn type) {
 }
 
 
-TypeEn      RPMType2JITType(RPMTypesEn arg);
-RPMTypesEn  JITType2RPMType(TypeEn arg);
+TypeEn      RPMType2JITType(PRMTypesEn arg);
+PRMTypesEn  JITType2RPMType(TypeEn arg);
 
 
 #endif // COMMON_H

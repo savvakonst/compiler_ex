@@ -11,44 +11,44 @@ DataInterval getDataInterval(json::Value &data_fragment, json::Array &data_files
 
 
 
-TypeEn RPMType2JITType(RPMTypesEn arg) {
+TypeEn RPMType2JITType(PRMTypesEn arg) {
 
     switch (arg)
     {
-    case RPMTypesEn::PRM_TYPE_U08:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_U16:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_U32:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_U64:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_I08:return TypeEn::int8_jty;
-    case RPMTypesEn::PRM_TYPE_I16:return TypeEn::int16_jty;
-    case RPMTypesEn::PRM_TYPE_I32:return TypeEn::int32_jty;
-    case RPMTypesEn::PRM_TYPE_I64:return TypeEn::int64_jty;
-    case RPMTypesEn::PRM_TYPE_F32:return TypeEn::float_jty;
-    case RPMTypesEn::PRM_TYPE_F64:return TypeEn::double_jty;
-    case RPMTypesEn::PRM_TYPE_U08_T:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_U16_T:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_U32_T:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_U64_T:return TypeEn::unknown_jty;
-    case RPMTypesEn::PRM_TYPE_I08_T:return TypeEn::int8_jty;
-    case RPMTypesEn::PRM_TYPE_I16_T:return TypeEn::int16_jty;
-    case RPMTypesEn::PRM_TYPE_I32_T:return TypeEn::int32_jty;
-    case RPMTypesEn::PRM_TYPE_I64_T:return TypeEn::int64_jty;
-    case RPMTypesEn::PRM_TYPE_F32_T:return TypeEn::float_jty;
-    case RPMTypesEn::PRM_TYPE_F64_T:return TypeEn::double_jty;
+    case PRMTypesEn::PRM_TYPE_U08:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_U16:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_U32:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_U64:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_I08:return TypeEn::int8_jty;
+    case PRMTypesEn::PRM_TYPE_I16:return TypeEn::int16_jty;
+    case PRMTypesEn::PRM_TYPE_I32:return TypeEn::int32_jty;
+    case PRMTypesEn::PRM_TYPE_I64:return TypeEn::int64_jty;
+    case PRMTypesEn::PRM_TYPE_F32:return TypeEn::float_jty;
+    case PRMTypesEn::PRM_TYPE_F64:return TypeEn::double_jty;
+    case PRMTypesEn::PRM_TYPE_U08_T:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_U16_T:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_U32_T:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_U64_T:return TypeEn::unknown_jty;
+    case PRMTypesEn::PRM_TYPE_I08_T:return TypeEn::int8_jty;
+    case PRMTypesEn::PRM_TYPE_I16_T:return TypeEn::int16_jty;
+    case PRMTypesEn::PRM_TYPE_I32_T:return TypeEn::int32_jty;
+    case PRMTypesEn::PRM_TYPE_I64_T:return TypeEn::int64_jty;
+    case PRMTypesEn::PRM_TYPE_F32_T:return TypeEn::float_jty;
+    case PRMTypesEn::PRM_TYPE_F64_T:return TypeEn::double_jty;
     default:return TypeEn::unknown_jty;
     }
 }
 
-RPMTypesEn  JITType2RPMType(TypeEn arg) {
+PRMTypesEn  JITType2RPMType(TypeEn arg) {
     if (isFloating(arg))
-        return (RPMTypesEn)(0x20 | sizeOfTy(arg) );
+        return (PRMTypesEn)(0x20 | sizeOfTy(arg) );
     if (isInteger(arg))
-        return (RPMTypesEn)(0x10 | sizeOfTy(arg) );
-    return RPMTypesEn::PRM_TYPE_UNKNOWN;
+        return (PRMTypesEn)(0x10 | sizeOfTy(arg) );
+    return PRMTypesEn::PRM_TYPE_UNKNOWN;
 }
 
-std::string toString(RPMTypesEn arg) {
-#define CASE_OP(NAME) case RPMTypesEn::NAME:return #NAME;
+std::string toString(PRMTypesEn arg) {
+#define CASE_OP(NAME) case PRMTypesEn::NAME:return #NAME;
     switch (arg)
     {
         CASE_OP(PRM_TYPE_U08);
@@ -336,7 +336,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
 }
 
 
-SyncParameter *  SyncParameter::intersection(SyncParameter  *b, RPMTypesEn target_ty, const std::string &name) {
+SyncParameter *  SyncParameter::intersection(SyncParameter  *b, PRMTypesEn target_ty, const std::string &name) {
     auto parameter_a = this;
     auto parameter_b = b;
 
@@ -379,7 +379,7 @@ SyncParameter *  SyncParameter::intersection(SyncParameter  *b, RPMTypesEn targe
 
 
 
-SyncParameter *  SyncParameter::enlargeFrequency(int64_t arg, RPMTypesEn target_ty , const std::string &name ) {
+SyncParameter *  SyncParameter::enlargeFrequency(int64_t arg, PRMTypesEn target_ty , const std::string &name ) {
     auto parameter_a=this;
     SyncParameter* ret= this;
     std::vector<DataInterval> data_interval;
@@ -404,7 +404,7 @@ SyncParameter *  SyncParameter::enlargeFrequency(int64_t arg, RPMTypesEn target_
     return new SyncParameter(name, time_interval_, data_interval);
 }
 
-SyncParameter * SyncParameter::retyping(RPMTypesEn target_ty, const std::string & name)
+SyncParameter * SyncParameter::retyping(PRMTypesEn target_ty, const std::string & name)
 {
     if (getRPMType() == target_ty)
         return this;
@@ -418,7 +418,7 @@ SyncParameter * SyncParameter::retyping(RPMTypesEn target_ty, const std::string 
 }
 
 
-SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, RPMTypesEn target_ty, const std::string &name) {
+SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, PRMTypesEn target_ty, const std::string &name) {
     if (a == NULL)
         return b;
     if (b == NULL)
@@ -427,7 +427,7 @@ SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, RPMTypesEn ta
 
 }
 
-SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, RPMTypesEn target_ty, const std::string &name) {
+SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string &name) {
     std::set<SyncParameter*> parameterSet;
     SyncParameter* p=NULL;
     for (auto i : arg_list) {
@@ -447,7 +447,7 @@ SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, RPMTypesEn t
     return p;
 }
 
-SyncParameter *retyping(SyncParameter  *a,RPMTypesEn target_ty, const std::string & name)
+SyncParameter *retyping(SyncParameter  *a,PRMTypesEn target_ty, const std::string & name)
 {
     if (a == NULL)
         return NULL;

@@ -12,7 +12,7 @@
 
 
 
-enum class RPMTypesEn : uint64_t {
+enum class PRMTypesEn : uint64_t {
     PRM_TYPE_U08            = 0x0001, 
     PRM_TYPE_U16            = 0x0002,  
     PRM_TYPE_U32            = 0x0004,  
@@ -47,7 +47,7 @@ typedef struct {
 typedef struct {
     union {
         int64_t     int_type_represintation;
-        RPMTypesEn  type;
+        PRMTypesEn  type;
     };
     int64_t                     offs;
     int64_t                     size;
@@ -68,14 +68,14 @@ typedef struct {
 
 
 
-inline int64_t sizeOfTy(RPMTypesEn  arg) {
+inline int64_t sizeOfTy(PRMTypesEn  arg) {
     return ((int64_t)arg) & 0xf;
 }
 
-//TypeEn      RPMType2JITType(RPMTypesEn arg);
-//RPMTypesEn  JITType2RPMType(TypeEn arg);
+//TypeEn      RPMType2JITType(PRMTypesEn arg);
+//PRMTypesEn  JITType2RPMType(TypeEn arg);
 
-std::string toString(RPMTypesEn arg);
+std::string toString(PRMTypesEn arg);
 
 
 
@@ -112,7 +112,7 @@ inline TimeInterval operator|| (DataInterval a, DataInterval b) {
 }
 
 
-inline DataInterval createInterval(TimeInterval time_interval, double frequency, RPMTypesEn target_ty, const std::string &filename="", bool local = true) {
+inline DataInterval createInterval(TimeInterval time_interval, double frequency, PRMTypesEn target_ty, const std::string &filename="", bool local = true) {
     DataInterval interval;
 
     interval.type=target_ty;
