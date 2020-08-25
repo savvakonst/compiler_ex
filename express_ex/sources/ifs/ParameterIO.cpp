@@ -253,7 +253,7 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
             int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency_);
             local_points_to_write =  (int)((di.time_interval.end - current_time) * frequency_);
 
-            if ((di_index != current_interval_index_) || (ifs_==NULL) ) {
+            if ((di_index != current_interval_index_) || (ifs_==nullptr) ) {
                 openNewInterval(di_index);
                 //ifs_->seekg(local_start_pos * sizeof_data_type_);
             }
@@ -316,7 +316,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
             int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency_);
             local_points_to_read =  (int)((di.time_interval.end - current_time) * frequency_);
 
-            if (di_index != current_interval_index_ || (ifs_ == NULL)) {
+            if (di_index != current_interval_index_ || (ifs_ == nullptr)) {
                 openNewInterval(di_index);
                 ifs_->seekp(local_start_pos * sizeof_data_type_);
             }
@@ -345,12 +345,12 @@ SyncParameter *  SyncParameter::intersection(SyncParameter  *b, PRMTypesEn targe
 
     if (parameter_a->frequency_ != parameter_b->frequency_) {
         error_info_ = "different frequencys is not supported yet ";
-        return NULL;
+        return nullptr;
     }
 
     else if (parameter_a->frequency_ <= 0.0) {
         error_info_ = "async parameter is not supported yet";
-        return NULL;
+        return nullptr;
     }
 
     auto frequency = parameter_a->frequency_;
@@ -390,7 +390,7 @@ SyncParameter *  SyncParameter::enlargeFrequency(int64_t arg, PRMTypesEn target_
         frequency = this->frequency_ * arg;
     else if (arg < -1) {
         if (((int)this->frequency_) % arg)
-            return NULL;
+            return nullptr;
         frequency = this->frequency_ / arg;
     }
     else
@@ -419,9 +419,9 @@ SyncParameter * SyncParameter::retyping(PRMTypesEn target_ty, const std::string 
 
 
 SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, PRMTypesEn target_ty, const std::string &name) {
-    if (a == NULL)
+    if (a == nullptr)
         return b;
-    if (b == NULL)
+    if (b == nullptr)
         return a;
     return a->intersection(b, target_ty, name);
 
@@ -429,7 +429,7 @@ SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, PRMTypesEn ta
 
 SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string &name) {
     std::set<SyncParameter*> parameterSet;
-    SyncParameter* p=NULL;
+    SyncParameter* p=nullptr;
     for (auto i : arg_list) {
         p=intersection(p, i, target_ty, name);
         parameterSet.insert(p);
@@ -438,7 +438,7 @@ SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn t
     for (auto i : arg_list)
         parameterSet.erase(i);
 
-    parameterSet.erase(NULL);
+    parameterSet.erase(nullptr);
     parameterSet.erase(p);
 
     for (auto i : parameterSet)
@@ -449,7 +449,7 @@ SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn t
 
 SyncParameter *retyping(SyncParameter  *a,PRMTypesEn target_ty, const std::string & name)
 {
-    if (a == NULL)
-        return NULL;
+    if (a == nullptr)
+        return nullptr;
     return a->retyping(target_ty, name);
 }

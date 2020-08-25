@@ -68,7 +68,7 @@ void Line::genBodyVisitExit(BodyGenContext * context) {
 	is_visited_ = false;
 	std::vector<Line*> namespace_ = context->getNamespace();
 
-	std::string name = getName();
+	std::string name = getName(true);
 	if (namespace_.size() < 1)
 		return;
 	for (int i = namespace_.size() - 1; i >= 0; i--) {

@@ -43,7 +43,7 @@ public:
     bool open(bool open_to_write = false) {
         if (opened_to_read_ | opened_to_write_)
             return false;
-        ifs_ = NULL;
+        ifs_ = nullptr;
 
         //seek(0);
         opened_to_read_ = !open_to_write;
@@ -55,7 +55,7 @@ public:
         if (opened_to_read_ | opened_to_write_) {
             if (ifs_) 
                 ifs_->close();
-            ifs_ = NULL;
+            ifs_ = nullptr;
             opened_to_read_  = false;
             opened_to_write_ = false;
             return true;
@@ -140,7 +140,7 @@ protected:
             current_interval_index_=di_index;
             ifs_->close();
             delete ifs_;
-            ifs_=NULL;
+            ifs_=nullptr;
         }
         if (opened_to_read_) {
             ifs_ = new std::fstream(getCufrrentInterval().file_name, std::ios::in | std::ios::binary);
@@ -224,7 +224,7 @@ public:
         for (auto &i : db_parameters_)
             if (i->getName() == name)
                 return i;
-        return NULL;
+        return nullptr;
     }
 
     bool createSyncParameter(std::string name, std::vector<SyncParameter*> prototype_parameter_list, PRMTypesEn target_ty=PRMTypesEn::PRM_TYPE_UNKNOWN) {

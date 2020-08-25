@@ -2,6 +2,11 @@ QT += widgets
 #requires(qtConfig(filedialog))
 #CONFIG += c++11
 
+DEFINES += QUILIB_LIBRARY
+
+TARGET = $$qtLibraryTarget(syntaxhighlighter)
+TEMPLATE = lib
+
 INCLUDEPATH     = ../antlr4/antlr4-runtime \
                   ../EGrammar
 
@@ -34,6 +39,9 @@ Debug::LIBS += "$$PWD/../antlr4/lib/vs-2015/x64/Debug DLL/antlr4-runtime.lib"
 
 Release:DESTDIR += $$PWD/../express_ex/Release
 Debug:DESTDIR += $$PWD/../express_ex/Debug
+
+
+
 #DESTDIR += C:\Express_expr_compiler\compiler_ex\compiler_ex\x64\Release
 INSTALLS += target
 

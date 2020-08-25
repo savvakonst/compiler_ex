@@ -43,6 +43,7 @@ expr:   ID '(' (expr (','expr)*) ')'                                # callFunc
     |   expr op=('>'|'<') expr                                      # moreLess
     |   expr op=('>='|'<=') expr                                    # moreeqLesseq
     |   expr  op=('=='|'!=') expr                                   # equality
+    |   expr  op=('<<'|'>>') expr                                   # bitwise
     |   expr '?' left_expr ':' right_expr                           # condExpr
     |   '-' expr                                                    # inv
     |   (DOUBLE|FLOAT|INT64|INT)                                    # const

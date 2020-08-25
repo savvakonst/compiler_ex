@@ -15,13 +15,21 @@ void print_SA_error(const std::string &content);
 class Line;
 class Variable;
 
+typedef struct {
+    int64_t start_line=-1;
+    int64_t stop_line=-1;
+    int64_t start_char_pos=-1;
+    int64_t stop_char_pos=-1;
+} PosInText;
+
+
 template< typename T > class stack :public  std::vector<T> {
 public:
 
     T pop() {
         if (std::vector<T> ::size() == 0) {
             std::cout << "Error : stack is empty-\n";
-            return NULL;
+            return nullptr;
         }
         T res = std::vector<T> ::back();
         std::vector<T> ::pop_back();
@@ -108,7 +116,7 @@ public:
 #define SWITCH_UINT(CASE_ARG,LOOP, X ) case CASE_ARG: LOOP { X }   
 #define AR_SWITCH_OP(OP,LOOP,RET,ARG_A,ARG_B)   \
     switch (OP){\
-    SWITCH_UINT(OpCodeEn::add, LOOP, RET=ARG_A + ARG_B; ) break ;\
+    SWITCH_UINT(OpCodeEn::add, LOOP, RET=ARG_A + ARG_B;) break ;\
     SWITCH_UINT(OpCodeEn::sub, LOOP, RET=ARG_A - ARG_B;) break ;\
     SWITCH_UINT(OpCodeEn::mul, LOOP, RET=ARG_A * ARG_B;) break ;\
     SWITCH_UINT(OpCodeEn::sdiv, LOOP, RET=ARG_A / ARG_B;) break ;\
@@ -123,6 +131,36 @@ public:
     default: break;\
     }
 
+
+
+
+ /*
+     oeq, // ordered and equal
+     ogt, // ordered and greater than
+     oge, // ordered and greater than or equal
+     olt, // ordered and less than
+     ole, // ordered and less than or equal
+     one, // ordered and not equal
+     ord, // ordered (no nans)
+*/
+
+#define CMP_SWITCH_OP(OP,LOOP,RET,ARG_A,ARG_B)   \
+    switch (OP){\
+    SWITCH_UINT(OpCodeEn::eq,  LOOP, RET=ARG_A == ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::ne,  LOOP, RET=ARG_A != ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::sgt, LOOP, RET=ARG_A > ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::sge, LOOP, RET=ARG_A >= ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::slt, LOOP, RET=ARG_A < ARG_B;) break ;\
+    SWITCH_UINT(OpCodeEn::sle, LOOP, RET=ARG_A <= ARG_B;) break ;\
+                                                                                \
+    SWITCH_UINT(OpCodeEn::oeq, LOOP, RET=ARG_A == ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::one, LOOP, RET=ARG_A != ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::ogt, LOOP, RET=ARG_A >  ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::oge, LOOP, RET=ARG_A >= ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::olt, LOOP, RET=ARG_A < ARG_B;) break; \
+    SWITCH_UINT(OpCodeEn::ole, LOOP, RET=ARG_A <= ARG_B;) break; \
+    default: break;\
+    }
 
 
 #define BI_SWITCH_OP(OP,LOOP,RET,ARG_A)   \
@@ -161,8 +199,8 @@ public:
  */
 
  template< typename T >
- T *  SmallArrayAlloc(int n, T* ptr=NULL) {
-     if (ptr != NULL)
+ T *  SmallArrayAlloc(int n, T* ptr=nullptr) {
+     if (ptr != nullptr)
          return ptr;
      return new T[n];
  }
@@ -176,6 +214,17 @@ public:
      *((T*)(&binaryValue)) = value;
      return binaryValue;
  }
+
+
+ template< typename T >
+ uint64_t calcComparsionOperation(T arg1, T arg2, OpCodeEn uTypeOp) {
+     bool value = (bool)0;;
+     uint64_t binaryValue = 0;
+     CMP_SWITCH_OP(uTypeOp, ; , value, arg1, arg2);
+     *((bool*)(&binaryValue)) = value;
+     return binaryValue;
+ }
+
 
  template< typename T >
  uint64_t calcBuiltInFuncOperation(T arg, OpCodeEn uTypeOp) {
@@ -199,6 +248,21 @@ public:
  template <typename T>
  void aritheticConstTemplate(OpCodeEn op, T * ret, T  a, T * b, int n) {
      AR_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a, b[i]);
+ }
+
+ template <typename T>
+ void comparsionTemplate(OpCodeEn op, T * ret, T * a, T * b, int n) {
+     CMP_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i], b[i]);
+ }
+
+ template <typename T>
+ void comparsionConstTemplate(OpCodeEn op, T * ret, T * a, T  b, int n) {
+     CMP_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a[i], b);
+ }
+
+ template <typename T>
+ void comparsionConstTemplate(OpCodeEn op, T * ret, T  a, T * b, int n) {
+     CMP_SWITCH_OP(op, for (int i=0; i < n; i++), ret[i], a, b[i]);
  }
 
  template <typename T>
@@ -269,26 +333,31 @@ public:
 #undef AR_SWITCH_OP
 #undef BI_SWITCH_OP
 
-void * calcSmallArrayAlloc(TypeEn targetType, int N, void* ptr=NULL);
+char * calcSmallArrayAlloc(TypeEn targetType, int N, char * ptr=nullptr);
 
-void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int n);
-void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, int64_t  a, void *  b, int n);
-void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, int n);
+char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int n);
+char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, int64_t  a, char *  b, int n);
+char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, int n);
 
-void * invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n);
+char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int n);
+char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, int64_t  a, char *  b, int n);
+char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, int n);
 
-void * builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int n);
 
-void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, void * c, int n);
-void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int64_t c, int n);
-void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, void * c, int n);
-void * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t b, int64_t c, int n);
+char * invAritheticSmallArray(TypeEn targetType, char * ret, char * a, int n);
 
-void * calcConvolveSmallArray( TypeEn targetType, void * ret, void * a, void * b, int aN,int bN);
+char * builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int n);
 
-void * typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n);
+char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, char * c, int n);
+char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int64_t c, int n);
+char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, char * c, int n);
+char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t b, int64_t c, int n);
 
-void * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand);
+char * calcConvolveSmallArray( TypeEn targetType, char * ret, char * a, char * b, int aN,int bN);
+
+char * typeConvSmallArray(TypeEn retType, TypeEn argType, char * ret, char* arg, int n);
+
+char * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand);
 
 
 

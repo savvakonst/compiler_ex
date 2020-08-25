@@ -2,7 +2,28 @@
 #define HIGHLIGHTSTYLE_H
 #include <QtWidgets>
 
-class  HighlightStyle{
+/*
+#ifdef _MSC_VER
+#  ifdef QUILIB_LIBRARY
+#    define QUILIBSHARED_EXPORT __declspec(dllexport)
+#  elif QUIMONO_EXE
+#    define QUILIBSHARED_EXPORT
+#  else
+#    define QUILIBSHARED_EXPORT __declspec(dllimport)
+#  endif
+*/
+//#else
+#  ifdef QUILIB_LIBRARY
+#    define QUILIBSHARED_EXPORT Q_DECL_EXPORT
+#  elif QUIMONO_EXE
+#    define QUILIBSHARED_EXPORT
+#  else
+#    define QUILIBSHARED_EXPORT Q_DECL_IMPORT
+#  endif
+//#endif
+
+
+class QUILIBSHARED_EXPORT  HighlightStyle{
 public:
     HighlightStyle(){
 

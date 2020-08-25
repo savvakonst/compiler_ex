@@ -63,6 +63,10 @@ void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
 		visitorStack->push(operand[1]);
 		visitorStack->push(operand[0]);
 	}
+	else if (isComparsion(opCode)) {
+		visitorStack->push(operand[1]);
+		visitorStack->push(operand[0]);
+	}
 	else if (isInv(opCode)) {
 		visitorStack->push(operand[0]);
 	}
@@ -111,6 +115,7 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 
 	if (isSelect(opCode)	 || 
 		isArithetic(opCode)  || 
+		isComparsion(opCode) ||
 		isBuiltInFunc(opCode)||
 		isSelect(opCode)	 ||
 		isConvolve(opCode)) {
@@ -133,7 +138,7 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 		context->setParameter(parameter_);
 	}
 
-	if (parameter_!=NULL)
+	if (parameter_!=nullptr)
 		context->setParameter(parameter_);
 }
 
@@ -160,57 +165,98 @@ void Operation::visitEnter(stack<Variable*>* visitorStack){
 
 
 void Operation::genBodyVisitExit(BodyGenContext* context){
+	GarbageContainer * garbage_container =context->getGarbageContainer();
+	g_pos = pos;
 
 	is_visited_ = false;
-	Variable* ret = NULL;
+	Variable* ret = nullptr;
 	if (isArithetic(opCode)) {
 		auto op2 = context->pop();
 		auto op1 = context->pop();
 		
-		if ((op2 == NULL) || (op1 == NULL)) {
-			auto txtOperation = arSym[((int)opCode - (int)TypeOpCodeEn::arithetic)];
+		if ((op2 == nullptr) || (op1 == nullptr)) {
+			auto txtOperation = txtArOp(opCode);
 			print_error(
 				txtOperation + " "
-				"left operand:" + ((op1 != NULL) ? "a"  : "unknown") + ".  " +
-				"right operand:" + ((op2 != NULL)? "a"  : "unknown")
+				"left operand:" + ((op1 != nullptr) ? "a"  : "unknown") + ".  " +
+				"right operand:" + ((op2 != nullptr)? "a"  : "unknown")
 			);
 		}
 		TypeEn targetType = max(op1, op2)->getType();
 		
-		ret = newArithmeticOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2),  (OpCodeEn)(int)opCode );
+		ret = newArithmeticOperation(
+			garbage_container,
+			targetType, 
+			newTypeConvOp(garbage_container, targetType, op1), 
+			newTypeConvOp(garbage_container, targetType, op2),  
+			(OpCodeEn)(int)opCode);
+
+	}
+	else if (isComparsion(opCode)) {
+		auto op2 = context->pop();
+		auto op1 = context->pop();
+
+		if ((op2 == nullptr) || (op1 == nullptr)) {
+			auto txtOperation =txtCompOp(opCode);
+			print_error(
+				txtOperation + " "
+				"left operand:" + ((op1 != nullptr) ? "a" : "unknown") + ".  " +
+				"right operand:" + ((op2 != nullptr) ? "a" : "unknown")
+			);
+		}
+		TypeEn targetType = max(op1, op2)->getType();
+
+		ret = newComparsionOperation(
+			garbage_container,
+			targetType,
+			newTypeConvOp(garbage_container, targetType, op1),
+			newTypeConvOp(garbage_container, targetType, op2),
+			(OpCodeEn)(int)opCode);
+
 	}
 	else if (isInv(opCode)) {
 		auto op1 = context->pop();
-		ret = newInvOperation(op1);
+		ret = newInvOperation(garbage_container, op1);
 	}
 	else if (isTypeConv(opCode)) {
 		auto op1 = context->pop();
-		ret = newTypeConvOp(type_, op1);
+		ret = newTypeConvOp(garbage_container, type_, op1);
 	}
 	else if (isBuiltInFunc(opCode)) {
 		auto * op1 = context->pop();
 		if (TypeEn::float_jty > op1->getType()) {
-			op1 = newTypeConvOp(TypeEn::float_jty, op1);
+			op1 = newTypeConvOp(garbage_container, TypeEn::float_jty, op1);
 		}
 		TypeEn targetType = op1->getType();
-		ret = newBuiltInFuncOperation(targetType, op1 , opCode);
+		ret = newBuiltInFuncOperation(garbage_container, targetType, op1 , opCode);
 	}
 	else if (isSelect(opCode)) {
 		auto op3 = context->pop();
 		auto op2 = context->pop();
 		auto op1 = context->pop();
 		TypeEn targetType = max(op2, op3)->getType();
-		ret = newSelectOp(targetType, op1, newTypeConvOp(targetType, op2), newTypeConvOp(targetType, op3));
+		ret = newSelectOp(
+			garbage_container, 
+			targetType, 
+			op1, 
+			newTypeConvOp(garbage_container, targetType, op2), 
+			newTypeConvOp(garbage_container, targetType, op3));
 	}
 	else if(isConvolve(opCode)){
 		auto op2 = context->pop();
 		auto op1 = context->pop();
 		TypeEn targetType = max(op1, op2)->getType();
-		ret = newConvolveOperation(targetType, newTypeConvOp(targetType, op1), newTypeConvOp(targetType, op2), shiftParameter, opCode);
+		ret = newConvolveOperation(
+			garbage_container, 
+			targetType, 
+			newTypeConvOp(garbage_container, targetType, op1), 
+			newTypeConvOp(garbage_container, targetType, op2), 
+			shiftParameter, 
+			opCode);
 	}
 	else if (isSlice(opCode)) {
 		auto op1 = context->pop();
-		ret =newSliceOp(op1,getSliceParameter(),opCode);
+		ret =newSliceOp(garbage_container, op1,getSliceParameter(),opCode);
 	}
 	else if (isStoreToBuffer(opCode)) {
 		print_error("visitExitTxt StoreToBuffer unknown command .");
@@ -221,12 +267,13 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 		for (size_t i = 0; i < size; i++)
 			op.push(context->pop());
 		std::reverse(op.begin(), op.end());
-		ret = newSmallArrayDefOp(op, opCode);
+		ret = newSmallArrayDefOp(garbage_container, op, opCode);
 	}
 	else {
 		print_error("visitExit unknown command . In line : " +std::to_string(context->getNamespace().size() ) );
 	}
 	context->push(ret);
+
 }
 
 
@@ -238,6 +285,10 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 	if (isArithetic(opCode)) {
 		auto op2 = Stack->pop();auto op1 = Stack->pop();
 		Stack->push(checkBuffer("(" + op1 + txtArOp(opCode) + op2 + ")" ));
+	}
+	else if (isComparsion(opCode)) {
+		auto op2 = Stack->pop(); auto op1 = Stack->pop();
+		Stack->push(checkBuffer("(" + op1 + txtCompOp(opCode) + op2 + ")"));
 	}
 	else if (isInv(opCode)) {
 		Stack->push(checkBuffer("(-" + Stack->pop() + ")"));
@@ -295,6 +346,7 @@ string Operation::printUint() {
 #define OP(i) (operand[(i)]->getAssignedVal(true)->getUniqueName() )
 
 	if (isArithetic(opCode))          return uName + " = " + OP(0) + txtArOp(opCode) + OP(1);
+	if (isComparsion(opCode))          return uName + " = " + OP(0) + txtCompOp(opCode) + OP(1);
 	else if (isInv(opCode))           return uName + " = " + "( -" + OP(0) + ")";
 	else if (isTypeConv(opCode))      return uName + " = " + txtTConOp(opCode) + "( " + OP(0) + ")";
 	else if (isBuiltInFunc(opCode))   return uName + " = " + txtBuiltInOp(opCode) + "( " + OP(0) + ")";
@@ -334,6 +386,17 @@ void Operation::calculate(){
 			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
 		else
 			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
+	}
+	if (isComparsion(opCode)) {
+		auto aOperand = OP(0);
+		auto bOperand = OP(1);
+		auto localType=aOperand->getType();
+		if (aOperand->isArray() && bOperand->isArray())
+			bufferPtr_=calcComparsionSmallArray(opCode, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
+		else if (aOperand->isArray())
+			bufferPtr_=calcComparsionSmallArray(opCode, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
+		else
+			bufferPtr_=calcComparsionSmallArray(opCode, localType, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
 	}
 	else if (isInv(opCode))
 		bufferPtr_=invAritheticSmallArray(type_, bufferPtr_, OP(0)->getBufferPtr(), length_);

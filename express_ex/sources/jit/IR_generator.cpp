@@ -30,6 +30,11 @@
 
 using namespace llvm;
 
+
+
+
+
+
 IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context){
     table=table_;
 }
@@ -40,8 +45,8 @@ IRGenerator::~IRGenerator(){
 }
 
 Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::string &name) {
-    if (table == NULL) 
-        return NULL;
+    if (table == nullptr) 
+        return nullptr;
 
     if (aOperand->getType() == getFloatTy())
         return CreateCall(table->getFloatBIFunc(OpCodeEn::fpow),  { aOperand, bOperand }, name);
@@ -49,9 +54,8 @@ Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::str
         return CreateCall(table->getDoubleBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
 }
 
-
 Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, const std::string &name) {
-    Value * ret = NULL;
+    Value * ret = nullptr;
 
     auto &context = getContext();
     switch (targetTy)
@@ -63,15 +67,15 @@ Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, const s
     case TypeEn::int64_jty:  ret = getInt64(*((int64_t*)(&binaryValue)));   break;
     case TypeEn::float_jty:  ret = ConstantFP::get(Type::getFloatTy(context), *((float  *)(&binaryValue)));  break;
     case TypeEn::double_jty: ret = ConstantFP::get(Type::getDoubleTy(context), *((double *)(&binaryValue))); break;
-    case TypeEn::unknown_jty:ret = NULL;                                    break;
-    default:                 ret = NULL;                                    break;
+    case TypeEn::unknown_jty:ret = nullptr;                                    break;
+    default:                 ret = nullptr;                                    break;
     }
 
     return ret;
 }
 
 Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, OpCodeEn opCode, const std::string &name) {
-    Value * ret = NULL;
+    Value * ret = nullptr;
     switch (opCode)
     {
     case OpCodeEn::add:  ret = CreateAdd(aOperand, bOperand, name);  break;
@@ -79,7 +83,7 @@ Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, OpCodeEn
     case OpCodeEn::mul:  ret = CreateMul(aOperand, bOperand, name);  break;
     case OpCodeEn::sdiv: ret = CreateSDiv(aOperand, bOperand, name); break;
     case OpCodeEn::srem: ret = CreateSRem(aOperand, bOperand, name); break;
-    case OpCodeEn::pow:  ret = NULL; break;
+    case OpCodeEn::pow:  ret = nullptr; break;
 
     case OpCodeEn::fadd: ret = CreateFAdd(aOperand, bOperand, name); break;
     case OpCodeEn::fsub: ret = CreateFSub(aOperand, bOperand, name); break;
@@ -90,11 +94,39 @@ Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, OpCodeEn
     }
     return ret;
 }
+/*
+sgt,//  signed greater than
+sge,//  signed greater or equal
+slt,//  signed less than
+sle,//  signed less or equal
+*/
+
+llvm::Value * IRGenerator::CreateComparsion(Value *aOperand, Value *bOperand, OpCodeEn opCode, const std::string & name)
+{
+    Value * ret = nullptr;
+    switch (opCode)
+    {
+    case OpCodeEn::eq:  ret = CreateICmpEQ(aOperand, bOperand, name);  break;
+    case OpCodeEn::ne:  ret = CreateICmpNE(aOperand, bOperand, name);  break;
+    case OpCodeEn::sgt: ret = CreateICmpSGT(aOperand, bOperand, name);  break;
+    case OpCodeEn::sge: ret = CreateICmpSGE(aOperand, bOperand, name); break;
+    case OpCodeEn::slt: ret = CreateICmpSLT(aOperand, bOperand, name); break;
+    case OpCodeEn::sle: ret = CreateICmpSLT(aOperand, bOperand, name); break;
+
+    case OpCodeEn::oeq: ret = CreateFCmpOEQ(aOperand, bOperand, name); break;
+    case OpCodeEn::one: ret = CreateFCmpONE(aOperand, bOperand, name); break;
+    case OpCodeEn::ogt: ret = CreateFCmpOGT(aOperand, bOperand, name); break;
+    case OpCodeEn::oge: ret = CreateFCmpOGE(aOperand, bOperand, name); break;
+    case OpCodeEn::olt: ret = CreateFCmpOLT(aOperand, bOperand, name); break;
+    case OpCodeEn::ole: ret = CreateFCmpOLE(aOperand, bOperand, name); break;
+    }
+    return ret;
+}
 
 
     //builder.CreateCall(UpdateBufferF, ConstVars[0]);
 Value * IRGenerator::CreateInv(Value *aOperand, OpCodeEn opCode, const std::string &name) {
-    Value * ret = NULL;
+    Value * ret = nullptr;
 
     if (opCode == OpCodeEn::neg)
         return CreateNeg(aOperand, name);
@@ -106,7 +138,7 @@ Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCode, Typ
 {
     Type* destTy = getLLVMType(targetTy);
 
-    Value * ret=NULL;
+    Value * ret=nullptr;
     switch (opCode)
     {
     case OpCodeEn::trunc:   ret = CreateTrunc(aOperand, destTy, name);    break;
@@ -122,9 +154,9 @@ Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCode, Typ
     return ret;
 }
 
-Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, OpCodeEn opCode, const std::string &name)
+llvm::Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, OpCodeEn opCode, const std::string &name)
 {
-    if (table == NULL) return NULL;
+    if (table == nullptr) return nullptr;
     if (aOperand->getType() == getFloatTy()) {
         return CreateCall(table->getFloatBIFunc(opCode), { aOperand }, name);
     }
@@ -133,7 +165,17 @@ Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, OpCodeEn opCode, 
     }
 }
 
-Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty,unsigned int i, const std::string &name)
+Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,int64_t length, int64_t shift, TypeEn type, const std::string &name)
+{
+    auto function = table->getConvolveFunc(type);
+    auto bOperand = CreateIntToPtr(
+        ConstantInt::get(getInt64Ty(), uintptr_t(ptr)),
+        PointerType::getUnqual(getLLVMType(type)));
+
+    return CreateCall(function, { aOperand, bOperand, getInt64(length) ,getInt64(shift) }, name);
+}
+
+Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty, int64_t i, const std::string &name)
 {
     SetInitInsertPoint();
     Value* ret = CreateAlloca(ty, 0, name);
@@ -141,9 +183,9 @@ Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty,unsigned int i, cons
     return ret;
 }
 
-Value * IRGenerator::CreatePositionalOffset( std::string name,uint64_t startValue)
+Value * IRGenerator::CreatePositionalOffset( std::string name,int64_t startValue)
 {
-    Value* ret=CreatePositionalOffsetAlloca();
+    Value* ret=CreatePositionalOffsetAlloca("", startValue);
     SetLoadInsertPoint();
     currentOffsetValue=CreateLoad(ret, "offset" );
     SetCalcInsertPoint();
@@ -151,7 +193,7 @@ Value * IRGenerator::CreatePositionalOffset( std::string name,uint64_t startValu
 }
 
 
-Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, uint64_t startValue)
+Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, int64_t startValue)
 {
     auto ty=getInt64Ty();
     SetInitInsertPoint();
@@ -259,13 +301,13 @@ void IRGenerator::CreateMidleBRs()
 void * IRGenerator::AddBufferAlloca(Buffer *s)
 {
     buffer_list.push_back(s);
-    return NULL;
+    return nullptr;
 }
 
 
 Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const std::string &name)
 {
-    Value * ret =NULL,* convolveFunction=NULL;
+    Value * ret =nullptr,* convolveFunction=nullptr;
     Type * type=aOperand->getType()->getPointerElementType();
 
     if (type == getDoubleTy())
@@ -278,13 +320,13 @@ Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const st
         convolveFunction=convolveI32Function;
     else
         return ret;
-    //if (ret == NULL) print_error("CreateConvolve :" );
+    //if (ret == nullptr) print_error("CreateConvolve :" );
     return CreateCall(convolveFunction, { aOperand ,bOperand }, name);
 }
 
 
 
-void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr)
+void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr) //atavism
 {
     typedef Value * (*lambla_ty)(llvm::Type * type, uintptr_t addr);
 
@@ -312,11 +354,16 @@ void IRGenerator::SetOffsetToZero()
 {   
     BasicBlock*  tmp=BB;
     CreateStore(getInt64(0), currentOffsetValueAlloca);
+}
 
+void IRGenerator::SetOffsetTo(int64_t val)
+{
+    BasicBlock*  tmp=BB;
+    CreateStore(getInt64(val), currentOffsetValueAlloca);
 }
 
 llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
-    Type * ret = NULL;
+    Type * ret = nullptr;
     //this->SetInsertPoint
     switch (targetTy)
     {
@@ -327,8 +374,8 @@ llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
     case TypeEn::int64_jty:  ret = getInt64Ty();  break;
     case TypeEn::float_jty:  ret = getFloatTy();  break;
     case TypeEn::double_jty: ret = getDoubleTy(); break;
-    case TypeEn::unknown_jty:ret = NULL;          break;
-    default:                 ret = NULL;          break;
+    case TypeEn::unknown_jty:ret = nullptr;          break;
+    default:                 ret = nullptr;          break;
     }
     
     return ret;

@@ -21,7 +21,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<T>
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<ParameterIfs*> & arg) {
     std::stringstream stream;
     for (auto i : arg)
-        if (i!=NULL)
+        if (i!=nullptr)
             OS << i->stream(stream).str() << " ";
     return OS;
 }

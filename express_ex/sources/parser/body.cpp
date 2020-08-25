@@ -6,6 +6,7 @@
 
 Body::Body( std::string name,  bool isPrototype )
 {
+	garbage_contaiiner_ = new GarbageContainer;
 	name_ = name;
 	isPrototype_ = isPrototype;
 	lines_.reserve(30);
@@ -13,6 +14,8 @@ Body::Body( std::string name,  bool isPrototype )
 
 Body::~Body()
 {
+	delete garbage_contaiiner_;
+
 	for (auto& value : lines_) {
 		delete value;
 	}
@@ -22,19 +25,23 @@ Body::~Body()
 
 void Body::addLine(const std::string &name, Variable* var)
 {
+	
 	auto line = new Line(name,var);
+	garbage_contaiiner_->add(line);
 	lines_.push_back(line);
 }
 
 void Body::addArg(const std::string &name)
 {
 	auto line = new Line(name);
+	garbage_contaiiner_->add(line);
 	argCount_++;
 	lines_.push_back(line);
 }
 
 void Body::addParam(Line * line)
 {
+	garbage_contaiiner_->add(line);
 	argCount_++;
 	lines_.push_back(line);
 }
@@ -42,6 +49,7 @@ void Body::addParam(Line * line)
 void Body::addParam(const std::string &name, TypeEn ty, DataStructTypeEn dsty, uint64_t len)
 {
 	auto line = new Line(name,  ty,  dsty,  len);
+	garbage_contaiiner_->add(line);
 	argCount_++;
 	lines_.push_back(line);
 }
@@ -49,6 +57,7 @@ void Body::addParam(const std::string &name, TypeEn ty, DataStructTypeEn dsty, u
 void Body::addParam(const std::string &name, const std::string &linkName,DataStructTypeEn dsty)
 {
 	auto line = new Line(name, linkName, dsty);
+	garbage_contaiiner_->add(line);
 	argCount_++;
 	lines_.push_back(line);
 }
@@ -56,6 +65,7 @@ void Body::addParam(const std::string &name, const std::string &linkName,DataStr
 void Body::addReturn(const std::string &name, Variable* var)
 {
 	auto line = new Line(name, var);
+	garbage_contaiiner_->add(line);
 	returnStack_.push_back(line);
 }
 
@@ -76,7 +86,7 @@ Variable* Body::pop()
 
 stack<Variable*> Body::pop(size_t length)
 {
-	//if (varStack_.size() < length) 
+	//if (varStack_.size() < length_) 
 	//	print_error("stack is empty");
 	return varStack_.pop(length);
 }
@@ -85,7 +95,7 @@ stack<Variable*> Body::pop(size_t length)
 //create operation
 Variable* Body::typeConvOp(TypeEn targetType, Variable* arg1)
 {	
-	return newTypeConvOp( targetType,  arg1);
+	return newTypeConvOp(garbage_contaiiner_, targetType,  arg1);
 }
 
 // maybe this code segment is excess/glut 
@@ -108,7 +118,7 @@ Variable* Body::builtInFuncOp(OpCodeEn uTypeOp, Variable* arg1 ){
 			ret_arg1 = typeConvOp(TypeEn::float_jty, arg1);
 		targetType = arg1->getType();
 	}
-	return newBuiltInFuncOperation(targetType, ret_arg1, uTypeOp);
+	return newBuiltInFuncOperation(garbage_contaiiner_,targetType, ret_arg1, uTypeOp);
 }
 
 Variable* Body::arithmeticOp(OpCodeEn uTypeOp,Variable* arg1, Variable* arg2)
@@ -120,8 +130,21 @@ Variable* Body::arithmeticOp(OpCodeEn uTypeOp,Variable* arg1, Variable* arg2)
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
 	}
-	return newArithmeticOperation(targetType, ret_arg1, ret_arg2,  uTypeOp );
+	return newArithmeticOperation(garbage_contaiiner_,targetType, ret_arg1, ret_arg2,  uTypeOp );
 }
+
+Variable* Body::comparsionOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2)
+{
+	Variable * ret_arg1= arg1, * ret_arg2= arg2;
+	TypeEn targetType = TypeEn::DEFAULT_JTY;
+	if (!isPrototype_) {
+		targetType = max(arg1, arg2)->getType();
+		ret_arg1   = typeConvOp(targetType, arg1);
+		ret_arg2   = typeConvOp(targetType, arg2);
+	}
+	return newComparsionOperation(garbage_contaiiner_, targetType, ret_arg1, ret_arg2, uTypeOp);
+}
+
 
 Variable* Body::convolveOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint32_t shift) //necessary to add type maching
 {
@@ -132,7 +155,7 @@ Variable* Body::convolveOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
 	}
-	return newConvolveOperation(targetType, ret_arg1, ret_arg2, shift, uTypeOp);
+	return newConvolveOperation(garbage_contaiiner_,targetType, ret_arg1, ret_arg2, shift, uTypeOp);
 }
 
 Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
@@ -144,7 +167,7 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 		ret_arg2   = typeConvOp(targetType, arg2);
 		ret_arg3   = typeConvOp(targetType, arg3);
 	}
-	return newSelectOp(targetType, arg1, ret_arg2, ret_arg3);
+	return newSelectOp(garbage_contaiiner_,targetType, arg1, ret_arg2, ret_arg3);
 }
 
 
@@ -168,6 +191,14 @@ void Body::addArithmeticOp(OpCodeEn uTypeOp){
 	push(arithmeticOp(uTypeOp,arg1, arg2));
 }
 
+void Body::addComarsionOp(OpCodeEn uTypeOp) {
+
+	Variable* arg2 = pop();
+	Variable* arg1 = pop();
+	push(comparsionOp(uTypeOp, arg1, arg2));
+}
+
+
 void Body::addConvolveOp(OpCodeEn uTypeOp,uint32_t shift){
 
 	Variable* arg2 = pop();
@@ -188,7 +219,7 @@ void Body::addRangeOp(size_t argCount){
 		print_error("invalid signature of range(..) function");
 
 	stack<Variable*> v=pop(argCount);
-	push(newSmallArrayDefOp(v,OpCodeEn::smallArrayRange));
+	push(newSmallArrayDefOp(garbage_contaiiner_,v,OpCodeEn::smallArrayRange));
 
 }
 
@@ -196,14 +227,14 @@ void Body::addShiftOp()
 {
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
-	push(newSliceOp(arg1, arg2, OpCodeEn::shift));
+	push(newSliceOp(garbage_contaiiner_,arg1, arg2, OpCodeEn::shift));
 }
 
 void Body::addDecimationOp(){
 
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
-	push(newSliceOp(arg1, arg2,OpCodeEn::decimation));
+	push(newSliceOp(garbage_contaiiner_,arg1, arg2,OpCodeEn::decimation));
 }
 
 void Body::addSmallArrayDefinitionOp(size_t size) {
@@ -212,7 +243,7 @@ void Body::addSmallArrayDefinitionOp(size_t size) {
 	for (size_t i = 0; i < size; i++)
 		op.push(pop());
 	std::reverse(op.begin(), op.end());
-	push(newSmallArrayDefOp(op));
+	push(newSmallArrayDefOp(garbage_contaiiner_,op,OpCodeEn::smallArrayDef, isPrototype_));
 }
 
 void Body::addCall(Body* body){
@@ -224,7 +255,7 @@ void Body::addCall(Body* body){
 	
 
 	auto b =isPrototype_? body : body->genBodyByPrototype(a,isPrototype_);
-	push(new Call(b,a));
+	push(garbage_contaiiner_->add(new Call(b,a)));
 }
 
 
@@ -232,13 +263,13 @@ void Body::addCall(Body* body){
 Line* Body::getLastLineFromName(std::string name)
 {
 	if (lines_.size() < 1)
-		return NULL;
+		return nullptr;
 	for (int i = lines_.size() - 1; i >= 0; i--) {
 		if (lines_[i]->haveTargetName(name))
 			return (lines_[i]);
 	}
 	print_error("unknown symbol " + name);
-	return NULL;
+	return nullptr;
 }
 
 const stack<ParameterIfs*> Body::getOutputParameterList()
@@ -332,7 +363,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 	auto arg	= args.begin();
 
 	auto body	= new Body(name_, isPrototype);
-	auto context= new BodyGenContext(&varStack_, &(body->lines_), isPrototype);
+	auto context= new BodyGenContext(&varStack_, &(body->lines_), isPrototype, body->getGarbageContainer());
 
 	stack<Variable*> visitorStack;
 
@@ -478,4 +509,10 @@ void Body::genTable(TableGenContext * context){
 	if (name_ == "main")
 		context->setMaxBufferLength(maxBufferLength);
 
+}
+
+
+GarbageContainer::~GarbageContainer() {
+	for (auto i : variable_set_)
+		delete i;
 }

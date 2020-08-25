@@ -1,14 +1,18 @@
 #ifndef TEXTEDIT_H
 #define TEXTEDIT_H
 
-//#include "highlightListener.h"
+
+#include "highlightStyle.h"
 #include "highlighter.h"
 #include <QMainWindow>
 #include <QtWidgets>
 
-class KexEdit;
-class TemplateTextEdit;
-class SearchWidget : public QWidget {
+
+
+class   KexEdit;
+class   TemplateTextEdit;
+
+class QUILIBSHARED_EXPORT SearchWidget : public QWidget {
     Q_OBJECT
 public:
     SearchWidget(QWidget* parent = nullptr):QWidget(parent){
@@ -85,7 +89,7 @@ private:
 
 
 
-class LineNumberArea : public QWidget
+class   LineNumberArea : public QWidget
 {
 public:
     LineNumberArea(KexEdit *editor);
@@ -99,7 +103,7 @@ private:
 };
 
 
-class TemplateTextEdit :public QPlainTextEdit{
+class QUILIBSHARED_EXPORT  TemplateTextEdit :public QPlainTextEdit{
     Q_OBJECT
 public:
     TemplateTextEdit(): QPlainTextEdit() {
@@ -239,9 +243,9 @@ private:
 };
 
 
-class HighlightStyle;
 
-class KexEdit:public TemplateTextEdit{
+
+class  QUILIBSHARED_EXPORT KexEdit:public TemplateTextEdit{
     Q_OBJECT
 public:
     KexEdit();
@@ -249,14 +253,13 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int  lineNumberAreaWidth();
 
+    void setHighlightStyle(HighlightStyle*);
+
 public Q_SLOTS:
 
     void rehighlight();
 
-    virtual void highlitText(const QString &text) override{
-        highlighter->setPattern(text);
-        rehighlight();
-    }
+    virtual void highlitText(const QString &text) override;
 
 private Q_SLOTS:
     void updateLineNumberAreaWidth(int newBlockCount);
@@ -273,9 +276,14 @@ protected:
 
     void keyPressEvent(QKeyEvent* event) override ;
 
+Q_SIGNALS:
+    void uncorrect_syntax(QString);
+    void correct_syntax();
+
 private:
     bool rehighlightInProgress= false;
     bool spacesInsteadOfTabs  = true;
+    bool isInvalidSyntax      = false;
     int  tabWidth=2;
 
     Highlighter*        highlighter;
@@ -283,7 +291,7 @@ private:
     QWidget*            lineNumberArea;
 };
 
-class RunOutputBrowser:public TemplateTextEdit{
+class  RunOutputBrowser:public TemplateTextEdit{
 Q_OBJECT
 public:
     RunOutputBrowser(): TemplateTextEdit() {

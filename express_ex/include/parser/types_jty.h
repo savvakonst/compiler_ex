@@ -68,6 +68,27 @@ enum class OpCodeEn {
     pow,
     fpow,
 
+    eq,//   equal
+    ne,//   not equal
+    ugt,//  unsigned greater than
+    uge,//  unsigned greater or equal
+    ult,//  unsigned less than
+    ule,//  unsigned less or equal
+    sgt,//  signed greater than
+    sge,//  signed greater or equal
+    slt,//  signed less than
+    sle,//  signed less or equal
+
+    oeq , // ordered and equal
+    one,  // ordered and not equal
+    ogt , // ordered and greater than
+    oge , // ordered and greater than or equal
+    olt , // ordered and less than
+    ole , // ordered and less than or equal
+    ord , // ordered (no nans)
+
+
+
     LSHL,
     LSHR,
     ASHR,
@@ -116,6 +137,7 @@ enum class OpCodeEn {
 enum class TypeOpCodeEn { 
     inv= (int)OpCodeEn::neg,
     arithetic = (int)OpCodeEn::add,
+    comparsion = (int)OpCodeEn::eq,
     bitwise = (int)OpCodeEn::LSHL,
     typeConv = (int)OpCodeEn::trunc,
     convolve_op = (int)OpCodeEn::convolve,
@@ -126,7 +148,8 @@ enum class TypeOpCodeEn {
     
 
     invEnd = arithetic,
-    aritheticEnd = bitwise,
+    aritheticEnd = comparsion,
+    comparsionEnd = bitwise,
     bitwiseEnd = typeConv,
     typeConvEnd = convolve_op,
     convolve_opEnd= (int)OpCodeEn::convolve_f+1,
@@ -152,6 +175,10 @@ inline bool isInv(OpCodeEn x) {
 inline bool isArithetic(OpCodeEn x){
     TypeOpCodeEn t=(TypeOpCodeEn)x;
     return (TypeOpCodeEn::arithetic <= t) && (t < TypeOpCodeEn::aritheticEnd);
+}
+inline bool isComparsion(OpCodeEn x) {
+    TypeOpCodeEn t=(TypeOpCodeEn)x;
+    return (TypeOpCodeEn::comparsion <= t) && (t < TypeOpCodeEn::comparsionEnd);
 }
 inline bool isBitwise(OpCodeEn x) {
     TypeOpCodeEn t = (TypeOpCodeEn)x;

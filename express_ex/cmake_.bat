@@ -1,5 +1,5 @@
 for /d %%i in (*) do (
-  if not "%%i"=="sources" (if not "%%i"=="include"  if not "%%i"==".vs"  RMDIR /q  /s  %%i )
+  if not "%%i"=="sources" (if not "%%i"=="include" (if not "%%i"=="Release"  if not "%%i"==".vs"  RMDIR /q  /s  %%i ))
 )
 
 for  %%i in (*) do (

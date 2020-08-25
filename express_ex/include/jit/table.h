@@ -49,11 +49,11 @@ public:
     ~SubBlock() {}
 
     void     setUint(Variable * var);
-    void     setBufferLength(uint64_t bufferLength_) { bufferLength=bufferLength_; }
+    void     setBufferLength(uint64_t buffer_length) { buffer_length_=buffer_length; }
     uint64_t getLevel () { return 0; };
-    uint64_t getLength() { return length; };
-    uint64_t getLeftLength() { return leftLength; };
-    uint64_t getRightLength() { return rightLength; };
+    uint64_t getLength() { return length_; };
+    uint64_t getLeftLength() { return left_ength_; };
+    uint64_t getRightLength() { return right_length_; };
 
     string   print();
 
@@ -61,12 +61,12 @@ public:
         std::string basicBlockPrefix="", std::string basicBlockPostfix="");
 
 private:
-    stack<Variable*> uintList;
+    stack<Variable*> uint_list_;
 
-    uint64_t leftLength;
-    uint64_t rightLength;
-    uint64_t length;
-    uint64_t bufferLength=1 << 20;
+    uint64_t left_ength_;
+    uint64_t right_length_;
+    uint64_t length_;
+    uint64_t buffer_length_=1 << 20;
 };
 
 class Block
@@ -76,25 +76,31 @@ public:
     //Block (uint64_t l) {level =l; }
     Block (Variable* var);
 
-    ~Block() {}
+    ~Block() {
+        for (auto i : sub_block_list_)
+            delete i;
+    }
 
     void     setUint(Variable * var);
-    void     setBufferLength(uint64_t bufferLength_);
-    uint64_t getLevel () { return level;  };
-    uint64_t getLength() { return length; };
-
-    string  print();
+    void     setBufferLength(uint64_t bufferLength);
+    uint64_t getLevel () { return level_;  };
+    uint64_t getLength() { return length_; };
+    void     recalcLeftRightBufferLengths();
+    string   print();
 
     bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
 
 private:
     void setUintToSubtable(Variable * var);
 
-    stack<Variable*> uintList;
-    stack<SubBlock*> subBlockList;
-    uint64_t level;
-    uint64_t length;
-    uint64_t bufferLength=1 << 20;
+    stack<Variable*> uint_list_;
+    stack<SubBlock*> sub_block_list_;
+
+    uint64_t left_ength_;
+    uint64_t right_length_;
+    uint64_t level_;
+    uint64_t length_;
+    uint64_t buffer_length_=1 << 20;
 };
 
 
@@ -102,34 +108,40 @@ private:
 class TableColumn 
 {
 public:
-    TableColumn (uint64_t len) { length =len; }
+    TableColumn (uint64_t len) { length_ =len; }
     TableColumn (Variable* var);
 
-    ~TableColumn() {}
+    ~TableColumn() {
+        for (auto i : blockList_)
+            delete i;
+    }
 
     void   setUint(Variable * var);
     void   setBufferLength(uint64_t bufferLength_) { 
-        for (auto i : blockList)
+        for (auto i : blockList_)
             i->setBufferLength(bufferLength_);
     }
 
-    uint64_t    getLength() { return length; }
+    uint64_t    getLength() { return length_; }
     Block *     getBlock(int level) {
-        for (auto i : blockList)
-            if (i->getLength() == length) {
+        for (auto i : blockList_)
+            if (i->getLength() == length_) {
                 return i;
             }
-        return NULL;
+        return nullptr;
     }
-
+    void recalcLeftRightBufferLengths(){
+        for (auto i : blockList_)
+            i->recalcLeftRightBufferLengths();
+    }
     string  print();
 
 
     bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
 
 private:
-    uint64_t      length;
-    stack<Block*> blockList;
+    uint64_t      length_;
+    stack<Block*> blockList_;
 };
 
 
@@ -139,17 +151,16 @@ class Table
 public:
     Table ( int maxBufferLength=(1<<20),int minBufferLength=0) {
         
-        maxBufferLength_=maxBufferLength;
-        minBufferLength_=minBufferLength;
+        max_buffer_length_=maxBufferLength;
+        min_buffer_length_=minBufferLength;
 
     }
-    ~Table() {
-        for (auto i : parameterSet_)
-            delete i;
-    }
+
+
+    ~Table();
 
     bool containsColumn(uint64_t length) {
-        for (auto i : columnList_)
+        for (auto i : column_list_)
             if (i->getLength() == length) 
                 return true;
         return false;
@@ -158,23 +169,27 @@ public:
     void setUint(Variable * var);
 
     TableColumn * getColumn(uint64_t length){
-        for (auto i : columnList_)
+        for (auto i : column_list_)
             if (i->getLength() == length) {
                 return i;
             }
-        return NULL;
+        return nullptr;
     }
-
+    void recalcLeftRightBufferLengths() {
+        for (auto i : column_list_)
+            i->recalcLeftRightBufferLengths();
+    }
     llvm::Function* getFloatBIFunc(OpCodeEn op);
     llvm::Function* getDoubleBIFunc(OpCodeEn op);
     llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, OpCodeEn op, llvm::Type * Ty);
-
+    llvm::Function* getConvolveFunc(TypeEn type);
     void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
 
     string  print();
     void calculateBufferLength(std::string basicBlockPrefix="");
 
     bool llvmInit();
+    
     bool generateIR(std::string basicBlockPrefix="");
 
     bool runOptimization();
@@ -187,36 +202,38 @@ public:
     friend class TableGenContext;
 private:
     void declareFunctions();
-    llvm::Module* M=NULL;
-    llvm::LLVMContext * context_=NULL;
+    llvm::Module* M_=nullptr;                //external 
+    llvm::LLVMContext * context_=nullptr;    //external 
 
-    std::unique_ptr<llvm::Module> moduleUPtr;
-    std::unique_ptr<llvm::legacy::FunctionPassManager> theFPM;
+    std::unique_ptr<llvm::Module> module_U_ptr_;    
+    std::unique_ptr<llvm::legacy::FunctionPassManager> the_FPM_;
 
-    llvm::Function* mainFunction_;
+    llvm::Function* mainFunction_;    //external 
 
-    IRGenerator* builder_=NULL;
+    std::map<TypeEn, llvm::Function*> convolve_map_;    //external 
 
-    BuiltInFuncMap floatBIFuncMap;
-    BuiltInFuncMap doubleBIFuncMap;
+    IRGenerator* builder_=nullptr;         //internal 
+
+    BuiltInFuncMap float_BI_func_map_;     //external 
+    BuiltInFuncMap double_BI_func_map_;    //external 
 
 
+     
+    llvm::Type * fTy_ = nullptr;         //external 
+    llvm::Type * dTy_ = nullptr;         //external
 
-    llvm::Type * fTy = NULL;
-    llvm::Type * dTy = NULL;
+    stack<Variable *> const_list_;           //external 
+    stack<Variable *> small_array_list_;     //external 
 
-    stack<Variable *> constList;
-    stack<Variable *> smallArrayList;
-
-    uint64_t *maxColumnDepth=0;
-    stack<TableColumn *> columnList_;
+    uint64_t *max_column_depth_=0;           
+    stack<TableColumn *> column_list_;       //internal
 
 
     std::map<OpCodeEn, int> BIF2LLVMmap_;
-    std::set<SyncParameter *> parameterSet_;
+    std::set<SyncParameter *> parameterSet_;    //external
 
-    int minBufferLength_;
-    int maxBufferLength_;
+    int min_buffer_length_;
+    int max_buffer_length_;
     int iterations_=0;
 
 
@@ -228,24 +245,24 @@ private:
 class TableGenContext
 {
 public:
-    TableGenContext (Table *arg) { table =arg;  }
+    TableGenContext (Table *arg) { table_ =arg;  }
     ~TableGenContext() {}
     
-    uint64_t          getUniqueIndex () { uniqueNameCounter++; return (uniqueNameCounter -3); }
-    void              setUint(Variable * var) { table->setUint(var);};
-    void              setParameter(SyncParameter * var) { table->parameterSet_.insert(var); };
+    uint64_t          getUniqueIndex () { unique_name_counter_++; return (unique_name_counter_ -3); }
+    void              setUint(Variable * var) { table_->setUint(var);};
+    void              setParameter(SyncParameter * var) { table_->parameterSet_.insert(var); };
     void              setMaxBufferLength(int64_t length) { 
         int64_t temp = (int64_t)1 << (int8_t)(floor(log2(length)) - 1);
-        if (table->maxBufferLength_> temp)
-            table->maxBufferLength_= temp; 
+        if (table_->max_buffer_length_> temp)
+            table_->max_buffer_length_= temp; 
     };
 
 private:
-    Table * table;
-    uint64_t uniqueNameCounter=0;
+    Table * table_;
+    uint64_t unique_name_counter_=0;
 
 };
 
-void jit_init();
+
 
 #endif

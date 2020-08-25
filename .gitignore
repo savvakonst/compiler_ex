@@ -12,6 +12,8 @@
 !/express_ex/sources/**
 !/express_ex/Release/
 !/express_ex/Release/**
+!/express_ex/Debug/
+!/express_ex/Debug/**
 
 !/express_ex/CMakeLists.txt
 !/express_ex/cmake_.bat
@@ -20,6 +22,8 @@
 !/syntaxhighlighter
 !/syntaxhighlighter/**
 
+!/topsyntaxhighlighter
+!/topsyntaxhighlighter/**
 
 !setup.bat
 !llvm.7z

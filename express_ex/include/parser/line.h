@@ -10,7 +10,7 @@ class Line : public Variable
 {
 public:
 
-    Line(std::string name, Variable* var) {
+    Line(std::string name, Variable* var) :Variable() {
         names_.push_back(name);
         name_=name;
         if (isConst(var)) {
@@ -25,7 +25,7 @@ public:
     }
 
 
-    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) {
+    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) :Variable() {
         names_.push_back(name);
         name_   = name;
         dsType_ = dsty;
@@ -35,7 +35,7 @@ public:
     }
 
 
-    Line(std::string name, std::string linkName, DataStructTypeEn dsty) {
+    Line(std::string name, std::string linkName, DataStructTypeEn dsty) :Variable() {
         //llvm::outs() <<"isLargeArr(dsty):"<< (DataStructTypeEn::largeArr_dsty==dsty)<<"\n";
         names_.push_back(name);
         name_=name;
@@ -56,7 +56,7 @@ public:
         parameter_     = new SyncParameter(parameterInfo);
     } //to remove
     */
-    Line(std::string name, SyncParameter * parameter) {
+    Line(std::string name, SyncParameter * parameter) :Variable() {
         names_.push_back(name);
         name_       = name;
         linkName_   = parameter->getName();
@@ -71,7 +71,7 @@ public:
 
 
 
-    Line(std::string name) {
+    Line(std::string name) :Variable() {
         names_.push_back(name);
         name_=name;
         type_ = TypeEn::unknown_jty;
@@ -114,7 +114,7 @@ public:
 private:
     bool        is_arg       = false;
 
-    Variable    *assignedVal_ = NULL;
+    Variable    *assignedVal_ = nullptr;
 
     std::vector<std::string> names_;
 

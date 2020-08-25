@@ -1,4 +1,5 @@
 
-x= param( "#1_A01__1" )  
-
-return exp(x*10)
+x = param( "#1_A01__1" )  
+z=0.0-2.0
+y=convolve(x*1,[0-1,1,0])*x
+return y

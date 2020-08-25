@@ -164,12 +164,26 @@ if(MSVC)
 
     SET(llvmLibPath ${llvmDir}/Lib/x64)
 
+    SET(llvmReleaseLibPath ${llvmDir}/Lib/Release/lib)
+    SET(llvmDebugLibPath ${llvmDir}/../../llvm-project/build_exp/Debug/lib)
+
     SET(antlrReleaseLibPath ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
+
     SET(antlrDebugLibPath ${antlr4Dir}/lib/vs-2015/x64/Debug\ DLL)
     SET(antlrLibPath    ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
     #debug ${llvmLibPath} ${antlrDebugLibPath}
-    #target_link_directories(express_ex PUBLIC ${llvmLibPath} "$<$<CONFIG:Debug>: ${antlrDebugLibPath}>"  "$<$<CONFIG:Release>: ${antlrReleaseLibPath}>" )
-    target_link_directories(express_ex PUBLIC ${llvmLibPath}  ${antlrReleaseLibPath} )
+
+    target_link_directories(express_ex PUBLIC 
+        "$<$<CONFIG:Debug>:   ${antlrDebugLibPath}>"   "$<$<CONFIG:Debug>:   ${llvmDebugLibPath}>" 
+        "$<$<CONFIG:Release>: ${antlrReleaseLibPath}>" "$<$<CONFIG:Release>: ${llvmReleaseLibPath}>" 
+    )
+    #target_link_directories(express_ex PUBLIC ${llvmLibPath}  ${antlrReleaseLibPath} )
+    #target_compile_options(express_ex PUBLIC "$<$<CONFIG:DEBUG>:/MD>")
+    #set_property(TARGET express_ex APPEND PROPERTY
+    #    COMPILE_DEFINITIONS "$<$<CONFIG:Debug>: _ITERATOR_DEBUG_LEVEL=0>" 
+    #)
+
+
     target_link_libraries(express_ex ${ObjNames} antlr4-runtime )
 
 
@@ -190,14 +204,13 @@ if(MSVC)
     )
 
    
-    target_compile_options(express_ex PUBLIC "$<$<CONFIG:DEBUG>:/MD>")
+    
 
     set_property(TARGET express_ex APPEND PROPERTY
         COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
     )
-    set_property(TARGET express_ex APPEND PROPERTY
-        COMPILE_DEFINITIONS "$<$<CONFIG:Debug>: _ITERATOR_DEBUG_LEVEL=0>" 
-    )
+
+
     
 
     #add_custom_command(TARGET express_ex PRE_BUILD 

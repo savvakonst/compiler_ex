@@ -14,6 +14,22 @@ enum class BufferTypeEn {
 };
 
 
+///      sizes map
+///     
+///                        |<-as_right_buff->|                             |<-as_left_buff-->|
+///           
+///      |<---left_buff--->|<----------------------------main_buffer------------------------>|<---right_buff-->|      
+///       _____________________________________________________________________________________________________
+///      |_________________|_________________|_____________________________|_________________|_________________|
+///     ptr             left_ptr         bottom_ptr                     top_ptr           right_ptr   
+///
+///
+///
+///
+///
+///
+///
+
 class Buffer {
 public:
 
@@ -36,15 +52,15 @@ public:
 	}
 
 	virtual int64_t update(){
-		memcpy(top_ptr_, ptr_, (left_offset_ + right_offset_));
+		std::memcpy(ptr_, top_ptr_, (left_offset_ + right_offset_) * sizeof_data_type_);
 		return 0;
 	}
 
 	void setBufferAlloca() {
-
 		ptr_ = new char[sizeof_data_type_ * (length_ + left_offset_ + right_offset_)];
-		bottom_ptr_ = ptr_ + (left_offset_ + right_offset_) * sizeof_data_type_;
-		top_ptr_	= ptr_ + length_;
+		left_ptr_   = ptr_ + sizeof_data_type_ * left_offset_ ;
+		bottom_ptr_ = ptr_ + sizeof_data_type_ * (left_offset_ + right_offset_) ;
+		top_ptr_	= ptr_ + sizeof_data_type_ * length_ ;
 	}
 
 	virtual BufferTypeEn getBufferType() {
@@ -56,7 +72,7 @@ public:
 	}
 
 	char *  getPtr() {
-		return ptr_ ;
+		return left_ptr_;
 	}
 
 	virtual int64_t close() {
@@ -81,15 +97,16 @@ public:
 
 
 protected:
-	TypeEn  type_=TypeEn::unknown_jty;
-	int64_t	sizeof_data_type_=-1;
-	int64_t	length_=-1;
-	int64_t	left_offset_=-1;
-	int64_t	right_offset_=-1;
+	TypeEn  type_ = TypeEn::unknown_jty;
+	int64_t	sizeof_data_type_ = -1;
+	int64_t	length_ = -1;
+	int64_t	left_offset_ = -1;
+	int64_t	right_offset_ = -1;
 	
-	char* ptr_ =NULL;
-	char* bottom_ptr_=NULL;
-	char* top_ptr_=NULL;
+	char* ptr_ = nullptr;
+	char* left_ptr_ = nullptr;
+	char* bottom_ptr_ = nullptr;
+	char* top_ptr_ = nullptr;
 	std::string		link_name_ = std::string();
 };
 
@@ -105,12 +122,13 @@ public:
 
 	virtual int64_t init(){
 		parameter_->open();
-		parameter_->read(ptr_, left_offset_ + length_ + right_offset_);
+		//parameter_->read(ptr_, left_offset_ + length_ + right_offset_);
+		parameter_->read(left_ptr_, length_ + right_offset_); //is not true
 		return 0;
 	}
 
 	virtual int64_t update() {
-		memcpy(top_ptr_, ptr_, (left_offset_ + right_offset_));
+		std::memcpy( ptr_, top_ptr_, (left_offset_ + right_offset_) * sizeof_data_type_);
 		parameter_->read(bottom_ptr_, length_);
 		return 0;
 	}
@@ -127,7 +145,7 @@ public:
 	virtual std::string  getName() { return parameter_->getName(); }
 
 protected:
-	SyncParameter * parameter_ = NULL;
+	SyncParameter * parameter_ = nullptr;
 
 };
 
@@ -169,7 +187,7 @@ public:
 
 	virtual std::string  getName() { return parameter_->getName(); }
 protected:
-	SyncParameter * parameter_=NULL;
+	SyncParameter * parameter_=nullptr;
 	std::string link_name_="";
 };
 

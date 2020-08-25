@@ -21,7 +21,7 @@ using namespace antlr4;
 //using namespace  parser_cpp;
 
 
-extern ParserRuleContext* errContext ;
+extern ParserRuleContext* g_err_context ;
 
 class EErrorListener : public BaseErrorListener
 {
@@ -34,6 +34,7 @@ public:
 
     TreeShapeListener();// : EGrammarBaseListener()
     ~TreeShapeListener();
+
 
     void NewBody(std::string name, bool isPrototype);
 
@@ -48,6 +49,9 @@ public:
     virtual void exitMulDiv(EGrammarParser::MulDivContext* ctx) override;
     virtual void exitAddSub(EGrammarParser::AddSubContext* ctx) override;
     virtual void exitPow(EGrammarParser::PowContext* ctx) override;
+    virtual void exitMoreLess(EGrammarParser::MoreLessContext * ctx) override;
+    virtual void exitMoreeqLesseq(EGrammarParser::MoreeqLesseqContext * ctx) override;
+    virtual void exitEquality(EGrammarParser::EqualityContext * ctx) override;
     //conditional 
     virtual void exitCondExpr(EGrammarParser::CondExprContext* ctx) override;
     virtual void exitCallConvolve(EGrammarParser::CallConvolveContext* ctx) override;
@@ -65,17 +69,24 @@ public:
     std::vector<Body*> context;
 
 private:
+    void setPos(ParserRuleContext* ctx);
 };
 
 class KEXParser {
 public:
 
-    KEXParser(std::string file_name) {
-        std::ifstream ifs(file_name);
-        std::string content(
-            (std::istreambuf_iterator<char>(ifs)),
-            (std::istreambuf_iterator<char>())
-        );
+    KEXParser(std::string str,bool is_file_name = true) {
+
+        std::string content; 
+        if (is_file_name) {
+            std::ifstream ifs(str);
+            content=    std::string(
+                (std::istreambuf_iterator<char>(ifs)),
+                (std::istreambuf_iterator<char>()));
+        }
+        else
+            content = str;
+
 
         //ANTLRInputStream    input(content + "\n");
 
@@ -89,14 +100,15 @@ public:
         parser_ =new EGrammarParser(tokens_);
 
         parser_->removeErrorListeners();
-        errorListner_ = new EErrorListener;
-        parser_->addErrorListener(errorListner_);
+        error_listner_ = new EErrorListener;
+        parser_->addErrorListener(error_listner_);
 
         tree_ = parser_->start();
     }
+
     ~KEXParser() {
         //delete tree_;
-        delete errorListner_;
+        delete error_listner_;
         delete parser_;
         delete tokens_;
         delete lexer_;
@@ -124,7 +136,7 @@ private:
     EGrammarLexer      *   lexer_;
     CommonTokenStream  *   tokens_;
     EGrammarParser     *   parser_;
-    EErrorListener     *   errorListner_;
+    EErrorListener     *   error_listner_;
 
     tree::ParseTree*  tree_;
     TreeShapeListener listener_;

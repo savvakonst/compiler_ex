@@ -28,7 +28,7 @@ class IRGenerator : public llvm::IRBuilder <>
 public:
 
 
-    IRGenerator(llvm::LLVMContext & context, Table * table_=NULL);
+    IRGenerator(llvm::LLVMContext & context, Table * table_=nullptr);
     ~IRGenerator();
 
      
@@ -44,12 +44,14 @@ public:
     llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
     llvm::Value * CreateConst(uint64_t & binaryValue, TypeEn targetTy, const std::string &name="");
     llvm::Value * CreateArithmetic(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
+    llvm::Value * CreateComparsion(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreateInv(llvm::Value * AOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreateTypeConv(llvm::Value *AOperand,  OpCodeEn opCode, TypeEn targetTy, const std::string &name="");
     llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, OpCodeEn opCode, const std::string &name="");
-    llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, unsigned int i, const std::string &name="");
-    llvm::Value * CreatePositionalOffset( std::string name="", uint64_t startValue=0);
-    llvm::Value * CreatePositionalOffsetAlloca(std::string name="", uint64_t startValue=0);
+    llvm::Value * CreateConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string & name);
+    llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, int64_t i, const std::string &name="");
+    llvm::Value * CreatePositionalOffset( std::string name="", int64_t startValue=0);
+    llvm::Value * CreatePositionalOffsetAlloca(std::string name="", int64_t startValue=0);
     llvm::Value * CreatePositionalInBoundsGEP(llvm::Value *Ptr, llvm::ArrayRef<llvm::Value *> IdxList, const std::string &Name = "");
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, const  std::string &name="");
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, bool isVolatile, const std::string &name="");
@@ -62,15 +64,15 @@ public:
 
     void        * AddBufferAlloca(Buffer * s);
 
-    void SetInitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(initBlock, bb); };
-    void SetLoadInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loadBlock, bb); };
-    void SetCalcInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(calcBlock, bb); };
-    void SetStoreInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(storeBlock, bb); };
+    void SetInitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(initBlock, bb); };
+    void SetLoadInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(loadBlock, bb); };
+    void SetCalcInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(calcBlock, bb); };
+    void SetStoreInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(storeBlock, bb); };
     
-    void SetLoopEnterInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(loopEnterBlock, bb); };
-    void SetIntermediateInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(intermediateBlock, bb); };
-    void SetCycleExitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(cycleExitBlock, bb); };
-    void SetExitInsertPoint(llvm::BasicBlock*bb=NULL) { SetCInsertPoint(exitBlock, bb); };
+    void SetLoopEnterInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(loopEnterBlock, bb); };
+    void SetIntermediateInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(intermediateBlock, bb); };
+    void SetCycleExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(cycleExitBlock, bb); };
+    void SetExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(exitBlock, bb); };
 
     void SetLastInsertPoint() { SetInsertPoint(bbList.back()); };
 
@@ -85,12 +87,13 @@ public:
 
     void SetOffsetToZero();
 
-    void DropBaseInsertPoint() {
-        calcBlock=NULL;
-        loadBlock=NULL;
-        storeBlock=NULL;
-    };
+    void SetOffsetTo(int64_t val);
 
+    void DropBaseInsertPoint() {
+        calcBlock=nullptr;
+        loadBlock=nullptr;
+        storeBlock=nullptr;
+    };
 
     llvm::BasicBlock* getInitBlock() { return initBlock; }
     llvm::BasicBlock* getLoadBlock() { return loadBlock; }
@@ -118,8 +121,8 @@ public:
 private:
     typedef llvm::BasicBlock* BasicBlockPtr;
 
-    void SetCInsertPoint(BasicBlockPtr & prot, llvm::BasicBlock * bb=NULL) {
-        if (bb == NULL)
+    void SetCInsertPoint(BasicBlockPtr & prot, llvm::BasicBlock * bb=nullptr) {
+        if (bb == nullptr)
             bb=prot;
         else {
             prot=bb;
@@ -133,14 +136,14 @@ private:
 
 
 
-    llvm::BasicBlock* initBlock=NULL;
-    llvm::BasicBlock* calcBlock=NULL;
-    llvm::BasicBlock* loadBlock=NULL;
-    llvm::BasicBlock* storeBlock=NULL;
-    llvm::BasicBlock* intermediateBlock=NULL;
-    llvm::BasicBlock* loopEnterBlock=NULL;
-    llvm::BasicBlock* cycleExitBlock=NULL;
-    llvm::BasicBlock* exitBlock=NULL;
+    llvm::BasicBlock* initBlock=nullptr;
+    llvm::BasicBlock* calcBlock=nullptr;
+    llvm::BasicBlock* loadBlock=nullptr;
+    llvm::BasicBlock* storeBlock=nullptr;
+    llvm::BasicBlock* intermediateBlock=nullptr;
+    llvm::BasicBlock* loopEnterBlock=nullptr;
+    llvm::BasicBlock* cycleExitBlock=nullptr;
+    llvm::BasicBlock* exitBlock=nullptr;
 
     std::vector <llvm::BasicBlock*> bbList;
 
@@ -148,19 +151,24 @@ private:
     //  this list should be cleared every time in the transition to a next block.
     std::vector <llvm::Value*>  initializedVariablesList; 
 
-    llvm::Value * convolveDoubleFunction=NULL;
-    llvm::Value * convolveFloatFunction=NULL;
+    llvm::Value * convolveDoubleFunction=nullptr;
+    llvm::Value * convolveFloatFunction=nullptr;
 
-    llvm::Value * convolveI64Function=NULL;
-    llvm::Value * convolveI32Function=NULL;
+    llvm::Value * convolveI64Function=nullptr;
+    llvm::Value * convolveI32Function=nullptr;
 
-    llvm::Value * currentOffsetValueAlloca =NULL;
-    llvm::Value * currentOffsetValue =NULL;
-    llvm::Value * currentCMPRes      =NULL;
+    llvm::Value * currentOffsetValueAlloca =nullptr;
+    llvm::Value * currentOffsetValue =nullptr;
+    llvm::Value * currentCMPRes      =nullptr;
 
-    Table * table=NULL;
-    llvm::Function* currentFunction=NULL;
-    llvm::Value* bufferUpdateFunction=NULL;
+
+
+    Table * table=nullptr;
+
+    
+
+    llvm::Function* currentFunction=nullptr;
+    llvm::Value* bufferUpdateFunction=nullptr;
 
     std::vector<llvm::Value *> buffersList;
     //std::vector <void *> bufferList;

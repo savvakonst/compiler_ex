@@ -1,3 +1,4 @@
+
 #include "highlightListener.h"
 #include "textEdit.h"
 
@@ -51,6 +52,16 @@ void KexEdit::rehighlight(){
         return;
     }
 
+    if (errorListner.hasError()){
+        isInvalidSyntax=true;
+        Q_EMIT uncorrect_syntax(errorListner.getErrorMessage());
+    }
+    else if(isInvalidSyntax){
+        isInvalidSyntax=false;
+        Q_EMIT correct_syntax();
+    }
+
+
 
     TreeShapeListener listener(highlightStyle);
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
@@ -58,6 +69,13 @@ void KexEdit::rehighlight(){
     highlighter->setListener(&listener);
     highlighter->rehighlight();
     rehighlightInProgress=false;
+}
+
+
+
+void KexEdit::highlitText(const QString &text){
+        highlighter->setPattern(text);
+        rehighlight();
 }
 
 void KexEdit::wheelEvent(QWheelEvent* event) {
@@ -167,6 +185,12 @@ int KexEdit::lineNumberAreaWidth()
     int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
 
     return space;
+}
+
+void KexEdit::setHighlightStyle(HighlightStyle * h)
+{
+    delete highlightStyle ;
+    highlightStyle = h ;
 }
 
 

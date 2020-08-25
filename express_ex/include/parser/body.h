@@ -9,8 +9,7 @@
 #include "operations.h"
 
 
-class Body
-{
+class Body{
 public:
 
     Body(std::string name = "main", bool isPrototype = false);
@@ -48,6 +47,7 @@ private:
     Variable* typeConvOp    (TypeEn   targetType, Variable* arg1);
     Variable* builtInFuncOp (OpCodeEn    uTypeOp, Variable* arg1);
     Variable* arithmeticOp  (OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2);
+    Variable * comparsionOp(OpCodeEn uTypeOp, Variable * arg1, Variable * arg2);
     Variable* selectOp      (Variable*      arg1, Variable* arg2, Variable* arg3);
     Variable* convolveOp    (OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
 
@@ -56,6 +56,7 @@ public:
     void addTypeConvOp      (TypeEn targetType);
     void addBuiltInFuncOp   (OpCodeEn uTypeOp);
     void addArithmeticOp    (OpCodeEn uTypeOp);
+    void addComarsionOp(OpCodeEn uTypeOp);
     void addConvolveOp      (OpCodeEn uTypeOp, uint32_t shift = 0);
     void addSelectOp        ();
 
@@ -72,7 +73,7 @@ public:
     Line*                      getLastLineFromName    (std::string name);
     std::string                getName                () { return name_; };
     const stack<ParameterIfs*> getOutputParameterList ();
-
+    GarbageContainer *         getGarbageContainer    () { return garbage_contaiiner_; }
 
 
     // tree walker methods
@@ -84,6 +85,8 @@ public:
 
 private:
 
+    GarbageContainer * garbage_contaiiner_;
+
     bool isPrototype_=false;
     std::string name_="main";
     std::vector<Line*> lines_;
@@ -94,7 +97,7 @@ private:
     stack<Line*> returnStack_;
 
     int   argCount_=0;
-    Body* genBody_=NULL;
+    Body* genBody_=nullptr;
 
     friend BodyGenContext;
 };
@@ -104,7 +107,7 @@ private:
 class Call :public Variable
 {
 public:
-    Call(Body* body, stack<Variable*> args = {}) {
+    Call(Body* body, stack<Variable*> args = {}) :Variable() {
         body_ = body; 
         args_ = args;
 
@@ -163,6 +166,8 @@ public:
     };
 
     virtual void genBodyVisitExit(BodyGenContext * context) override {
+        
+
         stack<Variable*> a;
         for (auto &i : args_)
             a.push(context->pop());
@@ -172,6 +177,7 @@ public:
         if(!context->isPrototype())
             b=body_->genBodyByPrototype(a, false);
         auto call =new Call(b, a);
+        context->getGarbageContainer()->add(call);
         context->push(call);
         is_visited_ = false;
     }
@@ -210,7 +216,7 @@ public:
     //virtual Variable*   getAssignedVal(bool deep = false)  override { return this; }
 private:
     stack<Variable*>  args_;
-    Body*             body_ = NULL;
+    Body*             body_ = nullptr;
 
 };
 

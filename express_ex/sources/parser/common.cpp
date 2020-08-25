@@ -6,15 +6,15 @@
 
 
 
-void * calcSmallArrayAlloc(TypeEn targetType, int N, void* ptr) {
-	void * ret=NULL;
-#define OP(T)  ret = (void *) SmallArrayAlloc<T> (N,(T*)ptr)
+char * calcSmallArrayAlloc(TypeEn targetType, int N, char* ptr) {
+	char * ret=nullptr;
+#define OP(T)  ret = (char *) SmallArrayAlloc<T> (N,(T*)ptr)
 	SWITCH_TYPE_OP(targetType, ;);
 #undef OP
 	return ret;
 }
 
-void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int n) {
+char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int n) {
 	ret=calcSmallArrayAlloc(targetType,n,ret);
 #define OP(T)   aritheticTemplate<T> (op,(T*)ret,(T*)a ,(T*)b, n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -22,7 +22,7 @@ void * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void 
 	return ret;
 }
 
-void *  calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, int n) {
+char *  calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   aritheticConstTemplate<T>(op,(T*)ret,(T*)a ,*((T*)(&b)), n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -30,7 +30,7 @@ void *  calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void
 	return ret;
 }
 
-void *  calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, int64_t  a, void *  b, int n) {
+char *  calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, int64_t  a, char *  b, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   aritheticConstTemplate<T>(op,(T*)ret,*((T*)(&a)),(T*)b , n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -38,7 +38,32 @@ void *  calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, void * ret, int6
 	return ret;
 }
 
-void *  invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n) {
+char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int n) {
+	ret=calcSmallArrayAlloc(targetType, n, ret);
+#define OP(T)   comparsionTemplate<T> (op,(T*)ret,(T*)a ,(T*)b, n)
+	SWITCH_TYPE_OP(targetType, ;);
+#undef OP
+	return ret;
+}
+
+char *  calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, int n) {
+	ret=calcSmallArrayAlloc(targetType, n, ret);
+#define OP(T)   comparsionConstTemplate<T>(op,(T*)ret,(T*)a ,*((T*)(&b)), n)
+	SWITCH_TYPE_OP(targetType, ;);
+#undef OP
+	return ret;
+}
+
+char *  calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, int64_t  a, char *  b, int n) {
+	ret=calcSmallArrayAlloc(targetType, n, ret);
+#define OP(T)   comparsionConstTemplate<T>(op,(T*)ret,*((T*)(&a)),(T*)b , n)
+	SWITCH_TYPE_OP(targetType, ;);
+#undef OP
+	return ret;
+}
+
+
+char *  invAritheticSmallArray(TypeEn targetType, char * ret, char * a, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   invTemplate<T>((T*)ret,(T*)a , n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -46,7 +71,7 @@ void *  invAritheticSmallArray(TypeEn targetType, void * ret, void * a, int n) {
 	return ret;
 }
 
-void *  builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a,  int n) {
+char *  builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a,  int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   builtInFuncTemplate<T>(op,(T*)ret,(T*)a , n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -55,7 +80,7 @@ void *  builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void *
 }
 
 
-void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, void * c, int n) {
+char *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, char * c, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   selectTemplate<T> (op,(T*)ret,(bool*)a ,(T*)b,(T*)c, n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -63,7 +88,7 @@ void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * 
 	return ret;
 }
 
-void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, void * b, int64_t c, int n) {
+char *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int64_t c, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   selectTemplate<T> (op,(T*)ret,(bool*)a ,(T*)b,*((T*)(&c)), n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -71,7 +96,7 @@ void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * 
 	return ret;
 }
 
-void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t  b, void * c, int n) {
+char *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, char * c, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   selectTemplate<T> (op,(T*)ret,(bool*)a ,*((T*)(&b)),(T*)c, n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -79,7 +104,7 @@ void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * 
 	return ret;
 }
 
-void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * a, int64_t b, int64_t c, int n) {
+char *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t b, int64_t c, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)  selectTemplate<T> (op,(T*)ret,(bool*)a ,*((T*)(&b)),*((T*)(&c)), n)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -87,7 +112,7 @@ void *  calcSelectSmallArray(OpCodeEn op, TypeEn targetType, void * ret, void * 
 	return ret;
 }
 
-void *  calcConvolveSmallArray(TypeEn targetType, void * ret, void * a, void * b, int aN, int bN) {
+char *  calcConvolveSmallArray(TypeEn targetType, char * ret, char * a, char * b, int aN, int bN) {
 	ret=calcSmallArrayAlloc(targetType, maxInt(aN,bN), ret);
 #define OP(T)  convolveTemplate_<T> ((T*)ret,(T*)a,(T*)b, aN,bN)
 	SWITCH_TYPE_OP(targetType, ;);
@@ -95,7 +120,7 @@ void *  calcConvolveSmallArray(TypeEn targetType, void * ret, void * a, void * b
 	return ret;
 }
 
-void *  typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg, int n)
+char *  typeConvSmallArray(TypeEn retType, TypeEn argType, char * ret, char* arg, int n)
 {
 	ret=calcSmallArrayAlloc(retType, n, ret);
 
@@ -139,15 +164,15 @@ void *  typeConvSmallArray(TypeEn retType, TypeEn argType, void * ret, void* arg
 	return ret;
 }
 
-void * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand) {
+char * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand) {
 
-	void * ret=calcSmallArrayAlloc(targetType, operand.size());
+	char * ret=calcSmallArrayAlloc(targetType, operand.size());
 
 #define OP(T)	{	\
 	T* ptr=(T*)ret;	\
-	for (auto &j : operand)  {		\
-		uint64_t v =j->getAssignedVal(true)->getBinaryValue(); \
-		*ptr++=*((T*)(&v)); }}
+	for (auto &j : operand)  { \
+		int64_t v =j->getAssignedVal(true)->getBinaryValue(); \
+		*ptr++ = *((T*)(&v)); }}
 
 	SWITCH_TYPE_OP(targetType, ;);
 #undef OP

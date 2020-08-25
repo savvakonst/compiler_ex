@@ -1,6 +1,6 @@
 #include "variable.h"
 
-Variable::Variable(string text, TypeEn type) {
+Variable::Variable(string text, TypeEn type) :SmallArr() {
     textValue_ = text;
     type_ = type;
 
@@ -21,7 +21,7 @@ Variable::Variable(string text, TypeEn type) {
 };
 
 
-Variable::Variable(int64_t value, TypeEn type) {
+Variable::Variable(int64_t value, TypeEn type) :SmallArr() {
 
     binaryValue_ = value;
     type_ = type;
@@ -31,7 +31,7 @@ Variable::Variable(int64_t value, TypeEn type) {
 };
 
 
-Variable::Variable(Variable* arg1, Variable* arg2, Variable* arg3) {
+Variable::Variable(Variable* arg1, Variable* arg2, Variable* arg3) :SmallArr() {
     if (!(isConst(arg1) && isConst(arg2) && isConst(arg3) && isInteger(arg3))) {
         print_error("range args must be a constant");
         return;
@@ -46,7 +46,7 @@ Variable::Variable(Variable* arg1, Variable* arg2, Variable* arg3) {
     }
 };
 
-Variable::Variable(Variable* arg1, Variable* arg2) {
+Variable::Variable(Variable* arg1, Variable* arg2) :SmallArr() {
     if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2)) {
         length_    = arg2->getBinaryValue() - arg1->getBinaryValue();
         dsType_    = DataStructTypeEn::smallArr_dsty;
@@ -60,7 +60,7 @@ Variable::Variable(Variable* arg1, Variable* arg2) {
     }
 };
 
-Variable::Variable(Variable* arg1) {
+Variable::Variable(Variable* arg1) :SmallArr() {
     if (isConst(arg1) && isInteger(arg1)) {
         length_    = arg1->getBinaryValue();
         dsType_    = DataStructTypeEn::smallArr_dsty;

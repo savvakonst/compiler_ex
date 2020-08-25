@@ -12,12 +12,32 @@ using std::string;
 class Body;
 class IRGenerator;
 
+class GarbageContainer
+{
+public:
+    ~GarbageContainer();
+        /*
+    ~GarbageContainer() {
+        for (auto i : variable_set_)
+            delete i;
+    }
+*/
+    Variable* add(Variable* var) {
+        if (var != nullptr)
+            variable_set_.insert(var);
+        return var;
+    }
+protected:
+    std::set<Variable*> variable_set_;
+};
+
 class BodyGenContext {
 public:
-    BodyGenContext (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr, bool isPrototype) {
+    BodyGenContext (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr, bool isPrototype, GarbageContainer* garbage_container) {
         varStack_       = varStack;
         namespace_ptr_  = namespace_ptr;
         isPrototype_    = isPrototype;
+        garbage_container_ = garbage_container;
     }
     BodyGenContext (Body & body){}
     ~BodyGenContext() {}
@@ -26,19 +46,23 @@ public:
     inline void push(Variable* var) {varStack_->push(var);}
     inline Variable*  pop() { return varStack_->pop();}
     inline std::vector< Line*> &getNamespace() { return *namespace_ptr_; }
+    inline GarbageContainer* getGarbageContainer() { return garbage_container_; }
     inline bool isPrototype() { return isPrototype_; }
-
 private:
-    stack<Variable*>*   varStack_=NULL;
-    std::vector<Line*>* namespace_ptr_=NULL;
+    GarbageContainer*   garbage_container_=nullptr;
+    stack<Variable*>*   varStack_=nullptr;
+    std::vector<Line*>* namespace_ptr_=nullptr;
     bool isPrototype_ = false;
 };
 
-
+extern PosInText g_pos;
 class SmallArr{
 public:
+    SmallArr() {
+        pos=g_pos;
+    }
     ~SmallArr() {
-        if (bufferPtr_ != NULL)
+        if (bufferPtr_ != nullptr)
             delete bufferPtr_;
     }
 
@@ -47,25 +71,24 @@ public:
     };
 
     virtual void calculate(){}
-    void * getBufferPtr() { 
+    char * getBufferPtr() {
         return bufferPtr_; 
     }
 
 protected:
-
+    PosInText  pos;
     double start_=0;
     double stop_=0;
 
-    void * bufferPtr_=NULL;
+    char * bufferPtr_=nullptr;
 };
 
 
 class Variable : public SmallArr
 {
 public:
-    Variable(){
-    };
 
+    Variable():SmallArr() {};
     Variable(string text, TypeEn type);
     Variable(int64_t value, TypeEn type);
     Variable(Variable* arg1, Variable* arg2, Variable* arg3);
@@ -83,13 +106,12 @@ public:
 
 
 
-    string  getTxtDSType();
-
     template< typename T >
     T            getConvTypeVal   () { return *((T*)(&binaryValue_)); }
     int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue_)); }
     double       getDoubleValue   ();
     string       getTextValue     () { return textValue_; }
+    string       getTxtDSType     ();
     string       getUniqueName    () { return uniqueName_; }
     int64_t      getUsageCounter  () { return usageCounter_; }
     int64_t      getLength        () { return length_; }
@@ -104,10 +126,11 @@ public:
     SyncParameter *  getPatameter () { return parameter_; }
 
 
-    virtual Variable* getAssignedVal(bool deep = false) { return this; }
+    virtual Variable * getAssignedVal(bool deep = false) { return this; }
 
-    llvm::Value* getIRValue       (IRGenerator & builder, int64_t parentLevel);
-    llvm::Value* getIRValuePtr    (IRGenerator & builder, int64_t parentLevel);
+    llvm::Value * getIRValue       (IRGenerator & builder, int64_t parentLevel);
+    llvm::Value * getIRValueBasePtr    (IRGenerator & builder, int64_t parentLevel);
+    llvm::Value * getIRValuePtr(IRGenerator & builder, int64_t parentLevel);
 
 
     virtual bool isTermialLargeArray    () { return false; }
@@ -131,7 +154,10 @@ public:
     };
 
     virtual void genBodyVisitExit(BodyGenContext* context) {
-        context->push(new Variable(textValue_, type_)); is_visited_ = false;
+        context->push(
+            context->getGarbageContainer()->add(
+                new Variable(textValue_, type_)));
+        is_visited_ = false;
     };
 
     virtual void genBlocksVisitExit(TableGenContext*  context) {
@@ -198,11 +224,13 @@ protected:
 
     uint64_t bufferNum_    = 0; //unused
 
-    llvm::Value * IRValue_        = NULL;
-    llvm::Value * IRLoadedBufferValue_ = NULL;
-    llvm::Value * IRBufferRefPtr_ = NULL;
+    llvm::Value * IRValue_        = nullptr;
+    llvm::Value * IRLoadedBufferValue_ = nullptr;
+    llvm::Value * IRBufferPtr_     = nullptr;
+    llvm::Value * IRBufferBasePtr_ = nullptr;
 
-    SyncParameter * parameter_= NULL;
+    SyncParameter * parameter_= nullptr;
+    
 };
 
 
@@ -240,9 +268,5 @@ inline Variable*    max     (std::vector<Variable*> args) {
 inline Variable*    maxDS   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
 inline Variable*    maxLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
 inline Variable*    minLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }
-
-
-
-
 
 #endif
