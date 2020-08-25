@@ -25,6 +25,12 @@
 !/topsyntaxhighlighter
 !/topsyntaxhighlighter/**
 
+
+*.ilk
+*.pdb
+
+
+
 !setup.bat
 !llvm.7z
 !antlr4.7z
