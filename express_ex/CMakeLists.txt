@@ -47,7 +47,9 @@ file(GLOB jitHeaders include/jit/*.h)
 file(GLOB parserHeaders include/parser/*.h)
 file(GLOB ifsHeaders include/ifs/*.h)
 
-add_executable(express_ex ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders}  )
+#add_executable(express_ex ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders}  )
+add_library( express_ex SHARED ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders} )	
+
 #add_library()
 
 source_group( "EGrammar\\headers"    FILES ${EGrammarHeaders} )
@@ -201,6 +203,7 @@ if(MSVC)
         __STDC_CONSTANT_MACROS
         __STDC_FORMAT_MACROS
         __STDC_LIMIT_MACROS
+        DLL_express_ex_EXPORT
     )
 
    

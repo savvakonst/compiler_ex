@@ -485,7 +485,7 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
     //iterations=groupList[0].columnList[0]->getLength()/ groupList[0].columnList[0]->get();
 }
 
-
+DLL_EXPORT void  jit_init();
 void jit_init() {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();

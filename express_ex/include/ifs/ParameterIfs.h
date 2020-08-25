@@ -8,7 +8,7 @@
 #include <sstream>
 #include <iostream>     
 #include <fstream>      
-
+#include "config.h"
 
 
 
@@ -75,6 +75,7 @@ inline int64_t sizeOfTy(PRMTypesEn  arg) {
 //TypeEn      RPMType2JITType(PRMTypesEn arg);
 //PRMTypesEn  JITType2RPMType(TypeEn arg);
 
+DLL_EXPORT
 std::string toString(PRMTypesEn arg);
 
 
@@ -128,7 +129,7 @@ inline DataInterval createInterval(TimeInterval time_interval, double frequency,
 }
 
 
-class ParameterIfs {
+class DLL_EXPORT ParameterIfs {
 public:
 
     void addIntrval(const  DataInterval &interval) {

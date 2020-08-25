@@ -21,9 +21,6 @@ bool         g_ansiEscapeCodes;
 
 
 
-void jit_init();
-
-
 int main2(int argc, const char* argv[]) {
 
     enum  ShowNames {

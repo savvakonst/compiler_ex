@@ -13,7 +13,7 @@
 
 
 
-class SyncParameter: public ParameterIfs {
+class DLL_EXPORT SyncParameter: public ParameterIfs {
 public:
 
     SyncParameter() {
@@ -156,15 +156,19 @@ protected:
 };
 
 
-
+DLL_EXPORT
 bool                        readParametersList(std::string database_Fame, std::vector<SyncParameter* >& parameter_list);
+DLL_EXPORT
 std::vector<SyncParameter*> readParametersList(std::string database_Fame);
+DLL_EXPORT
 SyncParameter *             intersection(SyncParameter * a, SyncParameter * b, PRMTypesEn target_ty, const std::string & name);
+DLL_EXPORT
 SyncParameter *             intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string &name);
+DLL_EXPORT
 SyncParameter *             retyping(SyncParameter  *a, PRMTypesEn target_ty, const std::string & name);
 
 
-class ParametersDB
+class DLL_EXPORT ParametersDB
 {
 public:
 
@@ -193,10 +197,10 @@ public:
         for (auto &i : output_parameters_)
             delete i;
     }
-
+    /*
     std::vector<SyncParameter *>&   getOutputParameters() {
-        std::vector<SyncParameter*> readParametersList(std::string database_Fame);
-    }
+        return  readParametersList(std::string database_Fame);
+    }*/
 
     bool addParametersSet(const std::string &file_name) {
         return readParametersList(file_name, db_parameters_);
@@ -251,6 +255,7 @@ public:
             if (!intersection(data_interval, front_parameter, i))
                 return false;
         }
+        return true;
     }
 
 private:

@@ -8,9 +8,11 @@ class KEXParser;
 class Body;
 class Table;
 
-void jit_init();
 
-class Express_ex {
+DLL_EXPORT void  jit_init();
+
+
+class DLL_EXPORT  Express_ex {
 public :
     ~Express_ex();
     bool                                parseText(std::string str, bool is_file_name = false);
