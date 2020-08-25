@@ -15,7 +15,7 @@ public :
     ~Express_ex();
     bool                                parseText(std::string str, bool is_file_name = false);
 
-    bool                                setParameters(std::vector<SyncParameter*> parameters_vector);
+    bool                                setParameters(const std::map<std::string, SyncParameter*> &parameters_map);
 
     //  return map< name ,link name>
     std::map<std::string,std::string >  getParameterLinkNamesMap(bool hide_unused = false);

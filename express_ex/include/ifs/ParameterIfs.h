@@ -161,7 +161,7 @@ public:
 
 protected:
 
-    std::fstream*              ifs_  = nullptr;
+    std::fstream*               ifs_  = nullptr;
 
     std::string                 name_ = "";
     TimeInterval                time_interval_;

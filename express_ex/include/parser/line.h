@@ -64,8 +64,8 @@ public:
         length_     = parameter->getVirtualSize();
         dsType_     = DataStructTypeEn::largeArr_dsty;
         is_arg      = true;
-
-        parameter_  = parameter;
+        
+        parameter_  = new SyncParameter(*parameter);
     }
 
 

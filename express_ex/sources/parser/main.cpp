@@ -24,7 +24,7 @@ bool         g_ansiEscapeCodes;
 void jit_init();
 
 
-int main(int argc, const char* argv[]) {
+int main2(int argc, const char* argv[]) {
 
     enum  ShowNames {
         nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
@@ -154,7 +154,7 @@ int main(int argc, const char* argv[]) {
 
 
 
-int main2(int argc, const char* argv[]) {
+int main(int argc, const char* argv[]) {
 
     enum  ShowNames {
         nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
@@ -195,17 +195,36 @@ int main2(int argc, const char* argv[]) {
 
     jit_init();
     Express_ex* express_ex = new Express_ex();
+
+
     express_ex->parseText(content);
     auto map = express_ex->getParameterLinkNamesMap();
 
-    stack<SyncParameter*> args;
+    std::map<std::string, SyncParameter*> parameters_map;
     for (auto i : map)
-        args.push(parameterDB[i.second]);
+        parameters_map[i.first]=(parameterDB[i.second]);
 
-    express_ex->setParameters(args);
+    express_ex->setParameters(parameters_map);
     express_ex->getOutputParameterVector(); //
     express_ex->genJit();
     express_ex->run();
+    llvm::outs() << "complete\n";
+
+    express_ex->parseText(content);
+    map = express_ex->getParameterLinkNamesMap();
+
+    std::map<std::string, SyncParameter*> parameters_map2;
+    for (auto i : map)
+        parameters_map2[i.first]=(parameterDB[i.second]);
+
+    express_ex->setParameters(parameters_map2);
+
+    int index=0;
+    for (auto i : express_ex->getOutputParameterVector())
+        i->setName("new_" + std::to_string(index++));
+    express_ex->genJit();
+    express_ex->run();
+    llvm::outs() << "complete";
 
     return 0;
 }

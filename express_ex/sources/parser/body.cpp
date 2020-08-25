@@ -15,10 +15,11 @@ Body::Body( std::string name,  bool isPrototype )
 Body::~Body()
 {
 	delete garbage_contaiiner_;
-
+	/*
 	for (auto& value : lines_) {
 		delete value;
 	}
+	*/
 }
 
 

@@ -17,66 +17,7 @@ extern bool  g_ansiEscapeCodes;
 
 
 
-int sub_main(int argc, const char* argv[]) {
-    std::string error_str_ = "";
 
-    bool optimizationEnable = true;
-
-    ParametersDB parameterDB({ "inputDataBaseFile" });
-    KEXParser    parser("inputFile");
-
-
-    try {
-        parser.walk();
-        Body* body_brototype = parser.getActivBody();
-        body_brototype->getParameterLinkNames();
-
-
-        stack<Variable*> args;
-
-        auto p =new SyncParameter();
-        if (p != nullptr)
-            args.push(new Line("as", p));
-        else
-            error_str_="can not find parameter ";
-
-
-        Body* body = body_brototype->genBodyByPrototype(args, false);
-        body->symplyfy();
-
-        body->getParameterLinkNames(true);
-        body->reduce(); //atavism
-
-        jit_init();
-
-        Table*          table   = new Table();
-        TableGenContext context = TableGenContext(table);
-
-        body->genTable(&context);
-
-        int index=0;
-        for (auto i : body->getOutputParameterList())
-            i->setName("out_" + std::to_string(index++));
-
-        table->calculateBufferLength();
-        table->llvmInit();
-        table->generateIR();
-
-        if (optimizationEnable)
-            table->runOptimization();
-
-        //table->printllvmIr();
-        //run jit
-
-        table->run();
-    }
-    catch (size_t) {
-
-    }
-
-
-    return 0;
-}
 
 #define REMOVE_MEMBER(X)    if (X != nullptr) {\
                                 delete X;\
@@ -107,8 +48,8 @@ bool Express_ex::parseText(std::string str, bool is_file_name ) {
     kex_parser_ =new KEXParser(str, is_file_name);
     try {
         kex_parser_->walk();
-        Body* body_brototype_ = kex_parser_->getActivBody();
-        body_brototype_->getParameterLinkNames();
+        body_prototype_ = kex_parser_->getActivBody();
+        body_prototype_->getParameterLinkNames();
         status=true;
     }
     catch (size_t) {
@@ -119,17 +60,17 @@ bool Express_ex::parseText(std::string str, bool is_file_name ) {
 }
 
 
-bool Express_ex::setParameters(std::vector<SyncParameter*> parameters_vector)
+bool Express_ex::setParameters(const std::map<std::string ,SyncParameter*> &parameters_map)
 {
     bool status=false;
 
 
     stack<Variable*> args;
-    for (auto p : parameters_vector)
-        if (p != nullptr)
-            args.push(new Line("as", p));
+    for (auto p : parameters_map)
+        if (p.second != nullptr)
+            args.push(new Line(p.first, p.second));
         else {
-            error_str_="null_ptr in parameters_vector";
+            error_str_="null_ptr in parameters_map";
             return false;
         }
 
@@ -144,8 +85,8 @@ bool Express_ex::setParameters(std::vector<SyncParameter*> parameters_vector)
         body_->getParameterLinkNames(true);
         body_->reduce(); //atavism
 
-        Table*          table   = new Table();
-        TableGenContext context = TableGenContext(table);
+        table_   = new Table();
+        TableGenContext context = TableGenContext(table_);
 
         body_->genTable(&context);
 
