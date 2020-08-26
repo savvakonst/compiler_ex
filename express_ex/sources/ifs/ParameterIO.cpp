@@ -175,7 +175,6 @@ std::vector<SyncParameter*>  readParametersList(std::string databaseFName) {
 
 SyncParameter::SyncParameter(
     std::string name, 
-    const TimeInterval &time_interval, 
     const std::vector<DataInterval> &interval_list,
     bool save_fnames
 ) 
@@ -198,11 +197,24 @@ SyncParameter::SyncParameter(
 
 
     auto bgn=interval_list_.front().time_interval.bgn;
-    auto end=interval_list_.front().time_interval.end;
+    auto end=interval_list_.back().time_interval.end;
 
-    time_interval_ ={ stdmin(time_interval.bgn, bgn), stdmax(time_interval.end, end) };
+    time_interval_ ={  bgn, end };
     calcExtendedInfo();
 }
+
+
+SyncParameter::SyncParameter(
+    std::string name,
+    const TimeInterval &time_interval,
+    const std::vector<DataInterval> &interval_list,
+    bool save_fnames
+):SyncParameter(name, interval_list, save_fnames)
+{
+    time_interval_ = time_interval;
+    calcExtendedInfo();
+}
+
 
 
 bool SyncParameter::seek(int64_t point_umber) {

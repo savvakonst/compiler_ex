@@ -20,6 +20,8 @@ public:
 
     }
 
+    SyncParameter(std::string name, const std::vector<DataInterval>& interval_list, bool save_fnames);
+
     SyncParameter(std::string name, const TimeInterval &time_interval,
         const std::vector<DataInterval> &interval_list, bool save_fnames=true);
 
