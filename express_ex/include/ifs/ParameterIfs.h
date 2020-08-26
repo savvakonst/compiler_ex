@@ -52,8 +52,8 @@ typedef struct {
     int64_t         offs;
     int64_t         size;
     double          frequency;
-    double          val_max=20;
-    double          val_min=-20;
+    double          val_max;
+    double          val_min;
     TimeInterval    time_interval;
     std::string     file_name;
     bool            local;
