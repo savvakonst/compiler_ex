@@ -25,10 +25,10 @@
 !/topsyntaxhighlighter
 !/topsyntaxhighlighter/**
 
-
+*.dat
 *.ilk
 *.pdb
-
+*.html
 
 
 !setup.bat

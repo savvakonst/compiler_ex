@@ -2,16 +2,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 ##################################################
-N=2**21
+N=2**20
 ##################################################
 a=np.fromfile("#1_A01__1.dat", np.double,N)
-a=np.convolve(a,[-1,1,0],"same")*a
+
+NK=5
+a=np.convolve(a,np.arange(NK)*0.0+1,"same")
+
 #a=np.fromfile("#1_A01__1.dat", np.double,N)
 b=np.fromfile("out_0.dat",np.double,N)
 ##################################################
 NN=min([len(a),len(b)])
-b=a[0:NN]-b[0:NN]
-
+b=b[1:NN-NK]
+a=a[1:NN-NK]
 ##################################################
 #delta_t=(1.0/2.0**17)
 #N=len(a)
@@ -22,6 +25,7 @@ x=[i*size for i in N]
 y=[1 for i in N]
 #plt.plot( a, 'o', label='origin', markersize=4)
 plt.plot( b, 'o', label='fitted')
+#plt.plot( a, 'o', label='fitted')
 plt.plot( x,y, 'o', label='fitted')
 plt.show()
 

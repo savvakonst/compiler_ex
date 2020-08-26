@@ -1,5 +1,7 @@
 
 x = param( "#1_A01__1" )  
-z=0.0-2.0
-y=convolve(x*1,[0-1,1,0])*x
+N=5
+arr=double(range(N*2+1)*0+1)/(N*2+1)
+y=convolve(x*x,arr)
+#y=(y>0)?(0-y):(y*2)
 return y

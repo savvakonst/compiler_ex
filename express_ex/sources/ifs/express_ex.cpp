@@ -15,10 +15,6 @@
 using namespace llvm;
 extern bool  g_ansiEscapeCodes;
 
-
-
-
-
 #define REMOVE_MEMBER(X)    if (X != nullptr) {\
                                 delete X;\
                                 X=nullptr;\

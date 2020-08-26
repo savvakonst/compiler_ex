@@ -1,0 +1,6 @@
+
+x = param( "#1_A01__1" )  
+array=(double(range(5)*0)+1)
+y=x*1
+y=convolve(y,array)
+return y

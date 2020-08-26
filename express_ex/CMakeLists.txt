@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-
+SET(IS_SHARED True)
 
 
 # specify the C++ standard 
@@ -47,19 +47,23 @@ file(GLOB jitHeaders include/jit/*.h)
 file(GLOB parserHeaders include/parser/*.h)
 file(GLOB ifsHeaders include/ifs/*.h)
 
-#add_executable(express_ex ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders}  )
-add_library( express_ex SHARED ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders} )	
+
+if(IS_SHARED)
+    add_library( express_ex SHARED ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders} )
+else()
+    add_executable(express_ex ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders}  )
+endif()
 
 #add_library()
 
-source_group( "EGrammar\\headers"    FILES ${EGrammarHeaders} )
+source_group( "EGrammar\\headers"   FILES ${EGrammarHeaders} )
 source_group( "EGrammar\\sources"   FILES ${EGrammar} )
-source_group( "jit\\headers"         FILES ${jitHeaders} )
+source_group( "jit\\headers"        FILES ${jitHeaders} )
 source_group( "jit\\sources"        FILES ${jit})
-source_group( "parser\\headers"      FILES ${parserHeaders} )
+source_group( "parser\\headers"     FILES ${parserHeaders} )
 source_group( "parser\\sources"     FILES ${parser})
-source_group( "ifs\\headers"      FILES ${ifsHeaders} )
-source_group( "ifs\\sources"     FILES ${ifs})
+source_group( "ifs\\headers"        FILES ${ifsHeaders} )
+source_group( "ifs\\sources"        FILES ${ifs})
 
 message("------ EGrammarHeaders:   " "${EGrammarHeaders}")
 
@@ -203,15 +207,20 @@ if(MSVC)
         __STDC_CONSTANT_MACROS
         __STDC_FORMAT_MACROS
         __STDC_LIMIT_MACROS
-        DLL_express_ex_EXPORT
     )
 
    
     
-
-    set_property(TARGET express_ex APPEND PROPERTY
-        COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
-    )
+    
+    if(IS_SHARED)
+        set_property(TARGET express_ex APPEND PROPERTY
+            COMPILE_DEFINITIONS ${commonMSVC_Definitions} DLL_express_ex_EXPORT
+        )
+    else()
+        set_property(TARGET express_ex APPEND PROPERTY
+            COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
+        )
+    endif()
 
 
     

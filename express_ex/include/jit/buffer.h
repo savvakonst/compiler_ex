@@ -48,6 +48,7 @@ public:
 	}
 
 	virtual int64_t init(){
+		std::memset(ptr_, 0, sizeof_data_type_ * (length_ + left_offset_ + right_offset_));
 		return 0;
 	}
 
@@ -121,6 +122,7 @@ public:
 	~InputBuffer(){ }
 
 	virtual int64_t init(){
+		std::memset(ptr_, 0, sizeof_data_type_ * (length_ + left_offset_ + right_offset_));
 		parameter_->open();
 		//parameter_->read(ptr_, left_offset_ + length_ + right_offset_);
 		parameter_->read(left_ptr_, length_ + right_offset_); //is not true

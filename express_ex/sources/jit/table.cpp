@@ -73,7 +73,7 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     Value* nextOffset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
     builder.CreateStore(nextOffset, alloc);
     builder.SetCurrentCMPRes(
-        builder.CreateICmpULT(
+        builder.CreateICmpSLT(
             nextOffset,
             builder.getInt64(buffer_length_ + right_length_))); // not true
             //builder.getInt64(buffer_length_ + right_length_)));
@@ -208,7 +208,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
 
         int len=(type == CycleStageEn::midle) ? buffer_length_ : length_ % buffer_length_ ;
         builder.SetCurrentCMPRes(
-            builder.CreateICmpULT(
+            builder.CreateICmpSLT(
                 next_offset,
                 builder.getInt64(len + right_length_)));
         builder.SetCalcInsertPoint();
@@ -589,7 +589,7 @@ Function* CreateConvolveFunction(Module* M, TypeEn type) {
 
     builder.CreateStore(next_sum, sum_ptr);
     builder.CreateStore(next_index, index_ptr);
-    auto cond=builder.CreateICmpULT(next_index, num_of_samples);
+    auto cond=builder.CreateICmpSLT(next_index, num_of_samples);
     builder.CreateCondBr(cond, bb_LoopBody, bb_exit);
 
     //exit_block
@@ -713,7 +713,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     Value* nextGlobIndex = builder.CreateAdd(globIndex, builder.getInt64(1));
     builder.CreateStore(nextGlobIndex, globIndexAlloca);
     builder.SetCurrentCMPRes(
-        builder.CreateICmpULT(
+        builder.CreateICmpSLT(
             nextGlobIndex,
             builder.getInt64( (iterations_ - 1) )));
 

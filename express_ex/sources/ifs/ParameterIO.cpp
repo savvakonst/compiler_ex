@@ -219,7 +219,7 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
         open();
 
     int64_t points_to_write = point_number;
-    char*   ptr=data_buffer_ptr;
+    char*   ptr = data_buffer_ptr;
     //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
 
 
@@ -276,11 +276,11 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
 }
 
 int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
-    if (!opened_to_read_)
+    if ( !opened_to_read_ )
         open();
 
-    int64_t points_to_read = point_number;
-    uint8_t*   ptr=(uint8_t*)data_buffer_ptr;
+    int64_t   points_to_read = point_number;
+    uint8_t*  ptr = (uint8_t * )data_buffer_ptr;
     //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
 
 

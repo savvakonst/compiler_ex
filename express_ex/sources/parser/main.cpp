@@ -21,7 +21,7 @@ bool         g_ansiEscapeCodes;
 
 
 
-int main2(int argc, const char* argv[]) {
+int main(int argc, const char* argv[]) {
 
     enum  ShowNames {
         nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
@@ -151,7 +151,7 @@ int main2(int argc, const char* argv[]) {
 
 
 
-int main(int argc, const char* argv[]) {
+int main2(int argc, const char* argv[]) {
 
     enum  ShowNames {
         nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
