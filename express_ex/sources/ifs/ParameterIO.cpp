@@ -192,10 +192,15 @@ SyncParameter::SyncParameter(
             i.local = true;
         }
     }
+
     if (interval_list_.size())
         sizeof_data_type_=sizeOfTy(interval_list_.front().type);
 
-    time_interval_ = time_interval;
+
+    auto bgn=interval_list_.front().time_interval.bgn;
+    auto end=interval_list_.front().time_interval.end;
+
+    time_interval_ ={ stdmin(time_interval.bgn, bgn), stdmax(time_interval.end, end) };
     calcExtendedInfo();
 }
 

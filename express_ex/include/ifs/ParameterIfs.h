@@ -59,7 +59,7 @@ typedef struct {
     bool            local;
 } DataInterval;
 
-
+ 
 typedef struct {
     double	        val_max;
     double          val_min;
