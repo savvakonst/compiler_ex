@@ -64,7 +64,7 @@ int main(int argc, const char* argv[]) {
     KEXParser  parser(inputFile);
 
 
-    try{
+    try{ 
         parser.walk();
         Body* body_brototype = parser.getActivBody();
 

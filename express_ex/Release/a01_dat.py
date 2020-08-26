@@ -2,19 +2,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 ##################################################
-N=2**20
+N=2**21
 ##################################################
 a=np.fromfile("#1_A01__1.dat", np.double,N)
 
 NK=5
-a=np.convolve(a,np.arange(NK)*0.0+1,"same")
+a=np.convolve(a,(np.arange(NK)*0.0+1)/NK,"same")
 
 #a=np.fromfile("#1_A01__1.dat", np.double,N)
 b=np.fromfile("out_0.dat",np.double,N)
 ##################################################
 NN=min([len(a),len(b)])
-b=b[1:NN-NK]
-a=a[1:NN-NK]
+b=b[0:NN-NK]
+a=a[0:NN-NK]
 ##################################################
 #delta_t=(1.0/2.0**17)
 #N=len(a)

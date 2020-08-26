@@ -88,7 +88,8 @@ public:
     void     recalcLeftRightBufferLengths();
     string   print();
 
-    bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
+    bool generateIR(IRGenerator &builder, CycleStageEn type = CycleStageEn::midle, std::string basicBlockPrefix="");
+
 
 private:
     void setUintToSubtable(Variable * var);
@@ -138,7 +139,7 @@ public:
 
 
     bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle, std::string basicBlockPrefix="");
-
+    bool generateIR(IRGenerator &builder, CycleStageEn type, int64_t level, std::string basicBlockPrefix="");
 private:
     uint64_t      length_;
     stack<Block*> blockList_;
@@ -228,6 +229,7 @@ private:
     uint64_t *max_column_depth_=0;           
     stack<TableColumn *> column_list_;       //internal
 
+    int64_t topLevel=0;
 
     std::map<OpCodeEn, int> BIF2LLVMmap_;
     std::set<SyncParameter *> parameterSet_;    //external

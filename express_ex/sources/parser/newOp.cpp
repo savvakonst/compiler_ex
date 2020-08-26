@@ -223,7 +223,7 @@ Variable* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn target
 	if (uTypeOp != OpCodeEn::convolve)
 		print_error("convolve_f operation is not supported yet");
 
-	if (isConst(arg1) || isConst(arg2)) {
+	if ((isConst(arg1) || isConst(arg2) )&& !(isUnknownTy(arg1) || isUnknownTy(arg2))) {
 		return garbageContainer->add(newArithmeticOperation(garbageContainer,targetType, arg1, arg2, OpCodeEn::mul));
 	}
 	else if (isSmallArr(arg1) && isSmallArr(arg2)) {

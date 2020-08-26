@@ -41,7 +41,7 @@ void TreeShapeListener::exitAssignParam(EGrammarParser::AssignParamContext* ctx)
 
     if (stl.size() == 0) 
         for (auto i : id) 
-            activBody_->addParam(i->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, 100000);
+            activBody_->addParam(i->getText(),"", DataStructTypeEn::largeArr_dsty);
     
     else if (id.size() == stl.size()) 
         for (int i = 0; i < id.size(); i++) {

@@ -39,29 +39,31 @@ enum class PRMTypesEn : uint64_t {
 };
 
 typedef struct {
-    double                       bgn=0.0;
-    double                       end=0.0;
-    int64_t                      offs=0;
+    double          bgn = 0.0;
+    double          end = 0.0;
+    int64_t         offs = 0;
 } TimeInterval;
-
+ 
 typedef struct {
     union {
         int64_t     int_type_represintation;
         PRMTypesEn  type;
     };
-    int64_t                     offs;
-    int64_t                     size;
-    double                      frequency;
-    TimeInterval                time_interval;
-    std::string                 file_name;
-    bool                        local;
+    int64_t         offs;
+    int64_t         size;
+    double          frequency;
+    double          val_max=20;
+    double          val_min=-20;
+    TimeInterval    time_interval;
+    std::string     file_name;
+    bool            local;
 } DataInterval;
 
 
 typedef struct {
-    double	val_max;
-    double  val_min;
-    double  time;
+    double	        val_max;
+    double          val_min;
+    double          time;
 } Dot;
 
 
@@ -100,15 +102,23 @@ inline bool isEmpty(TimeInterval i) {
     return i.bgn >= i.end;
 }
 
+
+inline double stdmax (double a, double b) {
+    return a > b ? a : b;
+}
+inline double stdmin (double a, double b) {
+    return a < b ? a : b;
+}
+
 inline TimeInterval operator& (DataInterval a, DataInterval b) {
-    TimeInterval ret ={ std::max(a.time_interval.bgn, a.time_interval.bgn)  , std::min(a.time_interval.end, a.time_interval.end) };
+    TimeInterval ret ={ stdmax(a.time_interval.bgn, b.time_interval.bgn)  , stdmin(a.time_interval.end, b.time_interval.end) };
     return ret;
 }
 
 inline TimeInterval operator|| (DataInterval a, DataInterval b) {
     auto c=a & b;
     if (c.bgn <= c.end)
-        return { std::min(a.time_interval.bgn, a.time_interval.bgn) , std::max(a.time_interval.end, a.time_interval.end) };
+        return { stdmin(a.time_interval.bgn, b.time_interval.bgn) , stdmax(a.time_interval.end, b.time_interval.end) };
     return { 0.0 };
 }
 
@@ -155,7 +165,7 @@ public:
 
     virtual std::stringstream &stream(std::stringstream & OS, std::string offset="") const = 0;
 
-    void setPath(std::string dirname) { work_directory = dirname; }
+    void setPath(std::string dirname) { work_directory_ = dirname; }
 
 
     friend class ParametersDB;
@@ -178,10 +188,8 @@ protected:
     bool    opened_to_read_          = false;
     bool    opened_to_write_         = false;
 
-    std::string work_directory = "";
+    std::string work_directory_ = "";
     std::string error_info_    = "";
-
-
 };
 
 #endif

@@ -193,8 +193,6 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
         builder.SetLoadInsertPoint(bb_load);
         builder.SetCalcInsertPoint(bb_calc);
         builder.SetStoreInsertPoint(bb_store);
-
-
         
         builder.SetLoadInsertPoint();
 
@@ -213,7 +211,6 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
                 builder.getInt64(len + right_length_)));
         builder.SetCalcInsertPoint();
 
-
         for (auto i : uint_list_)
             i->setupIR(builder);
 
@@ -228,6 +225,8 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
     }
     return true;
 }
+
+
 
 
 //TableColumn:: column section 
@@ -258,6 +257,7 @@ string  TableColumn::print(){
 }
 
 bool    TableColumn::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix) {
+
     std::stringstream hex;
     bool res=false;
     for (auto i : blockList_) {
@@ -266,6 +266,22 @@ bool    TableColumn::generateIR(IRGenerator &builder, CycleStageEn type, std::st
 
         res|=i->generateIR(builder, type, basicBlockPrefix + "block_" +"0x" +ss.str() + "_level_");
     }
+    return res;
+}
+
+
+bool TableColumn::generateIR(IRGenerator & builder, CycleStageEn type, int64_t level, std::string basicBlockPrefix){
+
+    std::stringstream hex;
+    bool res=false;
+    for (auto i : blockList_) {
+        if (i->getLevel() == level) {
+            std::stringstream ss;
+            ss << std::hex << length_;
+            res |= i->generateIR(builder, type, basicBlockPrefix + "block_" + "0x" + ss.str() + "_level_");
+        }
+    }
+
     return res;
 }
 
@@ -398,14 +414,15 @@ void    Table::declareFunctions() {
 }
 
 void    Table::declareBuiltInFunctions(BuiltInFuncMap &UBIFMap, Type * Ty) {
-    BIF2LLVMmap_ ={
-{OpCodeEn::fpow, Intrinsic::pow},
-{OpCodeEn::cos, Intrinsic::cos},
-{OpCodeEn::sin, Intrinsic::sin},
-{OpCodeEn::exp, Intrinsic::exp},
-{OpCodeEn::log, Intrinsic::log},
-{OpCodeEn::log2, Intrinsic::log2},
-{OpCodeEn::log10,Intrinsic::log10} };
+    BIF2LLVMmap_ = {
+        {OpCodeEn::fpow, Intrinsic::pow},
+        {OpCodeEn::cos,  Intrinsic::cos},
+        {OpCodeEn::sin,  Intrinsic::sin},
+        {OpCodeEn::exp,  Intrinsic::exp},
+        {OpCodeEn::log,  Intrinsic::log},
+        {OpCodeEn::log2, Intrinsic::log2},
+        {OpCodeEn::log10,Intrinsic::log10} 
+    };
 }
 
 

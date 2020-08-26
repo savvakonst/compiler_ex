@@ -1,6 +1,13 @@
 
+function one_array(Num)
+  N=Num*2+1
+  return double(range(N)*0+1)/N
+end
+
+
 x = param( "#1_A01__1" )  
-array=(double(range(5)*0)+1)
-y=x*1
-y=convolve(y,array)
-return y
+N = 100
+arr=one_array(N)
+y=convolve(x*x,arr)
+#y=(y>0)?(0-y):(y*2)
+return y #(x*x)*0.5

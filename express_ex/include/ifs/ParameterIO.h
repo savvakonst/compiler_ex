@@ -142,12 +142,13 @@ protected:
             delete ifs_;
             ifs_=nullptr;
         }
+        std::string file_name = (getCufrrentInterval().local ? work_directory_ + "/" : "") + getCufrrentInterval().file_name;
         if (opened_to_read_) {
-            ifs_ = new std::fstream(getCufrrentInterval().file_name, std::ios::in | std::ios::binary);
+            ifs_ = new std::fstream(file_name, std::ios::in | std::ios::binary);
             bool op =ifs_->is_open();
         }
         else if(opened_to_write_)
-            ifs_ =new std::fstream(getCufrrentInterval().file_name, std::ios::out | std::ios::binary);
+            ifs_ =new std::fstream(file_name, std::ios::out | std::ios::binary);
         // std::ios::app |  std::ios::trunc
 
     }

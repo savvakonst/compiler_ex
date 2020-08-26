@@ -122,7 +122,6 @@ public:
             binaryValue_ = ret->getBinaryValue();
             textValue_   = ret->getTextValue();
         }
-
     }
     ~Call() {}
 
