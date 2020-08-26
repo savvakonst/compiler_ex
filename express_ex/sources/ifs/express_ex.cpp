@@ -122,6 +122,7 @@ bool Express_ex::genJit()
         table_->llvmInit();
         table_->generateIR();
         table_->runOptimization();
+        status = true;
     }
     catch (size_t) {
         error_str_ = g_error_str;

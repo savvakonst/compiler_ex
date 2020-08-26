@@ -26,6 +26,8 @@ public :
     bool                                genJit();
     bool                                run();
 
+    const std::string &                 getErrorMsg() { return  error_str_; }
+
 private:
     KEXParser * kex_parser_ = nullptr;
     Body*   body_prototype_ = nullptr;
