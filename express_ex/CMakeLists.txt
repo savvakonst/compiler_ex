@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-SET(IS_SHARED False)
+SET(IS_SHARED True)
 
 
 # specify the C++ standard 

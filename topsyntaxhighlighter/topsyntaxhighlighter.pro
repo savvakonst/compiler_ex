@@ -16,12 +16,31 @@ SOURCES         = main.cpp \
 
 DEFINES += QUIMONO_EXE
 
+#Release:DEPENDPATH += "$$PWD/../express_ex/Release"
+#Debug:DEPENDPATH  += "$$PWD/../express_ex/Debug"
+
+
 Release:LIBS += "$$PWD/../express_ex/Release/syntaxhighlighter.lib"
-Debug::LIBS += "$$PWD/../express_ex/Debug/syntaxhighlighter.lib"
+Debug::LIBS += "$$PWD/../express_ex/Debug/syntaxhighlighterd.lib"
 
 
-Release:DESTDIR += $$PWD/../express_ex/Release
-Debug:DESTDIR += $$PWD/../express_ex/Debug
+
+Release:DESTDIR += $$PWD/../topSyntax/Release
+Debug:DESTDIR += $$PWD/../topSyntax/Debug
+
+
+
+#Release:DESTDIR += $$PWD/../express_ex/Release
+#Debug:DESTDIR += $$PWD/../express_ex/Debug
+
+
+
+
+
+Debug:Dll   +=  "$$PWD/../express_ex/Debug/*.dll"
+Release:Dll +=  "$$PWD/../express_ex/Release/*.dll"
+
+QMAKE_POST_LINK += xcopy /d/y  \"$$replace( Dll , /,\\ )\"   \"$$replace( DESTDIR, /,\\ )\"
 
 
 INSTALLS += target
