@@ -13,11 +13,11 @@ bool         fromJSON(const json::Value &data_fragment, DataInterval &data_inter
 DataInterval getDataInterval(json::Value &data_fragment, json::Array &data_files_list);
 
 calcMinMaxTy g_calcMinMax_select(PRMTypesEn arg) {
-    int sub_type = 0xF & (((int)arg) >> 8);
+    int sub_type = ( ((int)arg) >> 4);
     int code = 0xFF & ((int)arg);
 
 #define CALC_CASE_OP(T, SUB_T)   \
-                case( sizeof(T)|(SUB_T<<8) ) :   return calcMinMax<T> 
+                case( sizeof(T)|(SUB_T<<4) ) :   return calcMinMax<T> 
 
     switch (code){
         CALC_CASE_OP(int8_t, 1);
