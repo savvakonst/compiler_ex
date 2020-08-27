@@ -76,8 +76,10 @@ int main(int argc, const char* argv[]) {
         stack<Variable*> args;
         for (auto i : parameterNameList) {
             auto p =parameterDB[i.second];
-            if (p!=nullptr)
+            if (p != nullptr) {
+                p->setLocal(false);
                 args.push(new Line(i.first, p));
+            }
             else
                 print_error("can not find parameter " + i.second);
         }
@@ -114,9 +116,10 @@ int main(int argc, const char* argv[]) {
         body->genTable(&context);
 
         int index=0;
-        for (auto i : body->getOutputParameterList())
+        for (auto i : body->getOutputParameterList()) {
             i->setName("out_" + std::to_string(index++));
-
+            i->setLocal(false);
+        }
         if (showBits.isSet(outputPrm)) {
             index=0;
             for (auto i : body->getOutputParameterList()) {

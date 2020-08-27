@@ -373,14 +373,38 @@ inline size_t tEnSizeof(TypeEn type) {
 inline size_t sizeOfTy(TypeEn type) {
     size_t size=0;
 #define OP(T)  size=sizeof(T)
-    SWITCH_TYPE_OP(type, ;)
+    SWITCH_TYPE_OP(type, ;)                                             
 #undef OP
-        return size;
+    return size;
 }
 
 
-TypeEn      RPMType2JITType(PRMTypesEn arg);
-PRMTypesEn  JITType2RPMType(TypeEn arg);
+TypeEn      PRMType2JITType(PRMTypesEn arg);
+PRMTypesEn  JITType2PRMType(TypeEn arg);
+
+
+template< typename T >
+void calcMinMax(char* carg,int64_t Number, double & dmax, double & dmin,bool init) {
+    T* arg=(T*) carg;
+
+    T max =(T)dmax;
+    T min =(T)dmin;
+    if (init & Number) {
+        max=arg[0];
+        min=arg[0];
+    }
+    for (int i=0; i < Number; i++) {
+        register T var = arg[i];
+        max = max > var ? max : var;
+        min = min < var ? min : var;
+    }
+    dmax =(double)max;
+    dmin =(double)min;
+}
+
+
+
+
 
 
 #endif // COMMON_H

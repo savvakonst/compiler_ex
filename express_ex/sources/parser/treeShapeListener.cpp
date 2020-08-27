@@ -111,6 +111,11 @@ void TreeShapeListener::exitCallUnaryBInFunc(EGrammarParser::CallUnaryBInFuncCon
     activBody_->addBuiltInFuncOp(op);
 }
 
+void TreeShapeListener::exitInv(EGrammarParser::InvContext * ctx)
+{
+    activBody_->addInvOp();
+}
+
 //arithmetic operations
 void TreeShapeListener::exitMulDiv(EGrammarParser::MulDivContext* ctx) {
     setPos(ctx);

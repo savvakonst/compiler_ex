@@ -60,7 +60,7 @@ public:
         names_.push_back(name);
         name_       = name;
         linkName_   = parameter->getName();
-        type_       = RPMType2JITType(parameter->getRPMType());
+        type_       = PRMType2JITType(parameter->getRPMType());
         length_     = parameter->getVirtualSize();
         dsType_     = DataStructTypeEn::largeArr_dsty;
         is_arg      = true;

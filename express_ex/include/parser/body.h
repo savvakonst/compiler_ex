@@ -55,12 +55,13 @@ public:
     //create operation and push to varStack
     void addTypeConvOp      (TypeEn targetType);
     void addBuiltInFuncOp   (OpCodeEn uTypeOp);
+    void addInvOp           ();
     void addArithmeticOp    (OpCodeEn uTypeOp);
-    void addComarsionOp(OpCodeEn uTypeOp);
+    void addComarsionOp     (OpCodeEn uTypeOp);
     void addConvolveOp      (OpCodeEn uTypeOp, uint32_t shift = 0);
     void addSelectOp        ();
 
-    void addRangeOp(size_t argCount);
+    void addRangeOp         (size_t argCount);
     void addShiftOp         ();
     void addDecimationOp    ();
     void addSmallArrayDefinitionOp(size_t length);

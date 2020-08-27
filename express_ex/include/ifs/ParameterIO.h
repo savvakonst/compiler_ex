@@ -154,7 +154,7 @@ protected:
         // std::ios::app |  std::ios::trunc
 
     }
-
+    PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
     double  frequency_  = -1;
 };
 

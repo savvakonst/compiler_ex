@@ -74,8 +74,8 @@ inline int64_t sizeOfTy(PRMTypesEn  arg) {
     return ((int64_t)arg) & 0xf;
 }
 
-//TypeEn      RPMType2JITType(PRMTypesEn arg);
-//PRMTypesEn  JITType2RPMType(TypeEn arg);
+//TypeEn      PRMType2JITType(PRMTypesEn arg);
+//PRMTypesEn  JITType2PRMType(TypeEn arg);
 
 DLL_EXPORT
 std::string toString(PRMTypesEn arg);
@@ -138,6 +138,7 @@ inline DataInterval createInterval(TimeInterval time_interval, double frequency,
     return interval;
 }
 
+typedef void (*calcMinMaxTy)(char* carg, int64_t Number, double & dmax, double & dmin, bool init);
 
 class DLL_EXPORT ParameterIfs {
 public:
@@ -166,13 +167,15 @@ public:
     virtual std::stringstream &stream(std::stringstream & OS, std::string offset="") const = 0;
 
     void setPath(std::string dirname) { work_directory_ = dirname; }
-
+    void setLocal(bool val = true) { for (auto &i : interval_list_) i.local=val; }
 
     friend class ParametersDB;
 
 protected:
 
-    std::fstream*               ifs_  = nullptr;
+    calcMinMaxTy   calcMinMaxPtr = nullptr;
+
+    std::fstream*  ifs_ = nullptr;
 
     std::string                 name_ = "";
     TimeInterval                time_interval_;

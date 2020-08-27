@@ -75,6 +75,7 @@ void Body::addReturn(const std::string &name, Variable* var)
 //varStack push/pop 
 void Body::push(Variable* line)
 {
+	garbage_contaiiner_->add(line);
 	varStack_.push_back(line);
 }
 
@@ -183,6 +184,12 @@ void Body::addTypeConvOp(TypeEn targetType){
 void Body::addBuiltInFuncOp(OpCodeEn uTypeOp){
 	Variable* arg1 = pop();
 	push(builtInFuncOp(uTypeOp, arg1));
+}
+
+void Body::addInvOp() {
+	Variable* arg = pop();
+	Variable* zero = garbage_contaiiner_->add(new  Variable("0", TypeEn::int32_jty ));
+	push(arithmeticOp( OpCodeEn::sub , zero, arg) );
 }
 
 void Body::addArithmeticOp(OpCodeEn uTypeOp){

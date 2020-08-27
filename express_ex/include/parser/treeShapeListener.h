@@ -46,6 +46,7 @@ public:
     virtual void exitCallTConvBInFunc(EGrammarParser::CallTConvBInFuncContext  *ctx) override;
     virtual void exitCallUnaryBInFunc(EGrammarParser::CallUnaryBInFuncContext* ctx) override;
     //arithmetic operations
+    virtual void exitInv(EGrammarParser::InvContext * ctx) override;
     virtual void exitMulDiv(EGrammarParser::MulDivContext* ctx) override;
     virtual void exitAddSub(EGrammarParser::AddSubContext* ctx) override;
     virtual void exitPow(EGrammarParser::PowContext* ctx) override;

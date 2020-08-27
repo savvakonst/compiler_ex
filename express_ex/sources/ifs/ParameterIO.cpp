@@ -1,17 +1,39 @@
-
+#include <type_traits>
 #include <set>
 #include "ParameterIO.h"
 #include "common.h"
 #include "llvm/Support/JSON.h"
 
+
 using namespace llvm;
+
+
 
 bool         fromJSON(const json::Value &data_fragment, DataInterval &data_interval);
 DataInterval getDataInterval(json::Value &data_fragment, json::Array &data_files_list);
 
+calcMinMaxTy g_calcMinMax_select(PRMTypesEn arg) {
+    int sub_type = 0xF & (((int)arg) >> 8);
+    int code = 0xFF & ((int)arg);
+
+#define CALC_CASE_OP(T, SUB_T)   \
+                case( sizeof(T)|(SUB_T<<8) ) :   return calcMinMax<T> 
+
+    switch (code){
+        CALC_CASE_OP(int8_t, 1);
+        CALC_CASE_OP(int16_t, 1);
+        CALC_CASE_OP(int32_t, 1);
+        CALC_CASE_OP(int64_t, 1);
+        CALC_CASE_OP(float, 2);
+        CALC_CASE_OP(double, 2);
+    default:
+        return nullptr;
+    };
+}
 
 
-TypeEn RPMType2JITType(PRMTypesEn arg) {
+
+TypeEn PRMType2JITType(PRMTypesEn arg) {
 
     switch (arg)
     {
@@ -39,7 +61,7 @@ TypeEn RPMType2JITType(PRMTypesEn arg) {
     }
 }
 
-PRMTypesEn  JITType2RPMType(TypeEn arg) {
+PRMTypesEn  JITType2PRMType(TypeEn arg) {
     if (isFloating(arg))
         return (PRMTypesEn)(0x20 | sizeOfTy(arg) );
     if (isInteger(arg))
@@ -192,9 +214,12 @@ SyncParameter::SyncParameter(
         }
     }
 
-    if (interval_list_.size())
+    if (interval_list_.size()) {
         sizeof_data_type_=sizeOfTy(interval_list_.front().type);
-
+        type_ = interval_list_.front().type;
+        calcMinMaxPtr = g_calcMinMax_select(type_);
+    }
+    
 
     auto bgn=interval_list_.front().time_interval.bgn;
     auto end=interval_list_.back().time_interval.end;
@@ -265,20 +290,25 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
 
         }
         else {
-            const DataInterval &di = interval_list_[di_index];
+            DataInterval &di = interval_list_[di_index];
 
             int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency_);
             local_points_to_write =  (int)((di.time_interval.end - current_time) * frequency_);
 
-            if ((di_index != current_interval_index_) || (ifs_==nullptr) ) {
+            bool is_new_interval = (di_index != current_interval_index_);
+            if (is_new_interval || (ifs_==nullptr) ) {
                 openNewInterval(di_index);
                 //ifs_->seekg(local_start_pos * sizeof_data_type_);
             }
 
+
             if (points_to_write <= local_points_to_write)
                 local_points_to_write = points_to_write;
             
-            
+
+            if (calcMinMaxPtr)
+                calcMinMaxPtr(ptr, local_points_to_write * sizeof_data_type_, di.val_max, di.val_min, is_new_interval);
+
             ifs_->write(ptr, local_points_to_write * sizeof_data_type_);
         }
 
@@ -288,8 +318,6 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
     }
 
     return point_number - points_to_write;
-
-    return  0 ;
 }
 
 int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {

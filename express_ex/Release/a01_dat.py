@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 ##################################################
 N=2**21
 ##################################################
-a=np.fromfile("#1_A01__1.dat", np.double,N)
-
+a=np.fromfile("#1_A01__1.dat", np.double)
+plt.plot( a, 'o', label='fitted')
+plt.show()
 NK=5
 a=np.convolve(a,(np.arange(NK)*0.0+1)/NK,"same")
 
