@@ -394,7 +394,7 @@ void calcMinMax(char* carg,int64_t Number, double & dmax, double & dmin,bool ini
         min=arg[0];
     }
     for (int i=0; i < Number; i++) {
-        register T var = arg[i];
+        T var = arg[i];
         max = max > var ? max : var;
         min = min < var ? min : var;
     }

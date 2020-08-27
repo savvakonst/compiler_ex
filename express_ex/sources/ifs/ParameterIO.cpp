@@ -307,7 +307,7 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
             
 
             if (calcMinMaxPtr)
-                calcMinMaxPtr(ptr, local_points_to_write * sizeof_data_type_, di.val_max, di.val_min, is_new_interval);
+                calcMinMaxPtr(ptr, local_points_to_write , di.val_max, di.val_min, is_new_interval);
 
             ifs_->write(ptr, local_points_to_write * sizeof_data_type_);
         }
