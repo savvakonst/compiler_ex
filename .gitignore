@@ -25,9 +25,13 @@
 !/topsyntaxhighlighter
 !/topsyntaxhighlighter/**
 
-*.dat
-*.ilk
+*.exp
 *.pdb
+*.ilk
+*.lib
+*.dll
+
+*.dat
 *.html
 
 
