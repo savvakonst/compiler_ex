@@ -25,6 +25,7 @@
 !/topsyntaxhighlighter
 !/topsyntaxhighlighter/**
 
+*.exe
 *.exp
 *.pdb
 *.ilk
