@@ -156,7 +156,7 @@ public:
         double from, double to, size_t max_point_number_to_read) = 0;
 
     virtual bool open(bool open_to_write = false) = 0;
-    virtual bool close() = 0;
+    virtual bool close() = 0; 
 
     const std::string               & getName() const { return name_; }
     const TimeInterval              & getMainTimeInterval() const { return time_interval_; }
