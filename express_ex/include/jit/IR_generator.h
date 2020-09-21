@@ -48,7 +48,9 @@ public:
     llvm::Value * CreateInv(llvm::Value * AOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreateTypeConv(llvm::Value *AOperand,  OpCodeEn opCode, TypeEn targetTy, const std::string &name="");
     llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, OpCodeEn opCode, const std::string &name="");
-    llvm::Value * CreateConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string & name);
+    llvm::Value * CreateConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string & name="");
+    llvm::Value * CreateConvolve(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
+    llvm::Value * CreateGPUConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string & name="");
     llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, int64_t i, const std::string &name="");
     llvm::Value * CreatePositionalOffset( std::string name="", int64_t startValue=0);
     llvm::Value * CreatePositionalOffsetAlloca(std::string name="", int64_t startValue=0);
@@ -56,7 +58,6 @@ public:
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, const  std::string &name="");
     llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, bool isVolatile, const std::string &name="");
     llvm::Value * CreateLoadOffset( const std::string &name="common_offset");
-    llvm::Value * CreateConvolve(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
     void          CreatePositionalStore(llvm::Value * AOperand, llvm::Value * BOperand, bool isVolatile = false);
     llvm::Value * CreateBufferInit(TypeEn targetTy, const std::string &name="");
     void          CreateStartBRs();

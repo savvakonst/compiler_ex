@@ -12,30 +12,28 @@
 #include "llvm/Support/CommandLine.h"
 #include "express_ex.h"
  
-using namespace llvm;
-
-
 
 
 bool         g_ansiEscapeCodes;
 
-
-
+void clGpuConvolve();
 int main(int argc, const char* argv[]) {
+
+
 
     enum  ShowNames {
         nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
     };
 
-    static  cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
-    static  cl::opt<std::string>  inputFile("i", cl::desc("input source file"), cl::value_desc("filename"), cl::Required, cl::cat(mainCategory));
-    static  cl::opt<bool>         optimizationEnable("opt", cl::desc("optimization enable"), cl::Optional, cl::cat(mainCategory));
-    static  cl::opt<bool>         ansiEscapeCodes("ansi", cl::desc("enable ANSI escape codes"), cl::Optional, cl::cat(mainCategory));
-    static  cl::list<std::string> libraryPath("dir", cl::desc("list of available directories"), cl::value_desc("filename"), cl::ZeroOrMore, cl::cat(mainCategory));
-    static  cl::list<std::string> inputDataBaseFile("db", cl::desc("input data base files"), cl::value_desc("directory"), cl::ZeroOrMore, cl::cat(mainCategory));
-    static  cl::opt<bool>         runJit("runJit", cl::desc("run jit"), cl::Optional, cl::cat(mainCategory));
-    static  cl::bits<ShowNames>   showBits(cl::desc("show:"), cl::cat(mainCategory), cl::ZeroOrMore,
-        cl::values(
+    static  llvm::cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
+    static  llvm::cl::opt<std::string>  inputFile("i", llvm::cl::desc("input source file"), llvm::cl::value_desc("filename"), llvm::cl::Required, llvm::cl::cat(mainCategory));
+    static  llvm::cl::opt<bool>         optimizationEnable("opt", llvm::cl::desc("optimization enable"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
+    static  llvm::cl::opt<bool>         ansiEscapeCodes("ansi", llvm::cl::desc("enable ANSI escape codes"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
+    static  llvm::cl::list<std::string> libraryPath("dir", llvm::cl::desc("list of available directories"), llvm::cl::value_desc("filename"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
+    static  llvm::cl::list<std::string> inputDataBaseFile("db", llvm::cl::desc("input data base files"), llvm::cl::value_desc("directory"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
+    static  llvm::cl::opt<bool>         runJit("runJit", llvm::cl::desc("run jit"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
+    static  llvm::cl::bits<ShowNames>   showBits(llvm::cl::desc("show:"), llvm::cl::cat(mainCategory), llvm::cl::ZeroOrMore,
+        llvm::cl::values(
             clEnumVal(nameList, "names list"),
             clEnumVal(untypedFSR, "FSR(first stage representation) without type calculation"),
             clEnumVal(activeNameList, "Procedure Integration"),
@@ -46,9 +44,11 @@ int main(int argc, const char* argv[]) {
             clEnumVal(llvmIRcode, "llvm IR ")));
 
 
-    cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
-    cl::HideUnrelatedOptions(mainCategory);
-    cl::ParseCommandLineOptions(argc, argv, "express jit");
+    llvm::cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
+    llvm::cl::HideUnrelatedOptions(mainCategory);
+    llvm::cl::ParseCommandLineOptions(argc, argv, "express jit");
+
+    //clGpuConvolve();
 
     g_ansiEscapeCodes=ansiEscapeCodes;
 
@@ -157,18 +157,18 @@ int main(int argc, const char* argv[]) {
 int main2(int argc, const char* argv[]) {
 
     enum  ShowNames {
-        nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
+        nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode 
     };
 
-    static  cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
-    static  cl::opt<std::string>  inputFile("i", cl::desc("input source file"), cl::value_desc("filename"), cl::Required, cl::cat(mainCategory));
-    static  cl::opt<bool>         optimizationEnable("opt", cl::desc("optimization enable"), cl::Optional, cl::cat(mainCategory));
-    static  cl::opt<bool>         ansiEscapeCodes("ansi", cl::desc("enable ANSI escape codes"), cl::Optional, cl::cat(mainCategory));
-    static  cl::list<std::string> libraryPath("dir", cl::desc("list of available directories"), cl::value_desc("filename"), cl::ZeroOrMore, cl::cat(mainCategory));
-    static  cl::list<std::string> inputDataBaseFile("db", cl::desc("input data base files"), cl::value_desc("directory"), cl::ZeroOrMore, cl::cat(mainCategory));
-    static  cl::opt<bool>         runJit("runJit", cl::desc("run jit"), cl::Optional, cl::cat(mainCategory));
-    static  cl::bits<ShowNames>   showBits(cl::desc("show:"), cl::cat(mainCategory), cl::ZeroOrMore,
-        cl::values(
+    static  llvm::cl::OptionCategory    mainCategory("Compiler Options", "Main Options ");
+    static  llvm::cl::opt<std::string>  inputFile("i", llvm::cl::desc("input source file"), llvm::cl::value_desc("filename"), llvm::cl::Required, llvm::cl::cat(mainCategory));
+    static  llvm::cl::opt<bool>         optimizationEnable("opt", llvm::cl::desc("optimization enable"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
+    static  llvm::cl::opt<bool>         ansiEscapeCodes("ansi", llvm::cl::desc("enable ANSI escape codes"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
+    static  llvm::cl::list<std::string> libraryPath("dir", llvm::cl::desc("list of available directories"), llvm::cl::value_desc("filename"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
+    static  llvm::cl::list<std::string> inputDataBaseFile("db", llvm::cl::desc("input data base files"), llvm::cl::value_desc("directory"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
+    static  llvm::cl::opt<bool>         runJit("runJit", llvm::cl::desc("run jit"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
+    static  llvm::cl::bits<ShowNames>   showBits(llvm::cl::desc("show:"), llvm::cl::cat(mainCategory), llvm::cl::ZeroOrMore,
+        llvm::cl::values(
             clEnumVal(nameList, "names list"),
             clEnumVal(untypedFSR, "FSR(first stage representation) without type calculation"),
             clEnumVal(activeNameList, "Procedure Integration"),
@@ -179,9 +179,9 @@ int main2(int argc, const char* argv[]) {
             clEnumVal(llvmIRcode, "llvm IR ")));
 
 
-    cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
-    cl::HideUnrelatedOptions(mainCategory);
-    cl::ParseCommandLineOptions(argc, argv, "express jit");
+    llvm::cl::SetVersionPrinter([](llvm::raw_ostream &OS) {OS << "version - 0.94_6\n"; });
+    llvm::cl::HideUnrelatedOptions(mainCategory);
+    llvm::cl::ParseCommandLineOptions(argc, argv, "express jit");
 
     g_ansiEscapeCodes=ansiEscapeCodes;
 

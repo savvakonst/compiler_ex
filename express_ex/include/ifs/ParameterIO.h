@@ -10,8 +10,12 @@
 #include "ParameterIfs.h"
 
 
+class DLL_EXPORT AsyncParameter : public ParameterIfs {
+    AsyncParameter() {
 
-
+    }
+};
+ 
 
 class DLL_EXPORT SyncParameter: public ParameterIfs {
 public:
@@ -54,8 +58,8 @@ public:
     }
 
     bool close() {
-        if (opened_to_read_ | opened_to_write_) {
-            if (ifs_) 
+        if ( opened_to_read_ | opened_to_write_ ) {
+            if( ifs_ ) 
                 ifs_->close();
             ifs_ = nullptr;
             opened_to_read_  = false;
@@ -70,7 +74,7 @@ public:
     int64_t read(char * data_buffer_ptr, int64_t point_number);
 
     PRMTypesEn  getRPMType() { return interval_list_[0].type; }
-    int64_t     getVirtualSize() {return frequency_ * (time_interval_.end - time_interval_.bgn);}    
+    int64_t     getVirtualSize() {return frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_);}
 
     void setName(const std::string &name) {
         name_=name;
@@ -132,14 +136,14 @@ protected:
 
         for (int64_t i =current_interval_index_ <0?0:current_interval_index_; i< numer_of_intervals_; i++) {
             DataInterval &a =interval_list_[i];
-            if ((a.time_interval.bgn <= time) && (time < a.time_interval.end)) return i;
+            if ((a.time_interval.bgn <= time) && ((time < a.time_interval.end) + additional_time_)) return i;
         }
         return -1;
     }
 
     inline void openNewInterval(double di_index) {
         if (ifs_) {
-            current_interval_index_=di_index;
+            current_interval_index_ = di_index;
             ifs_->close();
             delete ifs_;
             ifs_=nullptr;
@@ -154,6 +158,7 @@ protected:
         // std::ios::app |  std::ios::trunc
 
     }
+    const double additional_time_ = 0.001;
     PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
     double  frequency_  = -1;
 };

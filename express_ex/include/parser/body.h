@@ -20,11 +20,11 @@ public:
     bool    isRetStackEmpty() {return 0 == returnStack_.size();}
 
     void addLine    (const std::string &name, Variable* var);
-    void addArg     (const std::string &name); //is necessary to add returned status value with line ,pos end error code and string;
+    void addArg     (const std::string &name); //is necessary to add returned status_ value with line ,pos end error code and string;
     void addParam   (Line * line);
     void addParam   (const std::string &name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
     void addParam   (const std::string &name, const std::string & linkName, DataStructTypeEn dsty=DataStructTypeEn::constant_dsty);
-    void addReturn  (const std::string &name, Variable* var); //is necessary to add returned status value with line ,pos end error code and string;
+    void addReturn  (const std::string &name, Variable* var); //is necessary to add returned status_ value with line ,pos end error code and string;
 
     //varStack push/pop 
     void             push       (Variable*);

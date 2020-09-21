@@ -628,6 +628,15 @@ Function * Table::getConvolveFunc(TypeEn type){
     return function;
 }
 
+Function * Table::getGPUConvolveFunc(TypeEn type) {
+    llvm::Function * function = convolve_map_[type];
+    if (function == nullptr)
+        function=CreateConvolveFunction(M_, type);
+    convolve_map_[type] = function;
+    return function;
+}
+
+
 bool Table::generateIR(std::string basicBlockPrefix) {
 
 
@@ -635,21 +644,6 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     if(builder_==nullptr)
         builder_=new IRGenerator(context, this);
     IRGenerator &builder= *builder_;
-
-    /*
-    auto updateFunction = Function::Create(
-        FunctionType::get(Type::getInt32Ty(context), {  }, false),
-        Function::ExternalLinkage,
-        "updateBuffer",
-        M_
-    );
-    */
-//auto externalFn_IR = cast<Function> (M_->getOrInsertFunction("externalFn",Type::getDoubleTy(context), Type::getDoubleTy(context)));
-//Value* x = externalFn_IR->arg_begin();
-//x->setName("x");
-
-
-
 
     mainFunction_ = Function::Create(
         FunctionType::get(Type::getInt32Ty(context), {Type::getInt64PtrTy(context)->getPointerTo()}, false),
@@ -667,22 +661,11 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 
     bufferUpdateFunction->setName("updateBuffer");
 
-
-    //builder.SetDeclareConvolve(builder.getInt16Ty(),  uintptr_t(convolveTemplate<int16_t>));
-    //builder.SetDeclareConvolve(builder.getInt32Ty(),  uintptr_t(convolveTemplate<int32_t>));
-    //builder.SetDeclareConvolve(builder.getInt64Ty(),  uintptr_t(convolveTemplate<int64_t>));
-    //builder.SetDeclareConvolve(builder.getDoubleTy(), uintptr_t(convolveTemplate<double>));
-    //builder.SetDeclareConvolve(builder.getFloatTy(),  uintptr_t(convolveTemplate<float>));
-
     for (auto i : const_list_)
         i->setupIR(builder);
 
     for (auto i : small_array_list_)
         i->calculate();
-
-
-    //i->setupIR(builder);
-
 
     ///the main "For loop"
     ///creating jump commands for init cycle
@@ -691,8 +674,10 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     BasicBlock* bb= BasicBlock::Create(context, "init_block", mainFunction_);
     builder.SetInitInsertPoint(bb);
 
-    for (auto i : column_list_) 
-       i->generateIR(builder,CycleStageEn::start);
+    auto max_level =getMaxLevel()+1;
+    for (uint32_t j=0;j < max_level;j++ )
+        for (auto i : column_list_) 
+            i->generateIR(builder,CycleStageEn::start, j);
 
     ///creating jump commands for init cycle
     builder.CreateStartBRs();
@@ -717,8 +702,10 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.SetLoopEnterInsertPoint(bbLoopEnter);
     Value* globIndex=builder.CreateLoad(globIndexAlloca, "glob_index");
 
-    for (auto i : column_list_)
-        i->generateIR(builder, CycleStageEn::midle);
+
+    for (uint32_t j=0; j < max_level; j++)
+        for (auto i : column_list_)
+            i->generateIR(builder, CycleStageEn::midle,j);
    
     builder.CreateMidleBRs();
     BasicBlock* bbCycleExit = BasicBlock::Create(context, "cycle_exit_block", builder.getCurrentFunction());
@@ -732,7 +719,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.SetCurrentCMPRes(
         builder.CreateICmpSLT(
             nextGlobIndex,
-            builder.getInt64( (iterations_ - 1) )));
+            builder.getInt64( ( iterations_ - 1 ) )));
 
 
     BasicBlock* bbTerminalLoopEnter = BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
@@ -742,8 +729,9 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.DropBaseInsertPoint();
     
     bool  isNotIdle = false;
-    for (auto i : column_list_)
-        isNotIdle |= i->generateIR(builder, CycleStageEn::end);
+    for (uint32_t j=0; j < max_level; j++)
+        for (auto i : column_list_)
+            isNotIdle |= i->generateIR(builder, CycleStageEn::end,j);
    
     if (isNotIdle) {
         builder.CreateMidleBRs();
@@ -752,15 +740,11 @@ bool Table::generateIR(std::string basicBlockPrefix) {
         builder.SetExitInsertPoint(bbExit);
         builder.CreateCall(bufferUpdateFunction); //call buffer update
     }
-   
-
-
     
     builder.CreateRet(builder.getInt32(1));
     ///create jump from init block to the next
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
-
 
     //
     g_buffers = builder.getBufferList();
@@ -769,7 +753,6 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     //    if(i)
     //        llvm::outs() << Delimiter::RED << *i;
     
-
     return true;
 }
 
@@ -917,7 +900,6 @@ void  Operation::setupIR(IRGenerator & builder){
     }
 
 
-    
     if (isBuffered()|isReturned()) {
         if (!is_initialized) {
             BufferTypeEn bufferType=isReturned()? BufferTypeEn::output: BufferTypeEn::internal;
@@ -953,7 +935,7 @@ void  Line::setupIR(IRGenerator & builder) {
             IRBufferBasePtr_ = builder.CreateBufferInit(type_, "external_");
             is_initialized  = true;
         }
-        IRBufferPtr_    = builder.CreatePositionalInBoundsGEP(IRBufferBasePtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
+        IRBufferPtr_   = builder.CreatePositionalInBoundsGEP(IRBufferBasePtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
         IRValue_       = builder.CreatePositionalLoad(IRBufferPtr_, "arg_buffer_");
     }
 }

@@ -32,6 +32,7 @@ right_expr: expr ;
 
 expr:   ID '(' (expr (','expr)*) ')'                                # callFunc
     |   SPEC_SYM='convolve'  '('expr','expr(','STRINGLITERAL)?')'   # callConvolve
+    |   SPEC_SYM='recconvolve'  '('expr','expr(','STRINGLITERAL)?')'# callRecConvolve
     |   SPEC_SYM='range'     '('(expr (','expr)*)')'                # range
     |   SPEC_SYM='decimation''('expr ','expr')'                     # decimation
     |   SPEC_SYM='shift'     '('expr ','expr')'                     # shift

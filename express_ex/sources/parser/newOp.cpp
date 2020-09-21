@@ -136,8 +136,8 @@ Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targ
 	
 #define CONV_OP(depend,target) case (depend):  opType=(target) ;  break
 	if (isInteger(targetType) || isUnknownTy(targetType)) {
-		/*
-		switch (uTypeOp)
+		/* 
+		switch (uTypeOp) 
 		{
 			CONV_OP(OpCodeEn::add, OpCodeEn::add);
 			CONV_OP(OpCodeEn::sub, OpCodeEn::sub);

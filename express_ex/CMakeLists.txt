@@ -16,6 +16,10 @@ if(MSVC AND NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11))
   set(CMAKE_CXX_STACK_SIZE "10000000")
 endif()  
 
+set(CLHPP C:/Users/SVK/Desktop/openCl/khronos/OpenCL-CLHPP/include) 
+set(cudaPath C:/Program\ Files/NVIDIA\ GPU\ Computing\ Toolkit/CUDA/v11.0)
+set(openCL_libDir  ${cudaPath}/lib/x64)
+set(openCL_includeDir  ${cudaPath}/include)
 
 
 set(EGrammarDir ../EGrammar)
@@ -23,6 +27,8 @@ set(llvmDir ../llvm)
 set(antlr4Dir ../antlr4)
 
 
+include_directories(${CLHPP})
+include_directories(${openCL_includeDir})
 include_directories(${EGrammarDir})
 include_directories(${llvmDir}/include)
 include_directories(${llvmDir}/build/include)
@@ -33,6 +39,7 @@ include_directories(include/ifs)
 include_directories(include/jit)
 include_directories(include/parser)
 include_directories(include/ifs)
+
 
 
 set(sourcesDir sources)
@@ -121,6 +128,7 @@ if(MSVC)
         /wd4348
         /wd4804
         /wd4996
+        /wd5208
     )
 
 
@@ -163,12 +171,12 @@ if(MSVC)
         LLVMMCJIT
         LLVMDemangle
         LLVMMCJIT
-
+        OpenCL
     )
 
 
 
-    SET(llvmLibPath ${llvmDir}/Lib/x64)
+
 
     SET(llvmReleaseLibPath ${llvmDir}/Lib/Release/lib)
     SET(llvmDebugLibPath ${llvmDir}/../../llvm-project/build_exp/Debug/lib)
@@ -177,17 +185,13 @@ if(MSVC)
 
     SET(antlrDebugLibPath ${antlr4Dir}/lib/vs-2015/x64/Debug\ DLL)
     SET(antlrLibPath    ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
-    #debug ${llvmLibPath} ${antlrDebugLibPath}
 
     target_link_directories(express_ex PUBLIC 
         "$<$<CONFIG:Debug>:   ${antlrDebugLibPath}>"   "$<$<CONFIG:Debug>:   ${llvmDebugLibPath}>" 
         "$<$<CONFIG:Release>: ${antlrReleaseLibPath}>" "$<$<CONFIG:Release>: ${llvmReleaseLibPath}>" 
+        ${openCL_libDir}
     )
-    #target_link_directories(express_ex PUBLIC ${llvmLibPath}  ${antlrReleaseLibPath} )
-    #target_compile_options(express_ex PUBLIC "$<$<CONFIG:DEBUG>:/MD>")
-    #set_property(TARGET express_ex APPEND PROPERTY
-    #    COMPILE_DEFINITIONS "$<$<CONFIG:Debug>: _ITERATOR_DEBUG_LEVEL=0>" 
-    #)
+
 
 
     target_link_libraries(express_ex ${ObjNames} antlr4-runtime )
@@ -216,6 +220,13 @@ if(MSVC)
         set_property(TARGET express_ex APPEND PROPERTY
             COMPILE_DEFINITIONS ${commonMSVC_Definitions} DLL_express_ex_EXPORT
         )
+
+        #set(CP_EX_DLL "$<TARGET_FILE_DIR:express_ex>/express_ex.dll" )
+        #add_custom_command(TARGET express_ex POST_BUILD 
+        #    COMMAND  ${CMAKE_COMMAND} -E copy_if_different
+        #        ${CP_EX_DLL}
+        #        //nas_sy/Common/svk/express_ex/$<CONFIG>.Shared
+        #    ) 
     else()
         set_property(TARGET express_ex APPEND PROPERTY
             COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
@@ -223,12 +234,6 @@ if(MSVC)
     endif()
 
 
-    
-
-    #add_custom_command(TARGET express_ex PRE_BUILD 
-    #    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    #        ${antlrLibPath}/antlr4-runtime.dll
-    #        $<TARGET_FILE_DIR:express_ex>) 
 
     #set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT "express_ex")
     set_property (DIRECTORY PROPERTY VS_STARTUP_PROJECT "express_ex")

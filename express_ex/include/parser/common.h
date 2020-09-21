@@ -352,14 +352,11 @@ char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int64_t c, int n);
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, char * c, int n);
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t b, int64_t c, int n);
-
 char * calcConvolveSmallArray( TypeEn targetType, char * ret, char * a, char * b, int aN,int bN);
 
 char * typeConvSmallArray(TypeEn retType, TypeEn argType, char * ret, char* arg, int n);
 
 char * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand);
-
-
 
 inline size_t tEnSizeof(TypeEn type) {
     size_t size=0;
@@ -369,7 +366,6 @@ inline size_t tEnSizeof(TypeEn type) {
     return size;
 }
 
-
 inline size_t sizeOfTy(TypeEn type) {
     size_t size=0;
 #define OP(T)  size=sizeof(T)
@@ -378,20 +374,18 @@ inline size_t sizeOfTy(TypeEn type) {
     return size;
 }
 
-
 TypeEn      PRMType2JITType(PRMTypesEn arg);
 PRMTypesEn  JITType2PRMType(TypeEn arg);
 
-
 template< typename T >
 void calcMinMax(char* carg,int64_t Number, double & dmax, double & dmin,bool init) {
-    T* arg=(T*) carg;
+    T* arg= (T*) carg;
 
-    T max =(T)dmax;
-    T min =(T)dmin;
-    if (init & Number) {
-        max=arg[0];
-        min=arg[0];
+    T max = (T) dmax;
+    T min = (T) dmin;
+    if (init & (Number!=0)) {
+        max = arg[0];
+        min = arg[0];
     }
     for (int i=0; i < Number; i++) {
         T var = arg[i];
@@ -401,10 +395,5 @@ void calcMinMax(char* carg,int64_t Number, double & dmax, double & dmin,bool ini
     dmax =(double)max;
     dmin =(double)min;
 }
-
-
-
-
-
 
 #endif // COMMON_H

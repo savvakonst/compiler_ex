@@ -220,8 +220,8 @@ void Body::addSelectOp(){
 	Variable* arg2 = pop();
 	Variable* arg1 = pop();
 	push(selectOp(arg1, arg2, arg3));
-}
-
+} 
+ 
 void Body::addRangeOp(size_t argCount){
 	if((argCount < 1)||(argCount>3))
 		print_error("invalid signature of range(..) function");

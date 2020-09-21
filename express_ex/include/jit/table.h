@@ -123,7 +123,17 @@ public:
             i->setBufferLength(bufferLength_);
     }
 
+
+
     uint64_t    getLength() { return length_; }
+    uint64_t    getMaxLevel() {
+        uint64_t level = 0;
+        for (auto i : blockList_) {
+            auto tmp = i->getLevel();
+            level=level > tmp ? level : tmp;
+        }
+        return level;
+    }
     Block *     getBlock(int level) {
         for (auto i : blockList_)
             if (i->getLength() == length_) {
@@ -169,6 +179,11 @@ public:
 
     void setUint(Variable * var);
 
+
+    void recalcLeftRightBufferLengths() {
+        for (auto i : column_list_)
+            i->recalcLeftRightBufferLengths();
+    }
     TableColumn * getColumn(uint64_t length){
         for (auto i : column_list_)
             if (i->getLength() == length) {
@@ -176,14 +191,21 @@ public:
             }
         return nullptr;
     }
-    void recalcLeftRightBufferLengths() {
-        for (auto i : column_list_)
-            i->recalcLeftRightBufferLengths();
+    uint64_t      getMaxLevel() {
+        uint64_t level = 0;
+        for (auto i : column_list_) {
+            auto tmp = i->getMaxLevel();
+            level=level > tmp ? level : tmp;
+        }
+        return level;
     }
+
     llvm::Function* getFloatBIFunc(OpCodeEn op);
     llvm::Function* getDoubleBIFunc(OpCodeEn op);
     llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, OpCodeEn op, llvm::Type * Ty);
     llvm::Function* getConvolveFunc(TypeEn type);
+    llvm::Function* getGPUConvolveFunc(TypeEn type);
+
     void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
 
     string  print();

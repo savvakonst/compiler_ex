@@ -175,6 +175,32 @@ Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,int64_t 
     return CreateCall(function, { aOperand, bOperand, getInt64(length) ,getInt64(shift) }, name);
 }
 
+Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const std::string &name)
+{
+    Value * ret =nullptr, * convolveFunction=nullptr;
+    Type * type=aOperand->getType()->getPointerElementType();
+
+    if (type == getDoubleTy())
+        convolveFunction=convolveDoubleFunction;
+    else if (type == getFloatTy())
+        convolveFunction=convolveFloatFunction;
+    else if (type == getInt64Ty())
+        convolveFunction=convolveI64Function;
+    else if (type == getInt32Ty())
+        convolveFunction=convolveI32Function;
+    else
+        return ret;
+    //if (ret == nullptr) print_error("CreateConvolve :" );
+    return CreateCall(convolveFunction, { aOperand ,bOperand }, name);
+}
+
+llvm::Value * IRGenerator::CreateGPUConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string &name)
+{
+    print_IR_error("CreateGPUConvolve is not supported yet");
+    auto function = table->getGPUConvolveFunc(type);
+    return nullptr;
+}
+
 Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty, int64_t i, const std::string &name)
 {
     SetInitInsertPoint();
@@ -305,24 +331,6 @@ void * IRGenerator::AddBufferAlloca(Buffer *s)
 }
 
 
-Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const std::string &name)
-{
-    Value * ret =nullptr,* convolveFunction=nullptr;
-    Type * type=aOperand->getType()->getPointerElementType();
-
-    if (type == getDoubleTy())
-        convolveFunction=convolveDoubleFunction;
-    else if (type == getFloatTy())
-        convolveFunction=convolveFloatFunction;
-    else if (type == getInt64Ty())
-        convolveFunction=convolveI64Function;
-    else if (type == getInt32Ty())
-        convolveFunction=convolveI32Function;
-    else
-        return ret;
-    //if (ret == nullptr) print_error("CreateConvolve :" );
-    return CreateCall(convolveFunction, { aOperand ,bOperand }, name);
-}
 
 
 

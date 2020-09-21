@@ -170,7 +170,6 @@ bool readParametersList(std::string databaseFName, std::vector<SyncParameter*>& 
         for (auto k : DataFragmentsList)
             interval_list.push_back(getDataInterval(k, DataFilesList));
 
-
         json::ObjectMapper O(i);
         std::string  name;
         TimeInterval time_interval;
@@ -256,6 +255,8 @@ bool SyncParameter::seek(int64_t point_umber) {
     return true;
 }
 
+
+
 int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
     if (!opened_to_read_)
         open();
@@ -267,6 +268,7 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
 
     while (points_to_write) {
         const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
+        
         int64_t di_index = getDataIntervalIndex(current_time);
         int64_t local_points_to_write;
 
@@ -276,7 +278,7 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
             bool   is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
 
             if (is_last_interval)
-                end_time = time_interval_.end;
+                end_time = time_interval_.end + additional_time_;
             else
                 end_time = getTimeInterval(current_interval_index_ + 1).bgn;
 
@@ -292,29 +294,27 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
         else {
             DataInterval &di = interval_list_[di_index];
 
-            int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_write =  (int)((di.time_interval.end - current_time) * frequency_);
+            int64_t local_start_pos = (int)((current_time - di.time_interval.bgn) * frequency_);
+            local_points_to_write = (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
 
-            bool is_new_interval = (di_index != current_interval_index_);
-            if (is_new_interval || (ifs_==nullptr) ) {
+            bool is_new_interval = (di_index != current_interval_index_) || (ifs_ == nullptr);
+            if (is_new_interval ) {
                 openNewInterval(di_index);
                 //ifs_->seekg(local_start_pos * sizeof_data_type_);
             }
 
-
             if (points_to_write <= local_points_to_write)
                 local_points_to_write = points_to_write;
             
-
             if (calcMinMaxPtr)
                 calcMinMaxPtr(ptr, local_points_to_write , di.val_max, di.val_min, is_new_interval);
 
             ifs_->write(ptr, local_points_to_write * sizeof_data_type_);
         }
 
-        ptr +=            local_points_to_write * sizeof_data_type_;
+        ptr += local_points_to_write * sizeof_data_type_;
         points_to_write -= local_points_to_write;
-        point_number_   += local_points_to_write;
+        point_number_ += local_points_to_write;
     }
 
     return point_number - points_to_write;
@@ -331,6 +331,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
 
     while (points_to_read) {
         const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
+        
         int64_t di_index = getDataIntervalIndex(current_time);
         int64_t local_points_to_read;
 
@@ -339,7 +340,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
             double end_time;
             bool   is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
             if (is_last_interval)
-                end_time = time_interval_.end;
+                end_time = time_interval_.end + additional_time_;
             else
                 end_time = getTimeInterval(current_interval_index_ + 1).bgn;
 
@@ -359,7 +360,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
             const DataInterval &di = interval_list_[di_index];
 
             int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_read =  (int)((di.time_interval.end - current_time) * frequency_);
+            local_points_to_read =  (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
 
             if (di_index != current_interval_index_ || (ifs_ == nullptr)) {
                 openNewInterval(di_index);
@@ -372,7 +373,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
             ifs_->read((char*)ptr, local_points_to_read * sizeof_data_type_);
         }
 
-        ptr +=            local_points_to_read * sizeof_data_type_;
+        ptr += local_points_to_read * sizeof_data_type_;
         points_to_read -= local_points_to_read;
         point_number_  += local_points_to_read;
     }
