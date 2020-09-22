@@ -13,7 +13,7 @@ HEADERS         = $${SYNTAXHIGHLIGHTER_DIR}/include/highlighter.h \
                   $${SYNTAXHIGHLIGHTER_DIR}/include/textEdit.h
 
 
-HEADERS        += mainWindow.h
+HEADERS        += include/mainWindow.h
 
 SOURCES         = sources/main.cpp \
                   sources/mainWindow.cpp
@@ -31,19 +31,19 @@ Debug::LIBS += "$${EXPRESS_DIR}/express_ex/Debug/syntaxhighlighterd.lib"
 
 
 
-Release:DESTDIR += $${EXPRESS_DIR}/topSyntax/Release
-Debug:DESTDIR += $${EXPRESS_DIR}/topSyntax/Debug
+#Release:DESTDIR += $${EXPRESS_DIR}/topSyntax/Release
+#Debug:DESTDIR += $${EXPRESS_DIR}/topSyntax/Debug
 
 
 
-#Release:DESTDIR += $$PWD/../express_ex/Release
-#Debug:DESTDIR += $$PWD/../express_ex/Debug
+Release:DESTDIR = $${EXPRESS_DIR}/express_ex/Release
+Debug:DESTDIR = $${EXPRESS_DIR}/express_ex/Debug
 
 
-Debug:Dll   +=  "$$PWD/../express_ex/Debug/*.dll"
-Release:Dll +=  "$$PWD/../express_ex/Release/*.dll"
+#Debug:Dll   +=  "$$PWD/../express_ex/Debug/*.dll"
+#Release:Dll +=  "$$PWD/../express_ex/Release/*.dll"
 
-QMAKE_POST_LINK += xcopy /d/y  \"$$replace( Dll , /,\\ )\"   \"$$replace( DESTDIR, /,\\ )\"
+#QMAKE_POST_LINK += xcopy /d/y  \"$$replace( Dll , /,\\ )\"   \"$$replace( DESTDIR, /,\\ )\"
 
 
 INSTALLS += target

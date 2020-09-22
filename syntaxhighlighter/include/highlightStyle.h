@@ -38,18 +38,15 @@ public:
         auto green_fd    = QColor("#98C379");
         auto water_fd    = QColor("#008080");
 
-        //const QBrush kConstBrush        =Qt::darkBlue;
+
         const QBrush kConstBrush        =QBrush(red_fd);
 
         const QBrush kIdBrush           =QBrush(yellow_fd);
 
-        //const QBrush kFuncBrush         =QBrush(QColor("#960F93"));
+
         const QBrush kFuncBrush         =QBrush(pink_fd);
-        //const QBrush kBuiltInFuncBrush  =QBrush(QColor("#7F7942"));
         const QBrush kBuiltInFuncBrush  =QBrush(h_yellow_fd);
-        //const QBrush specSymbolBrush    =QBrush(QColor("#0031C8"));
         const QBrush specSymbolBrush    =QBrush(blue_fd);
-        //const QBrush stringLiteralBrush =QBrush(QColor("#008000"));
         const QBrush stringLiteralBrush =QBrush(green_fd);
 
         stringLiteralFormat.setForeground(stringLiteralBrush);

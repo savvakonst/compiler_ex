@@ -53,7 +53,7 @@ private:
     {
         //qDebug()<<"line " << line << "; pos " << charPositionInLine << ":" << "_" << ". \n";
         //errorMessage = "line " << line << "; pos " << charPositionInLine << ":" << "_" << ". ";
-
+        
         int start  = (int) charPositionInLine;
         int length = (int)(offendingSymbol->getText().size());
         auto format= &highlightStyle->unknownIdFormat;
@@ -69,9 +69,6 @@ private:
 
 public:
     QString getErrorMessage(){
-        //std::string tmp =out.str();
-        //qDebug()<< QString::fromStdString(out.str());
-        //return QString::fromUtf8(out.str().data(),out.width());
         return QString::fromStdString(out.str());
     }
     bool hasError(){

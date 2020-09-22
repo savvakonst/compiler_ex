@@ -1,6 +1,6 @@
 
 
-#include "mainWindow.h"
+#include "include\mainWindow.h"
 #include <QtWidgets>
 
 

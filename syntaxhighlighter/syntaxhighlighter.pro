@@ -13,7 +13,9 @@ PROJ_INCLUDE_DIR = include
 PROJ_SOURCES_DIR = sources
 
 INCLUDEPATH     = $${EXPRESS_DIR}/antlr4/antlr4-runtime \
-                  $${EXPRESS_DIR}/EGrammar
+                  $${EXPRESS_DIR}/EGrammar \
+                  $${PROJ_INCLUDE_DIR}
+
 
 HEADERS         = $${PROJ_INCLUDE_DIR}/highlighter.h \
                   $${PROJ_INCLUDE_DIR}/highlightListener.h \
@@ -42,8 +44,8 @@ Debug::LIBS += "$${EXPRESS_DIR}/antlr4/lib/vs-2015/x64/Debug DLL/antlr4-runtime.
 # install
 #target.path = $$[QT_INSTALL_EXAMPLES]/widgets/richtext/syntaxhighlighter
 
-Release:DESTDIR += $$PWD/../express_ex/Release
-Debug:DESTDIR += $$PWD/../express_ex/Debug
+Release:DESTDIR += $${EXPRESS_DIR}/express_ex/Release
+Debug:DESTDIR += $${EXPRESS_DIR}/express_ex/Debug
 
 
 
