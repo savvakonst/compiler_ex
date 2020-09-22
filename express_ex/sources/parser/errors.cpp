@@ -9,6 +9,7 @@ namespace WinNs {
 
 std::string g_error_str="";
 extern PosInText g_pos;
+extern std::string pos_file;
 
 
 void print_error(const std::string &content) {

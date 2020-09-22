@@ -1,29 +1,45 @@
 *
 !.gitignore
+
+
 !/EGrammar
 !/EGrammar/*
 
 !/express_ex
 /express_ex/*
 
-!/express_ex/include/
-!/express_ex/include/**
-!/express_ex/sources/
-!/express_ex/sources/**
+
 !/express_ex/Release/
 !/express_ex/Release/**
 !/express_ex/Debug/
 !/express_ex/Debug/**
 
-!/express_ex/CMakeLists.txt
+
 !/express_ex/cmake_.bat
 !/express_ex/remove.bat
 
-!/syntaxhighlighter
-!/syntaxhighlighter/**
 
-!/topsyntaxhighlighter
-!/topsyntaxhighlighter/**
+!/syntaxhighlighter
+/syntaxhighlighter/*
+
+
+!/topsyntaxhighlighter/
+/topsyntaxhighlighter/*
+
+
+#------------------- common excludes --------------------
+!/**/include/
+!/**/include/**
+!/**/sources/
+!/**/sources/**
+!/**/icons/
+!/**/icons/**
+
+!/**/*.CMakeLists.txt
+!/**/*.pro
+!/**/*.qrc
+
+
 
 *.exe
 *.exp

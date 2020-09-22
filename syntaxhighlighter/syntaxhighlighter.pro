@@ -7,8 +7,10 @@ DEFINES += QUILIB_LIBRARY
 TARGET = $$qtLibraryTarget(syntaxhighlighter)
 TEMPLATE = lib
 
-INCLUDEPATH     = ../antlr4/antlr4-runtime \
-                  ../EGrammar
+EXPRESS_DIR = $$PWD/express
+
+INCLUDEPATH     = $${EXPRESS_DIR}/antlr4/antlr4-runtime \
+                  $${EXPRESS_DIR}/EGrammar
 
 HEADERS         = highlighter.h \
                   highlightListener.h \
@@ -24,14 +26,14 @@ SOURCES         = highlighter.cpp \
                   textEdit.cpp \
                   tree.cpp
 
-SOURCES        += ../EGrammar/EGrammarBaseListener.cpp \
-                  ../EGrammar/EGrammarLexer.cpp \
-                  ../EGrammar/EGrammarListener.cpp \
-                  ../EGrammar/EGrammarParser.cpp
+SOURCES        += $${EXPRESS_DIR}/EGrammar/EGrammarBaseListener.cpp \
+                  $${EXPRESS_DIR}/EGrammar/EGrammarLexer.cpp \
+                  $${EXPRESS_DIR}/EGrammar/EGrammarListener.cpp \
+                  $${EXPRESS_DIR}/EGrammar/EGrammarParser.cpp
 
 
-Release:LIBS += "$$PWD/../antlr4/lib/vs-2015/x64/Release DLL/antlr4-runtime.lib"
-Debug::LIBS += "$$PWD/../antlr4/lib/vs-2015/x64/Debug DLL/antlr4-runtime.lib"
+Release:LIBS += "$${EXPRESS_DIR}/antlr4/lib/vs-2015/x64/Release DLL/antlr4-runtime.lib"
+Debug::LIBS += "$${EXPRESS_DIR}/antlr4/lib/vs-2015/x64/Debug DLL/antlr4-runtime.lib"
 
 
 # install

@@ -375,7 +375,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
 
         ptr += local_points_to_read * sizeof_data_type_;
         points_to_read -= local_points_to_read;
-        point_number_  += local_points_to_read;
+        point_number_ += local_points_to_read;
     }
     
     return point_number - points_to_read;

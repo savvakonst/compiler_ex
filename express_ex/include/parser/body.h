@@ -47,7 +47,7 @@ private:
     Variable* typeConvOp    (TypeEn   targetType, Variable* arg1);
     Variable* builtInFuncOp (OpCodeEn    uTypeOp, Variable* arg1);
     Variable* arithmeticOp  (OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2);
-    Variable * comparsionOp(OpCodeEn uTypeOp, Variable * arg1, Variable * arg2);
+    Variable* comparsionOp  (OpCodeEn uTypeOp, Variable * arg1, Variable * arg2);
     Variable* selectOp      (Variable*      arg1, Variable* arg2, Variable* arg3);
     Variable* convolveOp    (OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
 

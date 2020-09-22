@@ -23,6 +23,7 @@ typedef struct {
 } PosInText;
 
 
+
 template< typename T > class stack :public  std::vector<T> {
 public:
 

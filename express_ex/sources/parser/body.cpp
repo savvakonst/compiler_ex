@@ -270,6 +270,7 @@ void Body::addCall(Body* body){
 
 Line* Body::getLastLineFromName(std::string name)
 {
+
 	if (lines_.size() < 1)
 		return nullptr;
 	for (int i = lines_.size() - 1; i >= 0; i--) {
@@ -375,6 +376,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	stack<Variable*> visitorStack;
 
+
 	for (auto& value : lines_) {
 		if (value->isArg()) {
 			if (name_ == "main") {
@@ -413,10 +415,7 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 	delete context;
 	return body;
 
-
 }
-
-
 
 void Body::symplyfy(){
 

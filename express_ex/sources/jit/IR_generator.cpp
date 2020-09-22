@@ -40,7 +40,7 @@ IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(conte
 }
 
 IRGenerator::~IRGenerator(){
-    for (auto i : buffer_list)
+    for (auto i : buffer_list_)
         delete i;
 }
 
@@ -181,13 +181,13 @@ Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const st
     Type * type=aOperand->getType()->getPointerElementType();
 
     if (type == getDoubleTy())
-        convolveFunction=convolveDoubleFunction;
+        convolveFunction=convolve_double_function_;
     else if (type == getFloatTy())
-        convolveFunction=convolveFloatFunction;
+        convolveFunction=convolve_float_function_;
     else if (type == getInt64Ty())
-        convolveFunction=convolveI64Function;
+        convolveFunction=convolve_I64_function_;
     else if (type == getInt32Ty())
-        convolveFunction=convolveI32Function;
+        convolveFunction=convolve_I32_function_;
     else
         return ret;
     //if (ret == nullptr) print_error("CreateConvolve :" );
@@ -224,7 +224,7 @@ Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, int64_t star
     auto ty=getInt64Ty();
     SetInitInsertPoint();
     Value* ret = CreateAlloca(ty, 0, "offset_alloca_");
-    currentOffsetValueAlloca=ret;
+    current_offset_value_alloca_=ret;
     CreateStore(getInt64(startValue), ret);
     return ret;
 }
@@ -255,7 +255,7 @@ Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, bool isVolatil
 
 llvm::Value * IRGenerator::CreateLoadOffset( const std::string & name)
 {
-    currentOffsetValue =CreateLoad(currentOffsetValueAlloca, name);
+    currentOffsetValue =CreateLoad(current_offset_value_alloca_, name);
     return currentOffsetValue;
 }
 
@@ -268,11 +268,11 @@ void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * pt
 
 Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
 {
-    int numberOfBuffer = buffersList.size();
+    int numberOfBuffer = buffers_List_.size();
     std::string numberOfBufferTxt=std::to_string(numberOfBuffer);
 
     SetInitInsertPoint();
-    Value* arg              = currentFunction->getArg(0);
+    Value* arg              = current_Function_->getArg(0);
 
     Value* untypedBufferPtr =CreateInBoundsGEP(
         getInt64Ty()->getPointerTo(),
@@ -291,7 +291,7 @@ Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
         getLLVMType(targetTy)->getPointerTo(),
         name + "buffer_"+ numberOfBufferTxt);
     
-    buffersList.push_back(buffer);
+    buffers_List_.push_back(buffer);
 
     SetCalcInsertPoint();
     return buffer;
@@ -326,7 +326,7 @@ void IRGenerator::CreateMidleBRs()
 
 void * IRGenerator::AddBufferAlloca(Buffer *s)
 {
-    buffer_list.push_back(s);
+    buffer_list_.push_back(s);
     return nullptr;
 }
 
@@ -348,26 +348,26 @@ void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr) //atavis
     };
 
     if (type == getDoubleTy())
-        convolveDoubleFunction=lambda(type, addr);
+        convolve_double_function_=lambda(type, addr);
     else if (type == getFloatTy())
-        convolveFloatFunction=lambda(type, addr);
+        convolve_float_function_=lambda(type, addr);
     else if (type == getInt64Ty())
-        convolveI64Function=lambda(type, addr);
+        convolve_I64_function_=lambda(type, addr);
     else if (type == getInt32Ty())
-        convolveI32Function=lambda(type, addr);
+        convolve_I32_function_=lambda(type, addr);
     
 }
 
 void IRGenerator::SetOffsetToZero()
 {   
     BasicBlock*  tmp=BB;
-    CreateStore(getInt64(0), currentOffsetValueAlloca);
+    CreateStore(getInt64(0), current_offset_value_alloca_);
 }
 
 void IRGenerator::SetOffsetTo(int64_t val)
 {
     BasicBlock*  tmp=BB;
-    CreateStore(getInt64(val), currentOffsetValueAlloca);
+    CreateStore(getInt64(val), current_offset_value_alloca_);
 }
 
 llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {

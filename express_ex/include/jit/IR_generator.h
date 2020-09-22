@@ -33,12 +33,12 @@ public:
 
      
     bool CheckExistence(llvm::Value *var) { 
-        for (auto &i : initializedVariablesList)
+        for (auto &i : initialized_variables_list_)
             if (i == var) return true;
         return false;
     }
-    void AddInitializedVariable(llvm::Value *var) { initializedVariablesList.push_back(var); }
-    void ClearInitializedVariablesList() { initializedVariablesList.clear(); }
+    void AddInitializedVariable(llvm::Value *var) { initialized_variables_list_.push_back(var); }
+    void ClearInitializedVariablesList() { initialized_variables_list_.clear(); }
 
 
     llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
@@ -65,22 +65,21 @@ public:
 
     void        * AddBufferAlloca(Buffer * s);
 
-    void SetInitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(initBlock, bb); };
-    void SetLoadInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(loadBlock, bb); };
-    void SetCalcInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(calcBlock, bb); };
-    void SetStoreInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(storeBlock, bb); };
+    void SetInitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(init_bock_, bb); };
+    void SetLoadInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(load_block_, bb); };
+    void SetCalcInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(calc_block_, bb); };
+    void SetStoreInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(store_block_, bb); };
+    void SetTerminalOpInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(terminal_op_block_, bb); };
     
-    void SetLoopEnterInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(loopEnterBlock, bb); };
-    void SetIntermediateInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(intermediateBlock, bb); };
-    void SetCycleExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(cycleExitBlock, bb); };
-    void SetExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(exitBlock, bb); };
+    void SetLoopEnterInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(loop_enter_block_, bb); };
+    void SetIntermediateInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(intermediate_block_, bb); };
+    void SetCycleExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(cycle_exit_block_, bb); };
+    void SetExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(exit_block_, bb); };
 
-    void SetLastInsertPoint() { SetInsertPoint(bbList.back()); };
+    void SetLastInsertPoint() { SetInsertPoint(bb_List_.back()); };
 
-
-
-    void SetCurrentFunction(llvm::Function* currentFunction_) { currentFunction=currentFunction_; }
-    void SetBufferUpdateFunction(llvm::Value* bufferUpdateFunction_) { bufferUpdateFunction=bufferUpdateFunction_; }
+    void SetCurrentFunction(llvm::Function* currentFunction_) { current_Function_=currentFunction_; }
+    void SetBufferUpdateFunction(llvm::Value* bufferUpdateFunction_) { buffer_update_function_=bufferUpdateFunction_; }
     void SetDeclareConvolve(llvm::Type* type, uintptr_t addr);
 
     void SetCurrentOffsetValue(llvm::Value* currentOffsetValue_) { currentOffsetValue=currentOffsetValue; }
@@ -91,31 +90,31 @@ public:
     void SetOffsetTo(int64_t val);
 
     void DropBaseInsertPoint() {
-        calcBlock=nullptr;
-        loadBlock=nullptr;
-        storeBlock=nullptr;
+        calc_block_=nullptr;
+        load_block_=nullptr;
+        store_block_=nullptr;
+        intermediate_block_=nullptr;
     };
 
-    llvm::BasicBlock* getInitBlock() { return initBlock; }
-    llvm::BasicBlock* getLoadBlock() { return loadBlock; }
-    llvm::BasicBlock* getCalcBlock() { return calcBlock; }
-    llvm::BasicBlock* getStoreBlock() { return storeBlock; }
+    llvm::BasicBlock* getInitBlock() { return init_bock_; }
+    llvm::BasicBlock* getLoadBlock() { return load_block_; }
+    llvm::BasicBlock* getCalcBlock() { return calc_block_; }
+    llvm::BasicBlock* getStoreBlock() { return store_block_; }
+    llvm::BasicBlock* getTerminalOpBlock() { return terminal_op_block_; }
     llvm::BasicBlock* getCurrentBlock() { return BB; }
 
-    llvm::BasicBlock* getBlock(int N) { return bbList[N]; }
-    llvm::BasicBlock* getLastBlock(int N) { return bbList.back(); }
+    llvm::BasicBlock* getBlock(int N) { return bb_List_[N]; }
+    llvm::BasicBlock* getLastBlock(int N) { return bb_List_.back(); }
 
-    llvm::Value*    getCurrentOffsetValueAlloca() { return currentOffsetValueAlloca; }
+    llvm::Value*    getCurrentOffsetValueAlloca() { return current_offset_value_alloca_; }
     llvm::Value*    getCurrentOffsetValue() { return currentOffsetValue;}
     llvm::Value*    getCurrentCMPRes() { return currentCMPRes; }
 
     llvm::Type*     getLLVMType(TypeEn targetTy);
-    llvm::Function* getCurrentFunction() { return currentFunction; }
+    llvm::Function* getCurrentFunction() { return current_Function_; }
 
-
-     
     std::vector<Buffer*>  * getBufferList(BufferTypeEn bufferType = BufferTypeEn::input)  {
-        return &buffer_list;
+        return &buffer_list_;
     }
 
 
@@ -127,38 +126,36 @@ private:
             bb=prot;
         else {
             prot=bb;
-            bbList.push_back(bb);
+            bb_List_.push_back(bb);
         }
         SetInsertPoint(bb);
     }
 
+    std::vector <Buffer *>  buffer_list_;
 
-    std::vector <Buffer *>  buffer_list;
+    llvm::BasicBlock* init_bock_=nullptr;
+    llvm::BasicBlock* calc_block_=nullptr;
+    llvm::BasicBlock* load_block_=nullptr;
+    llvm::BasicBlock* store_block_=nullptr;
+    llvm::BasicBlock* terminal_op_block_=nullptr;
+    llvm::BasicBlock* intermediate_block_=nullptr;
+    llvm::BasicBlock* loop_enter_block_=nullptr;
+    llvm::BasicBlock* cycle_exit_block_=nullptr;
+    llvm::BasicBlock* exit_block_=nullptr;
 
-
-
-    llvm::BasicBlock* initBlock=nullptr;
-    llvm::BasicBlock* calcBlock=nullptr;
-    llvm::BasicBlock* loadBlock=nullptr;
-    llvm::BasicBlock* storeBlock=nullptr;
-    llvm::BasicBlock* intermediateBlock=nullptr;
-    llvm::BasicBlock* loopEnterBlock=nullptr;
-    llvm::BasicBlock* cycleExitBlock=nullptr;
-    llvm::BasicBlock* exitBlock=nullptr;
-
-    std::vector <llvm::BasicBlock*> bbList;
+    std::vector <llvm::BasicBlock*> bb_List_;
 
     //  list of variables that are alrady loaded in current loop block,
     //  this list should be cleared every time in the transition to a next block.
-    std::vector <llvm::Value*>  initializedVariablesList; 
+    std::vector <llvm::Value*>  initialized_variables_list_; 
 
-    llvm::Value * convolveDoubleFunction=nullptr;
-    llvm::Value * convolveFloatFunction=nullptr;
+    llvm::Value * convolve_double_function_=nullptr;
+    llvm::Value * convolve_float_function_=nullptr;
 
-    llvm::Value * convolveI64Function=nullptr;
-    llvm::Value * convolveI32Function=nullptr;
+    llvm::Value * convolve_I64_function_=nullptr;
+    llvm::Value * convolve_I32_function_=nullptr;
 
-    llvm::Value * currentOffsetValueAlloca =nullptr;
+    llvm::Value * current_offset_value_alloca_ =nullptr;
     llvm::Value * currentOffsetValue =nullptr;
     llvm::Value * currentCMPRes      =nullptr;
 
@@ -168,10 +165,10 @@ private:
 
     
 
-    llvm::Function* currentFunction=nullptr;
-    llvm::Value* bufferUpdateFunction=nullptr;
+    llvm::Function* current_Function_=nullptr;
+    llvm::Value* buffer_update_function_=nullptr;
 
-    std::vector<llvm::Value *> buffersList;
+    std::vector<llvm::Value *> buffers_List_;
     //std::vector <void *> bufferList;
 };
 

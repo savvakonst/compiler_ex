@@ -46,24 +46,26 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
 
     std::string  levelTxt=basicBlockPostfix;
 
-    BasicBlock* bbLoad  = BasicBlock::Create(context, "load_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
-    BasicBlock* bbCalc  = BasicBlock::Create(context, "calc_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
-    BasicBlock* bbStore = BasicBlock::Create(context, "store_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
+    BasicBlock* bb_load  = BasicBlock::Create(context, "load_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
+    BasicBlock* bb_calc  = BasicBlock::Create(context, "calc_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
+    BasicBlock* bb_store = BasicBlock::Create(context, "store_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
+    //BasicBlock* bb_terminal_op = BasicBlock::Create(context, "terminal_op_" + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
 
-    BasicBlock* bbLastStore=builder.getStoreBlock();
+    BasicBlock* bb_last_store=builder.getStoreBlock();
 
-    if (nullptr != bbLastStore)
+    if (nullptr != bb_last_store)
     {
         builder.CreateStartBRs();
-        builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbLoad);
+        builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_load);
     }
 
     builder.ClearInitializedVariablesList();
 
-    builder.SetLoadInsertPoint(bbLoad);
-    builder.SetCalcInsertPoint(bbCalc);
-    builder.SetStoreInsertPoint(bbStore);
-        
+    builder.SetLoadInsertPoint(bb_load);
+    builder.SetCalcInsertPoint(bb_calc);
+    builder.SetStoreInsertPoint(bb_store);
+    //builder.SetTerminalOpInsertPoint(bb_terminal_op);
+
     builder.SetCalcInsertPoint();
 
 
@@ -169,7 +171,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
         BasicBlock* bb_load  = BasicBlock::Create(context, "load_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         BasicBlock* bb_calc  = BasicBlock::Create(context, "calc_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         BasicBlock* bb_store = BasicBlock::Create(context, "store_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-
+        //BasicBlock* bb_terminal_op = BasicBlock::Create(context, "terminal_op_" + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
 
         BasicBlock* bb_last_store=builder.getStoreBlock();
 

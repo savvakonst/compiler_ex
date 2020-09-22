@@ -3,12 +3,19 @@
 
 ParserRuleContext* g_err_context = nullptr;
 PosInText g_pos;
+std::string g_pos_file;
+
 
 TreeShapeListener:: TreeShapeListener() : EGrammarBaseListener(){
     NewBody("main", true);
 }
 
-TreeShapeListener::~TreeShapeListener(){
+TreeShapeListener::TreeShapeListener(Body* body) : EGrammarBaseListener() {
+    activ_body_ = body;
+    context.push_back(activ_body_);
+}
+
+TreeShapeListener:: ~TreeShapeListener(){
     for (auto g : context) {
         delete g;
     }
@@ -24,14 +31,14 @@ void TreeShapeListener::setPos(ParserRuleContext* ctx) {
 
 
 void TreeShapeListener::NewBody(std::string name, bool isPrototype) {
-    activBody_ = new Body(name, isPrototype);
-    context.push_back(activBody_);
+    activ_body_ = new Body(name, isPrototype);
+    context.push_back(activ_body_);
 }
 
 void TreeShapeListener::exitAssign(EGrammarParser::AssignContext* ctx)  {
     g_err_context = ctx;
     //g_pos.len=g_err_context
-    activBody_->addLine(ctx->ID()->getText(), activBody_->pop());
+    activ_body_->addLine(ctx->ID()->getText(), activ_body_->pop());
 }
 
 void TreeShapeListener::exitAssignParam(EGrammarParser::AssignParamContext* ctx) {
@@ -41,13 +48,13 @@ void TreeShapeListener::exitAssignParam(EGrammarParser::AssignParamContext* ctx)
 
     if (stl.size() == 0) 
         for (auto i : id) 
-            activBody_->addParam(i->getText(),"", DataStructTypeEn::largeArr_dsty);
+            activ_body_->addParam(i->getText(),"", DataStructTypeEn::largeArr_dsty);
     
     else if (id.size() == stl.size()) 
         for (int i = 0; i < id.size(); i++) {
-            //activBody_->addParam(id[i]->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, stoi(stl[i]->getText().substr(1)));
+            //activ_body_->addParam(id[i]->getText(), TypeEn::double_jty, DataStructTypeEn::largeArr_dsty, stoi(stl[i]->getText().substr(1)));
             std::string s = stl[i]->getText();
-            activBody_->addParam(id[i]->getText(), s.substr(1, s.length()-2), DataStructTypeEn::largeArr_dsty);
+            activ_body_->addParam(id[i]->getText(), s.substr(1, s.length()-2), DataStructTypeEn::largeArr_dsty);
         }
     
     else
@@ -57,15 +64,15 @@ void TreeShapeListener::exitAssignParam(EGrammarParser::AssignParamContext* ctx)
 void TreeShapeListener::exitAssignRetParam(EGrammarParser::AssignRetParamContext* ctx)  {
     setPos(ctx);
     for (auto k : ctx->expr())
-        if (activBody_->isRetStackFull())
+        if (activ_body_->isRetStackFull())
             print_error("there are more then one returned value");
         else
-            activBody_->addReturn("return", activBody_->pop());
+            activ_body_->addReturn("return", activ_body_->pop());
 }
 
 void TreeShapeListener::enterId(EGrammarParser::IdContext* ctx) {
     setPos(ctx);
-    activBody_->push(activBody_->getLastLineFromName(ctx->ID()->getText()));
+    activ_body_->push(activ_body_->getLastLineFromName(ctx->ID()->getText()));
 }
 
 void TreeShapeListener::exitConst(EGrammarParser::ConstContext* ctx)  {
@@ -78,7 +85,7 @@ void TreeShapeListener::exitConst(EGrammarParser::ConstContext* ctx)  {
         CONV_TY(EGrammarParser::INT, TypeEn::int32_jty);
         CONV_TY(EGrammarParser::INT64, TypeEn::int64_jty);
     }
-    activBody_->push(new Variable(ctx->getText(), targetType));
+    activ_body_->push(new Variable(ctx->getText(), targetType));
 #undef CONV_TY
 }
 
@@ -92,7 +99,7 @@ void TreeShapeListener::exitCallTConvBInFunc(EGrammarParser::CallTConvBInFuncCon
         CONV_TY(EGrammarParser::C_INT, TypeEn::int32_jty);
         CONV_TY(EGrammarParser::C_INT64, TypeEn::int64_jty);
     }
-    activBody_->addTypeConvOp(targetType);
+    activ_body_->addTypeConvOp(targetType);
 #undef CONV_TY
 }
 
@@ -108,72 +115,72 @@ void TreeShapeListener::exitCallUnaryBInFunc(EGrammarParser::CallUnaryBInFuncCon
         CONV_TY(EGrammarParser::EXP, OpCodeEn::exp);
     }
 #undef CONV_TY
-    activBody_->addBuiltInFuncOp(op);
+    activ_body_->addBuiltInFuncOp(op);
 }
 
 void TreeShapeListener::exitInv(EGrammarParser::InvContext * ctx)
 {
-    activBody_->addInvOp();
+    activ_body_->addInvOp();
 }
 
 //arithmetic operations
 void TreeShapeListener::exitMulDiv(EGrammarParser::MulDivContext* ctx) {
     setPos(ctx);
     OpCodeEn op=(EGrammarParser::MUL == ctx->op->getType()) ? OpCodeEn::mul : OpCodeEn::sdiv;
-    activBody_->addArithmeticOp(op);
+    activ_body_->addArithmeticOp(op);
 }
 
 void TreeShapeListener::exitAddSub(EGrammarParser::AddSubContext* ctx) {
     setPos(ctx);
     OpCodeEn op = (EGrammarParser::ADD == ctx->op->getType()) ? OpCodeEn::add : OpCodeEn::sub;
-    activBody_->addArithmeticOp(op);
+    activ_body_->addArithmeticOp(op);
 }
 
 void TreeShapeListener::exitPow(EGrammarParser::PowContext* ctx) {
     setPos(ctx);
-    activBody_->addArithmeticOp(OpCodeEn::pow);
+    activ_body_->addArithmeticOp(OpCodeEn::pow);
 }
 
 void TreeShapeListener::exitMoreLess(EGrammarParser::MoreLessContext *ctx)  {
     OpCodeEn op = (EGrammarParser::MORE_ == ctx->op->getType()) ? OpCodeEn::sgt : OpCodeEn::slt;
-    activBody_->addComarsionOp(op);
+    activ_body_->addComarsionOp(op);
 }
 
 void TreeShapeListener::exitMoreeqLesseq(EGrammarParser::MoreeqLesseqContext *ctx) {
     OpCodeEn op = (EGrammarParser::MOREEQ == ctx->op->getType()) ? OpCodeEn::sge : OpCodeEn::sle;
-    activBody_->addComarsionOp(op);
+    activ_body_->addComarsionOp(op);
 }
 
 void TreeShapeListener::exitEquality(EGrammarParser::EqualityContext  *ctx)
 {
     OpCodeEn op = (EGrammarParser::EQ == ctx->op->getType()) ? OpCodeEn::eq : OpCodeEn::ne;
-    activBody_->addComarsionOp(op);
+    activ_body_->addComarsionOp(op);
 }
 
 //conditional 
 void TreeShapeListener::exitCondExpr(EGrammarParser::CondExprContext* ctx) {
     setPos(ctx);
-    activBody_->addSelectOp();
+    activ_body_->addSelectOp();
 }
 
 void TreeShapeListener::exitCallConvolve(EGrammarParser::CallConvolveContext* ctx) {
     setPos(ctx);
-    activBody_->addConvolveOp(OpCodeEn::convolve);
+    activ_body_->addConvolveOp(OpCodeEn::convolve);
 }
 
 void TreeShapeListener::exitRange(EGrammarParser::RangeContext* ctx) {
     setPos(ctx);
-    activBody_->addRangeOp(ctx->expr().size());
+    activ_body_->addRangeOp(ctx->expr().size());
 }
 
 void TreeShapeListener::exitShift(EGrammarParser::ShiftContext * ctx) {
     setPos(ctx);
-    activBody_->addShiftOp();
+    activ_body_->addShiftOp();
 }
 
 void TreeShapeListener::exitDecimation(EGrammarParser::DecimationContext * ctx) {
     setPos(ctx);
-    activBody_->addDecimationOp();
+    activ_body_->addDecimationOp();
 }
 
 //call function
@@ -190,13 +197,13 @@ void TreeShapeListener::exitCallFunc(EGrammarParser::CallFuncContext* ctx) {
             if (k->getArgCount() != exprs.size()) {
                 print_error("there are invalid signature in func: " + targName + " call");
             }
-            activBody_->addCall(k);
+            activ_body_->addCall(k);
             break;
         }
     }
     if (b){
         print_error("there are no functin with same name");
-        activBody_->push(new Variable(ctx->getText(), TypeEn::float_jty));
+        activ_body_->push(new Variable(ctx->getText(), TypeEn::float_jty));
     }
 }
 
@@ -204,19 +211,19 @@ void TreeShapeListener::enterFunc(EGrammarParser::FuncContext* ctx) {
     setPos(ctx);
     NewBody(ctx->ID()->getText(), true);
     for (auto i : ctx->args()->ID()) {
-        activBody_->addArg(i->getText());
+        activ_body_->addArg(i->getText());
     }
 }
 
 void TreeShapeListener::exitFunc(EGrammarParser::FuncContext* ctx) {
-    if (activBody_->isRetStackEmpty())
-        print_error("there are no returned value in func: " + activBody_->getName());
-    activBody_ = context[0];
+    if (activ_body_->isRetStackEmpty())
+        print_error("there are no returned value in func: " + activ_body_->getName());
+    activ_body_ = context[0];
 }
 
 void TreeShapeListener::exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext * ctx){
     setPos(ctx);
-    activBody_->addSmallArrayDefinitionOp(ctx->expr().size());
+    activ_body_->addSmallArrayDefinitionOp(ctx->expr().size());
 }
 
 
