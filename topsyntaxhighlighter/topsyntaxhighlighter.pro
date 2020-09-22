@@ -2,15 +2,21 @@ QT += widgets
 #requires(qtConfig(filedialog))
 #CONFIG += c++11
 
-INCLUDEPATH     =..\syntaxhighlighter
 
-HEADERS         = ..\syntaxhighlighter\highlighter.h \
-                  ..\syntaxhighlighter\highlightStyle.h \
-                  ..\syntaxhighlighter\textEdit.h \
-                  mainWindow.h
+EXPRESS_DIR = $$PWD/..
+SYNTAXHIGHLIGHTER_DIR = $${EXPRESS_DIR}/syntaxhighlighter
 
-SOURCES         = main.cpp \
-                  mainWindow.cpp
+INCLUDEPATH     = $${SYNTAXHIGHLIGHTER_DIR}/include
+
+HEADERS         = $${SYNTAXHIGHLIGHTER_DIR}/include/highlighter.h \
+                  $${SYNTAXHIGHLIGHTER_DIR}/include/highlightStyle.h \
+                  $${SYNTAXHIGHLIGHTER_DIR}/include/textEdit.h
+
+
+HEADERS        += mainWindow.h
+
+SOURCES         = sources/main.cpp \
+                  sources/mainWindow.cpp
 
 
 
@@ -20,21 +26,18 @@ DEFINES += QUIMONO_EXE
 #Debug:DEPENDPATH  += "$$PWD/../express_ex/Debug"
 
 
-Release:LIBS += "$$PWD/../express_ex/Release/syntaxhighlighter.lib"
-Debug::LIBS += "$$PWD/../express_ex/Debug/syntaxhighlighterd.lib"
+Release:LIBS += "$${EXPRESS_DIR}/express_ex/Release/syntaxhighlighter.lib"
+Debug::LIBS += "$${EXPRESS_DIR}/express_ex/Debug/syntaxhighlighterd.lib"
 
 
 
-Release:DESTDIR += $$PWD/../topSyntax/Release
-Debug:DESTDIR += $$PWD/../topSyntax/Debug
+Release:DESTDIR += $${EXPRESS_DIR}/topSyntax/Release
+Debug:DESTDIR += $${EXPRESS_DIR}/topSyntax/Debug
 
 
 
 #Release:DESTDIR += $$PWD/../express_ex/Release
 #Debug:DESTDIR += $$PWD/../express_ex/Debug
-
-
-
 
 
 Debug:Dll   +=  "$$PWD/../express_ex/Debug/*.dll"

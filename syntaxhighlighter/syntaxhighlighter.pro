@@ -7,24 +7,27 @@ DEFINES += QUILIB_LIBRARY
 TARGET = $$qtLibraryTarget(syntaxhighlighter)
 TEMPLATE = lib
 
-EXPRESS_DIR = $$PWD/express
+EXPRESS_DIR = $$PWD/..
+
+PROJ_INCLUDE_DIR = include
+PROJ_SOURCES_DIR = sources
 
 INCLUDEPATH     = $${EXPRESS_DIR}/antlr4/antlr4-runtime \
                   $${EXPRESS_DIR}/EGrammar
 
-HEADERS         = highlighter.h \
-                  highlightListener.h \
-                  highlightStyle.h \
-                  mainWindow.h \
-                  textEdit.h \
-                  tree.h
+HEADERS         = $${PROJ_INCLUDE_DIR}/highlighter.h \
+                  $${PROJ_INCLUDE_DIR}/highlightListener.h \
+                  $${PROJ_INCLUDE_DIR}/highlightStyle.h \
+                  $${PROJ_INCLUDE_DIR}/mainWindow.h \
+                  $${PROJ_INCLUDE_DIR}/textEdit.h \
+                  $${PROJ_INCLUDE_DIR}/tree.h
 
-SOURCES         = highlighter.cpp \
-                  highlightListener.cpp \
-                  main.cpp \
-                  mainWindow.cpp \
-                  textEdit.cpp \
-                  tree.cpp
+SOURCES         = $${PROJ_SOURCES_DIR}/highlighter.cpp \
+                  $${PROJ_SOURCES_DIR}/highlightListener.cpp \
+                  $${PROJ_SOURCES_DIR}/main.cpp \
+                  $${PROJ_SOURCES_DIR}/mainWindow.cpp \
+                  $${PROJ_SOURCES_DIR}/textEdit.cpp \
+                  $${PROJ_SOURCES_DIR}/tree.cpp
 
 SOURCES        += $${EXPRESS_DIR}/EGrammar/EGrammarBaseListener.cpp \
                   $${EXPRESS_DIR}/EGrammar/EGrammarLexer.cpp \
