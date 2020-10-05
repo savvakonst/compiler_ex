@@ -1,18 +1,13 @@
 #ifndef TEXTEDIT_H
 #define TEXTEDIT_H
 
-
-#include "highlightStyle.h"
 #include "highlighter.h"
 #include <QMainWindow>
 #include <QtWidgets>
-#include <QList>
 
-
-class   KexEdit;
-class   TemplateTextEdit;
-
-class QUILIBSHARED_EXPORT SearchWidget : public QWidget {
+class KexEdit;
+class TemplateTextEdit;
+class SearchWidget : public QWidget {
     Q_OBJECT
 public:
     SearchWidget(QWidget* parent = nullptr):QWidget(parent){
@@ -89,7 +84,7 @@ private:
 
 
 
-class   LineNumberArea : public QWidget
+class LineNumberArea : public QWidget
 {
 public:
     LineNumberArea(KexEdit *editor);
@@ -103,32 +98,32 @@ private:
 };
 
 
-class QUILIBSHARED_EXPORT  TemplateTextEdit :public QPlainTextEdit{
+class TemplateTextEdit :public QPlainTextEdit{
     Q_OBJECT
 public:
     TemplateTextEdit(): QPlainTextEdit() {
-        run_output_highlighter_=new SearchHighLight(document());
+        runOutputHighlighter=new SearchHighLight(document());
         QRect cr = contentsRect();
-        search_widget_=new SearchWidget(this);
-        search_widget_->hide();
+        searchWidget=new SearchWidget(this);
+        searchWidget->hide();
         auto rightOffset=verticalScrollBar()->isVisible()?verticalScrollBar()->width():0;
 
-        search_widget_->setGeometry(
+        searchWidget->setGeometry(
                     QRect(
-                        cr.right()-search_widget_->width()-rightOffset,
+                        cr.right()-searchWidget->width()-rightOffset,
                         cr.top(),
-                        search_widget_->width(),
-                        search_widget_->height()));
+                        searchWidget->width(),
+                        searchWidget->height()));
 
         setLineWrapMode(NoWrap);
     }
     ~TemplateTextEdit(){
-        delete   run_output_highlighter_;
-        delete   search_widget_;
+        delete   runOutputHighlighter;
+        delete   searchWidget;
     }
 
     bool isSelectd(){
-        return hasFocus()||search_widget_->hasFocus();
+        return hasFocus()||searchWidget->hasFocus();
     }
 
 protected:
@@ -164,46 +159,46 @@ protected:
 
         auto rightOffset=verticalScrollBar()->isVisible()?verticalScrollBar()->width():0;
 
-        search_widget_->setGeometry(
+        searchWidget->setGeometry(
                     QRect(
-                        cr.right()-search_widget_->width()-rightOffset,
+                        cr.right()-searchWidget->width()-rightOffset,
                         cr.top(),
-                        search_widget_->width(),
-                        search_widget_->height()));
+                        searchWidget->width(),
+                        searchWidget->height()));
     }
 
 public Q_SLOTS:
     void showSearchWidget(){
-        search_widget_->show();
+        searchWidget->show();
         this->clearFocus();
-        search_widget_->setFocus();
-        highlitText(search_widget_->text());
+        searchWidget->setFocus();
+        highlitText(searchWidget->text());
     }
 
     void hideSearchWidget(){
-        search_widget_->hide();
+        searchWidget->hide();
     }
 
     void hideSearchWidgetAndSetFocus(){
-        search_widget_->hide();
+        searchWidget->hide();
         setFocus();
         highlitText("");
     }
 
     virtual void highlitText(const QString &text){
-        run_output_highlighter_->searchText(text);
+        runOutputHighlighter->searchText(text);
     }
 
 
 
     void findDown(){
-        search_widget_->text();
-        findString(search_widget_->text(),false,false,false);
+        searchWidget->text();
+        findString(searchWidget->text(),false,false,false);
     }
 
     void findUp(){
-        search_widget_->text();
-        findString(search_widget_->text(),true,false,false);
+        searchWidget->text();
+        findString(searchWidget->text(),true,false,false);
     }
 
 private:
@@ -237,15 +232,15 @@ private:
     }
 
 protected:
-    SearchHighLight*    run_output_highlighter_;
+    SearchHighLight*    runOutputHighlighter;
 private:
-    SearchWidget *      search_widget_;
+    SearchWidget *      searchWidget;
 };
 
 
-class Namespace;
+class HighlightStyle;
 
-class  QUILIBSHARED_EXPORT KexEdit:public TemplateTextEdit{
+class KexEdit:public TemplateTextEdit{
     Q_OBJECT
 public:
     KexEdit();
@@ -253,25 +248,21 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int  lineNumberAreaWidth();
 
-    void setHighlightStyle(HighlightStyle*);
-
 public Q_SLOTS:
 
     void rehighlight();
 
-    void updateNamespace(QList<QString> &sources);
-    void clearNamespace();
-    void addToNamespace(const std::string &text);
-    virtual void highlitText(const QString &text) override;
+    virtual void highlitText(const QString &text) override{
+        highlighter->setPattern(text);
+        rehighlight();
+    }
 
 private Q_SLOTS:
-
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &rect, int dy);
 
 protected:
-
     //void changeEvent(QEvent *event);
     void resizeEvent(QResizeEvent *event) override;
 
@@ -284,21 +275,19 @@ protected:
 Q_SIGNALS:
     void uncorrect_syntax(QString);
     void correct_syntax();
-    void start_rehighlight();
 
 private:
-    bool rehighlight_in_progress_= false;
-    bool spaces_instead_of_tabs_  = true;
-    bool is_invalid_syntax_      = false;
-    int  tab_width_=2;
+    bool rehighlightInProgress= false;
+    bool spacesInsteadOfTabs  = true;
+    bool isInvalidSyntax      = false;
+    int  tabWidth=2;
 
-    Highlighter*            highlighter__;
-    HighlightStyle*         highlight_style_;
-    QWidget*                line_number_area_;
-    std::vector<Namespace*> namespase_list_;
+    Highlighter*        highlighter;
+    HighlightStyle*     highlightStyle;
+    QWidget*            lineNumberArea;
 };
 
-class  RunOutputBrowser:public TemplateTextEdit{
+class RunOutputBrowser:public TemplateTextEdit{
 Q_OBJECT
 public:
     RunOutputBrowser(): TemplateTextEdit() {

@@ -33,7 +33,7 @@ class TreeShapeListener : public EGrammarBaseListener {
 public:
 
     TreeShapeListener();
-    TreeShapeListener(Body * body);
+    TreeShapeListener(Body * body, const std::vector<Body*> &context={});
     // : EGrammarBaseListener()
     ~TreeShapeListener();
 
@@ -68,8 +68,10 @@ public:
     //array definition
     virtual void exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext* ctx) override;
 
+    Body* getMainBody();
+
     Body* activ_body_;
-    std::vector<Body*> context;
+    std::vector<Body*> context_;
 
 private:
     void setPos(ParserRuleContext* ctx);
@@ -78,7 +80,7 @@ private:
 class KEXParser {
 public:
 
-    KEXParser(Body* body, std::string str, bool is_file_name = true) {
+    KEXParser(Body* body,  std::string str, bool is_file_name = true) {
         listener_ = TreeShapeListener(body);
         init(str, is_file_name);
     }
@@ -86,34 +88,20 @@ public:
 
     KEXParser(std::string str, bool is_file_name = true, std::map<std::string, bool/*is_file_name*/> lib_str_map = {}){
         auto body = listener_.activ_body_ ;
-        for (auto i : lib_str_map) {
-            auto temp = KEXParser(body, i.first, i.second);
-            temp.walk();
-        }
-            
+
+        for (auto i : lib_str_map) 
+            init(i.first, i.second);
+
         init(str, is_file_name);
     }
 
 
     ~KEXParser() {
-        //delete tree_;
-        delete error_listner_;
-        delete parser_;
-        delete tokens_;
-        delete lexer_;
-        delete input_;
+
     }
 
     TreeShapeListener* getListener() {
         return &listener_;
-    }
-
-    tree::ParseTree* getTree() {
-        return tree_;
-    }
-
-    void walk() {
-        tree::ParseTreeWalker::DEFAULT.walk(&listener_, tree_);
     }
 
     Body*  getActivBody() {
@@ -121,6 +109,9 @@ public:
     }
 
 private:
+    std::vector<Body*> & getContext() {
+        return listener_.context_;
+    }
 
     void init(std::string str, bool is_file_name = true) {
 
@@ -135,25 +126,28 @@ private:
             content = str;
 
 
-        input_  =new ANTLRInputStream(content + "\n");
-        lexer_  =new EGrammarLexer(input_);
-        tokens_ =new CommonTokenStream(lexer_);
-        parser_ =new EGrammarParser(tokens_);
+        ANTLRInputStream* input_  =new ANTLRInputStream(content + "\n");
+        EGrammarLexer* lexer_  =new EGrammarLexer(input_);
+        CommonTokenStream* tokens_ =new CommonTokenStream(lexer_);
+        EGrammarParser* parser_ =new EGrammarParser(tokens_);
 
         parser_->removeErrorListeners();
-        error_listner_ = new EErrorListener;
+        EErrorListener* error_listner_ = new EErrorListener;
         parser_->addErrorListener(error_listner_);
 
-        tree_ = parser_->start();
+        tree::ParseTree* tree_ = parser_->start();
+        tree::ParseTreeWalker::DEFAULT.walk(&listener_, tree_);
+
+
+        delete error_listner_;
+        delete parser_;
+        delete tokens_;
+        delete lexer_;
+        delete input_;
+
     }
 
-    ANTLRInputStream   *   input_;
-    EGrammarLexer      *   lexer_;
-    CommonTokenStream  *   tokens_;
-    EGrammarParser     *   parser_;
-    EErrorListener     *   error_listner_;
-
-    tree::ParseTree*  tree_;
+    
     TreeShapeListener listener_;
 };
 

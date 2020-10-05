@@ -46,7 +46,7 @@ void Highlighter :: highlightBlock(const QString &text){
     if (listener==NULL) return ;
     int lineNumber = this->currentBlock().blockNumber()+1;
 
-    for( auto i :listener->formatMap[lineNumber] ){
+    for( auto i :listener->format_map_[lineNumber] ){
         setFormat(i.start,i.count,*i.format);
     }
 

@@ -45,6 +45,15 @@ void MainWindow::openFile(const QString &path){
             currentFileName=fileName;
             file.close();
         }
+
+
+        QFile Libfile("std.kex");
+        
+        if (Libfile.open(QFile::ReadOnly | QFile::Text)) {
+            QList<QString> lib_sources = { Libfile.readAll()};
+            editor->updateNamespace(lib_sources);
+            Libfile.close();
+        }
     }
 }
 

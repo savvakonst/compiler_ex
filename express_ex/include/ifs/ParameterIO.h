@@ -12,7 +12,6 @@
 
 class DLL_EXPORT AsyncParameter : public ParameterIfs {
     AsyncParameter() {
-
     }
 };
  
@@ -106,7 +105,7 @@ public:
 
 
 
-    friend  void readParametersList(std::string databaseFName, std::vector<SyncParameter>& parameterList);
+    friend void readParametersList(std::string databaseFName, std::vector<SyncParameter>& parameterList);
     friend class ParametersDB;
 
 

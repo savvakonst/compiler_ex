@@ -1,30 +1,5 @@
 
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
-#include "llvm/IR/Argument.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LegacyPassManager.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/Utils.h"
+
 #include "IR_generator.h"
 #include "table.h"
 
@@ -175,6 +150,15 @@ Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,int64_t 
     return CreateCall(function, { aOperand, bOperand, getInt64(length) ,getInt64(shift) }, name);
 }
 
+
+Value *IRGenerator::CreateCall_(Value *Callee, ArrayRef<Value *> Args ,const std::string & Name ) {
+    MDNode *FPMathTag = nullptr;
+
+    return CreateCall(
+        cast<FunctionType>(Callee->getType()->getPointerElementType()), Callee,
+        Args, Name, FPMathTag);
+}
+
 Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const std::string &name)
 {
     Value * ret =nullptr, * convolveFunction=nullptr;
@@ -191,7 +175,9 @@ Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const st
     else
         return ret;
     //if (ret == nullptr) print_error("CreateConvolve :" );
-    return CreateCall(convolveFunction, { aOperand ,bOperand }, name);
+
+
+    return CreateCall_(convolveFunction, { aOperand ,bOperand }, name);
 }
 
 llvm::Value * IRGenerator::CreateGPUConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string &name)
@@ -314,7 +300,7 @@ void IRGenerator::CreateMidleBRs()
     CreateBr(getLoadBlock());
     SetLoadInsertPoint();
     CreateBr(getCalcBlock());
-    SetCalcInsertPoint();
+    SetCalcInsertPoint(); 
     CreateBr(getStoreBlock());
     //SetStoreInsertPoint();
     SetLastInsertPoint();

@@ -15,14 +15,14 @@ DLL_EXPORT void  jit_init();
 class DLL_EXPORT  Express_ex {
 public :
     ~Express_ex();
-    bool                                parseText(std::string str, bool is_file_name = false);
+    bool                                parseText(std::string str, bool is_file_name = false, std::map<std::string, bool/*is_file_name*/> lib_str_map ={});
 
     bool                                setParameters(const std::map<std::string, SyncParameter*> &parameters_map);
 
     //  return map< name ,link name>
     std::map<std::string,std::string >  getParameterLinkNamesMap(bool hide_unused = false);
     std::vector<ParameterIfs*>          getOutputParameterVector();
-
+    
     bool                                genJit();
     bool                                run();
 

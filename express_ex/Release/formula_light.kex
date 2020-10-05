@@ -1,9 +1,0 @@
-
-
-y = param( "#1_A01__1")  #коментарий 
-X = range (0,12*10+1)
-
-y = convolve(y,X)
-
-
-return y*10

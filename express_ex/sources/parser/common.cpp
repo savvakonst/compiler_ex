@@ -3,9 +3,6 @@
 #include "variable.h"
 
 
-
-
-
 char * calcSmallArrayAlloc(TypeEn targetType, int N, char* ptr) {
 	char * ret=nullptr;
 #define OP(T)  ret = (char *) SmallArrayAlloc<T> (N,(T*)ptr)

@@ -1,6 +1,8 @@
 QT += widgets
 #requires(qtConfig(filedialog))
-#CONFIG += c++11
+CONFIG += c++14
+
+include(config.pri)
 
 
 EXPRESS_DIR = $$PWD/..
@@ -21,29 +23,12 @@ SOURCES         = sources/main.cpp \
 
 
 DEFINES += QUIMONO_EXE
-
-#Release:DEPENDPATH += "$$PWD/../express_ex/Release"
-#Debug:DEPENDPATH  += "$$PWD/../express_ex/Debug"
+#DEFINES += _$${_CONFIG}
 
 
-Release:LIBS += "$${EXPRESS_DIR}/express_ex/Release/syntaxhighlighter.lib"
-Debug::LIBS += "$${EXPRESS_DIR}/express_ex/Debug/syntaxhighlighterd.lib"
+LIBS     += "$${EXPRESS_DIR}/express_ex/$${_PLATFORM}/$${_CONFIG}/syntaxhighlighter$${LIBPOSTFIX}.lib"
+DESTDIR   = $${EXPRESS_DIR}/express_ex/$${_PLATFORM}/$${_CONFIG}
 
-
-
-#Release:DESTDIR += $${EXPRESS_DIR}/topSyntax/Release
-#Debug:DESTDIR += $${EXPRESS_DIR}/topSyntax/Debug
-
-
-
-Release:DESTDIR = $${EXPRESS_DIR}/express_ex/Release
-Debug:DESTDIR = $${EXPRESS_DIR}/express_ex/Debug
-
-
-#Debug:Dll   +=  "$$PWD/../express_ex/Debug/*.dll"
-#Release:Dll +=  "$$PWD/../express_ex/Release/*.dll"
-
-#QMAKE_POST_LINK += xcopy /d/y  \"$$replace( Dll , /,\\ )\"   \"$$replace( DESTDIR, /,\\ )\"
 
 
 INSTALLS += target

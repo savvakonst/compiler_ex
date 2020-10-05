@@ -36,6 +36,8 @@
 !/**/icons/**
 
 !/**/*.CMakeLists.txt
+!/**/*.CMakeMacro.txt
+!/**/*.pri
 !/**/*.pro
 !/**/*.qrc
 

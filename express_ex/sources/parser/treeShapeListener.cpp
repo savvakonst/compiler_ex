@@ -10,15 +10,14 @@ TreeShapeListener:: TreeShapeListener() : EGrammarBaseListener(){
     NewBody("main", true);
 }
 
-TreeShapeListener::TreeShapeListener(Body* body) : EGrammarBaseListener() {
+TreeShapeListener::TreeShapeListener(Body* body, const std::vector<Body*> &context) : EGrammarBaseListener() {
     activ_body_ = body;
-    context.push_back(activ_body_);
+    context_.push_back(activ_body_);
+    for(auto i: context)
+        context_.push_back(i);
 }
 
 TreeShapeListener:: ~TreeShapeListener(){
-    for (auto g : context) {
-        delete g;
-    }
 }
 
 void TreeShapeListener::setPos(ParserRuleContext* ctx) {
@@ -32,7 +31,7 @@ void TreeShapeListener::setPos(ParserRuleContext* ctx) {
 
 void TreeShapeListener::NewBody(std::string name, bool isPrototype) {
     activ_body_ = new Body(name, isPrototype);
-    context.push_back(activ_body_);
+    context_.push_back(activ_body_);
 }
 
 void TreeShapeListener::exitAssign(EGrammarParser::AssignContext* ctx)  {
@@ -191,7 +190,7 @@ void TreeShapeListener::exitCallFunc(EGrammarParser::CallFuncContext* ctx) {
     bool b = true;
     std::string targName= ctx->ID()->getText();
 
-    for (auto k : context) {
+    for (auto k : context_) {
         if (k->getName() == targName) {
             b = false;
             if (k->getArgCount() != exprs.size()) {
@@ -218,12 +217,17 @@ void TreeShapeListener::enterFunc(EGrammarParser::FuncContext* ctx) {
 void TreeShapeListener::exitFunc(EGrammarParser::FuncContext* ctx) {
     if (activ_body_->isRetStackEmpty())
         print_error("there are no returned value in func: " + activ_body_->getName());
-    activ_body_ = context[0];
+    activ_body_ = context_[0];
 }
 
 void TreeShapeListener::exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext * ctx){
     setPos(ctx);
     activ_body_->addSmallArrayDefinitionOp(ctx->expr().size());
+}
+
+Body * TreeShapeListener::getMainBody()
+{
+    return context_[0];
 }
 
 

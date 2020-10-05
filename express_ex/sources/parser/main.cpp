@@ -29,7 +29,8 @@ int main(int argc, const char* argv[]) {
     static  llvm::cl::opt<std::string>  inputFile("i", llvm::cl::desc("input source file"), llvm::cl::value_desc("filename"), llvm::cl::Required, llvm::cl::cat(mainCategory));
     static  llvm::cl::opt<bool>         optimizationEnable("opt", llvm::cl::desc("optimization enable"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
     static  llvm::cl::opt<bool>         ansiEscapeCodes("ansi", llvm::cl::desc("enable ANSI escape codes"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
-    static  llvm::cl::list<std::string> libraryPath("dir", llvm::cl::desc("list of available directories"), llvm::cl::value_desc("filename"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
+    static  llvm::cl::list<std::string> libraryPaths("dir", llvm::cl::desc("list of available directories"), llvm::cl::value_desc("filename"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
+    static  llvm::cl::list<std::string> moduleFiles("lib", llvm::cl::desc("list of available modules"), llvm::cl::value_desc("filename"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
     static  llvm::cl::list<std::string> inputDataBaseFile("db", llvm::cl::desc("input data base files"), llvm::cl::value_desc("directory"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
     static  llvm::cl::opt<bool>         runJit("runJit", llvm::cl::desc("run jit"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
     static  llvm::cl::bits<ShowNames>   showBits(llvm::cl::desc("show:"), llvm::cl::cat(mainCategory), llvm::cl::ZeroOrMore,
@@ -61,11 +62,14 @@ int main(int argc, const char* argv[]) {
 
     ParametersDB parameterDB(inputDataBaseFile);
 
-    KEXParser  parser(inputFile);
+
 
 
     try{ 
-        parser.walk();
+        std::map<std::string, bool> modules_map;
+        for (auto i : moduleFiles) modules_map[i]=true;
+
+        KEXParser  parser(inputFile,true, modules_map);
         Body* body_brototype = parser.getActivBody();
 
         std::map<std::string, std::string> parameterNameList = body_brototype->getParameterLinkNames();
@@ -83,7 +87,6 @@ int main(int argc, const char* argv[]) {
             else
                 print_error("can not find parameter " + i.second);
         }
-
         if (showBits.isSet(untypedFSR))
             llvm::outs() << delimiter << body_brototype->print("")<< delimiter <<"\n";
 

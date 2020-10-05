@@ -44,23 +44,26 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
 {
     LLVMContext & context = builder.getContext();
 
-    std::string  levelTxt=basicBlockPostfix;
+    std::string  level_txt=basicBlockPostfix;
 
-    BasicBlock* bb_load  = BasicBlock::Create(context, "load_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
-    BasicBlock* bb_calc  = BasicBlock::Create(context, "calc_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
-    BasicBlock* bb_store = BasicBlock::Create(context, "store_"   + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
-    //BasicBlock* bb_terminal_op = BasicBlock::Create(context, "terminal_op_" + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
+
+    BasicBlock* bb_intermediate  = BasicBlock::Create(context, "intermediate_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+    BasicBlock* bb_load  = BasicBlock::Create(context, "load_"   + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+    BasicBlock* bb_calc  = BasicBlock::Create(context, "calc_"   + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+    BasicBlock* bb_store = BasicBlock::Create(context, "store_"   + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+    //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
 
     BasicBlock* bb_last_store=builder.getStoreBlock();
 
     if (nullptr != bb_last_store)
     {
         builder.CreateStartBRs();
-        builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_load);
+        builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_intermediate);
     }
 
     builder.ClearInitializedVariablesList();
 
+    builder.SetIntermediateInsertPoint(bb_intermediate);
     builder.SetLoadInsertPoint(bb_load);
     builder.SetCalcInsertPoint(bb_calc);
     builder.SetStoreInsertPoint(bb_store);
@@ -69,14 +72,14 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     builder.SetCalcInsertPoint();
 
 
-    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + levelTxt, -left_ength_ );
+    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, -left_ength_ );
     //Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, 0);
     builder.SetStoreInsertPoint();
-    Value* nextOffset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
-    builder.CreateStore(nextOffset, alloc);
+    Value* next_offset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
+    builder.CreateStore(next_offset, alloc);
     builder.SetCurrentCMPRes(
         builder.CreateICmpSLT(
-            nextOffset,
+            next_offset,
             builder.getInt64(buffer_length_ + right_length_))); // not true
             //builder.getInt64(buffer_length_ + right_length_)));
     builder.SetCalcInsertPoint();
@@ -171,7 +174,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
         BasicBlock* bb_load  = BasicBlock::Create(context, "load_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         BasicBlock* bb_calc  = BasicBlock::Create(context, "calc_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         BasicBlock* bb_store = BasicBlock::Create(context, "store_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-        //BasicBlock* bb_terminal_op = BasicBlock::Create(context, "terminal_op_" + basicBlockPrefix + levelTxt, builder.getCurrentFunction());
+        //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
 
         BasicBlock* bb_last_store=builder.getStoreBlock();
 
@@ -691,7 +694,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbUpdateBuffer);
 
     builder.SetInsertPoint(bbUpdateBuffer);
-    builder.CreateCall(bufferUpdateFunction); //call buffer update
+    builder.CreateCall_(bufferUpdateFunction); //call buffer update
     builder.CreateBr(bbLoopEnter);
 
     builder.SetLoopEnterInsertPoint(bbLoopEnter);
@@ -725,7 +728,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 
 
     BasicBlock* bbTerminalLoopEnter = BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
-    builder.CreateCall(bufferUpdateFunction); //call buffer update
+    builder.CreateCall_(bufferUpdateFunction); //call buffer update
     builder.CreateCondBr(builder.getCurrentCMPRes(), bbLoopEnter, bbTerminalLoopEnter);
     builder.SetLoopEnterInsertPoint(bbTerminalLoopEnter);
     builder.DropBaseInsertPoint();
@@ -740,7 +743,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
         BasicBlock* bbExit = BasicBlock::Create(context, "exit_block", builder.getCurrentFunction());
         builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbExit);
         builder.SetExitInsertPoint(bbExit);
-        builder.CreateCall(bufferUpdateFunction); //call buffer update
+        builder.CreateCall_(bufferUpdateFunction); //call buffer update
     }
     
     builder.CreateRet(builder.getInt32(1));

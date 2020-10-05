@@ -52,7 +52,6 @@ private:
     cl::Context  context_ ;
     std::string  platform_ver_ = "";
 
-
     std::string  err_string_ = "";
     int          status_ = 0;
 };

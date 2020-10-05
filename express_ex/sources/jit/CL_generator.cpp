@@ -66,7 +66,7 @@ int clGpuConvolveTemplate(void)
 
 
         //cl_context_properties properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0 };
-        //cl::Context context(CL_DEVICE_TYPE_CPU, properties);
+        //cl::Context context_(CL_DEVICE_TYPE_CPU, properties);
         cl::Context context = cl::Context::getDefault();
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 

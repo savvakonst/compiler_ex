@@ -1421,7 +1421,7 @@ EGrammarParser::ExprContext* EGrammarParser::expr(int precedence) {
   size_t parentState = getState();
   EGrammarParser::ExprContext *_localctx = _tracker.createInstance<ExprContext>(_ctx, parentState);
   EGrammarParser::ExprContext *previousContext = _localctx;
-  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  (void)previousContext; // Silence compiler, in case the context_ is not used by generated code.
   size_t startState = 18;
   enterRecursionRule(_localctx, 18, EGrammarParser::RuleExpr, precedence);
 

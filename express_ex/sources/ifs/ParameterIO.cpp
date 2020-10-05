@@ -30,7 +30,7 @@ calcMinMaxTy g_calcMinMax_select(PRMTypesEn arg) {
         return nullptr;
     };
 }
-
+ 
 
 
 TypeEn PRMType2JITType(PRMTypesEn arg) {
@@ -102,8 +102,8 @@ std::string toString(PRMTypesEn arg) {
 
 
 bool fromJSON(const json::Value &DataFragment, DataInterval & dataInterval) {
-
-    json::ObjectMapper O(DataFragment);
+    json::Path::Root root("bare");
+    json::ObjectMapper O(DataFragment, root);
     bool ret= true;
 
     ret&=O.map("Frequency", dataInterval.frequency);
@@ -124,11 +124,13 @@ DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesLi
     fromJSON(DataFragment, dataInterval);
 
     int64_t dataIndex;
-    json::ObjectMapper O(DataFragment);
+    json::Path::Root root("bare");
+    json::ObjectMapper O(DataFragment, root);
     O.map("Index", dataIndex);
 
     for (auto i : DataFilesList) {
-        json::ObjectMapper O(i);
+        json::Path::Root root("bare");
+        json::ObjectMapper O(i, root);
         int64_t fileDataIndex;
         O.map("Index", fileDataIndex);
 
@@ -170,7 +172,9 @@ bool readParametersList(std::string databaseFName, std::vector<SyncParameter*>& 
         for (auto k : DataFragmentsList)
             interval_list.push_back(getDataInterval(k, DataFilesList));
 
-        json::ObjectMapper O(i);
+        json::Path::Root root("bare");
+        json::ObjectMapper O(i, root);
+
         std::string  name;
         TimeInterval time_interval;
 

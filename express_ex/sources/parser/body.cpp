@@ -14,7 +14,7 @@ Body::Body( std::string name,  bool isPrototype )
 
 Body::~Body()
 {
-	delete garbage_contaiiner_;
+	delete garbage_contaiiner_; 
 	/*
 	for (auto& value : lines_) {
 		delete value;
@@ -488,7 +488,7 @@ void Body::genTable(TableGenContext * context){
 				else
 					var->visitEnter(&visitorStack);
 			} while (!visitorStack.empty());
-			//context->setUint(value);
+			//context_->setUint(value);
 		}
 	}
 	int64_t maxBufferLength = 0;

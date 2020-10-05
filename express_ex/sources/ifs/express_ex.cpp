@@ -29,7 +29,7 @@ Express_ex::~Express_ex()
     REMOVE_MEMBER(kex_parser_);
 }
 
-bool Express_ex::parseText(std::string str, bool is_file_name ) {
+bool Express_ex::parseText(std::string str, bool is_file_name , std::map<std::string, bool/*is_file_name*/> lib_str_map ) {
 
     //
     bool status=false;
@@ -41,9 +41,9 @@ bool Express_ex::parseText(std::string str, bool is_file_name ) {
     REMOVE_MEMBER(kex_parser_);
 
 
-    kex_parser_ =new KEXParser(str, is_file_name);
     try {
-        kex_parser_->walk();
+        kex_parser_ =new KEXParser(str, is_file_name, lib_str_map);
+
         body_prototype_ = kex_parser_->getActivBody();
         body_prototype_->getParameterLinkNames();
         status=true;

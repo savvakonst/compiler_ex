@@ -41,25 +41,26 @@ public:
     void ClearInitializedVariablesList() { initialized_variables_list_.clear(); }
 
 
-    llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
-    llvm::Value * CreateConst(uint64_t & binaryValue, TypeEn targetTy, const std::string &name="");
+    llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, const std::string & name="");
+    llvm::Value * CreateConst(uint64_t & binaryValue, TypeEn targetTy, const std::string & name="");
     llvm::Value * CreateArithmetic(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreateComparsion(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
-    llvm::Value * CreateInv(llvm::Value * AOperand, OpCodeEn opCode, const std::string &name="");
+    llvm::Value * CreateInv(llvm::Value * AOperand, OpCodeEn opCode, const std::string & name="");
     llvm::Value * CreateTypeConv(llvm::Value *AOperand,  OpCodeEn opCode, TypeEn targetTy, const std::string &name="");
-    llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, OpCodeEn opCode, const std::string &name="");
+    llvm::Value * CreateBuiltInFunc(llvm::Value *AOperand, OpCodeEn opCode, const std::string & name="");
     llvm::Value * CreateConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string & name="");
-    llvm::Value * CreateConvolve(llvm::Value *AOperand, llvm::Value *BOperand, const std::string &name="");
+    llvm::Value * CreateCall_(llvm::Value * Callee, llvm::ArrayRef<llvm::Value*> Args={}, const std::string & Name="");
+    llvm::Value * CreateConvolve(llvm::Value *AOperand, llvm::Value *BOperand, const std::string & name="");
     llvm::Value * CreateGPUConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string & name="");
-    llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, int64_t i, const std::string &name="");
+    llvm::Value * CreatePositionalAlloca(llvm::Type *AOperand, int64_t i, const std::string & name="");
     llvm::Value * CreatePositionalOffset( std::string name="", int64_t startValue=0);
     llvm::Value * CreatePositionalOffsetAlloca(std::string name="", int64_t startValue=0);
-    llvm::Value * CreatePositionalInBoundsGEP(llvm::Value *Ptr, llvm::ArrayRef<llvm::Value *> IdxList, const std::string &Name = "");
-    llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, const  std::string &name="");
-    llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, bool isVolatile, const std::string &name="");
+    llvm::Value * CreatePositionalInBoundsGEP(llvm::Value *Ptr, llvm::ArrayRef<llvm::Value *> IdxList, const std::string & Name = "");
+    llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, const  std::string & name="");
+    llvm::Value * CreatePositionalLoad(llvm::Value *AOperand, bool isVolatile, const std::string & name="");
     llvm::Value * CreateLoadOffset( const std::string &name="common_offset");
     void          CreatePositionalStore(llvm::Value * AOperand, llvm::Value * BOperand, bool isVolatile = false);
-    llvm::Value * CreateBufferInit(TypeEn targetTy, const std::string &name="");
+    llvm::Value * CreateBufferInit(TypeEn targetTy, const std::string & name="");
     void          CreateStartBRs();
     void          CreateMidleBRs();
 

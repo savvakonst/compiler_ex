@@ -21,7 +21,7 @@ typedef struct {
     int64_t start_char_pos=-1;
     int64_t stop_char_pos=-1;
 } PosInText;
-
+ 
 
 
 template< typename T > class stack :public  std::vector<T> {

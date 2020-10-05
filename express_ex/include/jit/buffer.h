@@ -5,7 +5,7 @@
 #include "common.h"
 #include "variable.h"
 
-
+ 
 
 enum class BufferTypeEn {
 	input,

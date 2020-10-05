@@ -4,7 +4,6 @@
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 #include <QRegularExpression>
-#include "highlightStyle.h"
 
 QT_BEGIN_NAMESPACE
 class QTextDocument;
@@ -14,7 +13,7 @@ class TreeShapeListener;
 
 
 
-class QUILIBSHARED_EXPORT SearchHighLight : public QSyntaxHighlighter
+class SearchHighLight : public QSyntaxHighlighter
 {
     Q_OBJECT
     using BaseClass = QSyntaxHighlighter;
@@ -35,7 +34,7 @@ private:
 
 
 
-class QUILIBSHARED_EXPORT Highlighter : public SearchHighLight
+class Highlighter : public SearchHighLight
 {
     Q_OBJECT
 
@@ -50,8 +49,6 @@ private:
 
     TreeShapeListener * listener=NULL;
 };
-
-
 
 
 

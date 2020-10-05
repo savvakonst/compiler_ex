@@ -4,75 +4,55 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-SET(IS_SHARED False)
+SET(IS_SHARED True)
 
+if( NOT CMAKE_CL_64 )
+    set(SPlatform  x86)
+    set(APlarform  Win32)
+else()
+    set(SPlatform  x64)
+    set(APlarform  x64)
+endif()
 
 # specify the C++ standard 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
-if(MSVC AND NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11))
-  set(CMAKE_CXX_STACK_SIZE "10000000")
-endif()  
-
-set(CLHPP C:/Users/SVK/Desktop/openCl/khronos/OpenCL-CLHPP/include) 
-set(cudaPath C:/Program\ Files/NVIDIA\ GPU\ Computing\ Toolkit/CUDA/v11.0)
-set(openCL_libDir  ${cudaPath}/lib/x64)
+set(CLHPP       C:/Users/SVK/Desktop/openCl/khronos/OpenCL-CLHPP/include) 
+set(cudaPath    C:/Program\ Files/NVIDIA\ GPU\ Computing\ Toolkit/CUDA/v11.0)
 set(openCL_includeDir  ${cudaPath}/include)
 
-
 set(EGrammarDir ../EGrammar)
-set(llvmDir ../llvm)
-set(antlr4Dir ../antlr4)
+set(llvmDir     ../../common/llvm-project)
+set(antlr4Dir   ../../common/antlr4/runtime/Cpp/runtime)
 
+
+include(CMakeMacro.txt)
 
 include_directories(${CLHPP})
 include_directories(${openCL_includeDir})
 include_directories(${EGrammarDir})
-include_directories(${llvmDir}/include)
-include_directories(${llvmDir}/build/include)
-include_directories(${antlr4Dir}/antlr4-runtime)
+include_directories(${llvmDir}/llvm/include)
+include_directories(${llvmDir}/build_${SPlatform}/include)
+include_directories(${antlr4Dir}/src)
 
-
-include_directories(include/ifs)
-include_directories(include/jit)
-include_directories(include/parser)
-include_directories(include/ifs)
-
-
-
-set(sourcesDir sources)
 
 aux_source_directory(${EGrammarDir} EGrammar)
-aux_source_directory(${sourcesDir}/jit jit)
-aux_source_directory(${sourcesDir}/parser parser)
-aux_source_directory(${sourcesDir}/ifs ifs)
-
 file(GLOB EGrammarHeaders ${EGrammarDir}/*.h)
-file(GLOB jitHeaders include/jit/*.h)
-file(GLOB parserHeaders include/parser/*.h)
-file(GLOB ifsHeaders include/ifs/*.h)
+init_source_groups(express_grops_list ifs parser jit)
 
 
 if(IS_SHARED)
-    add_library( express_ex SHARED ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders} )
+    add_library( express_ex SHARED  ${express_grops_list} ${EGrammar} ${EGrammarHeaders}  )
 else()
-    add_executable(express_ex ${EGrammar} ${ifs} ${jit} ${parser} ${EGrammarHeaders} ${ifsHeaders} ${jitHeaders} ${parserHeaders}  )
+    add_executable(express_ex  ${express_grops_list} ${EGrammar} ${EGrammarHeaders} )
 endif()
 
 #add_library()
 
 source_group( "EGrammar\\headers"   FILES ${EGrammarHeaders} )
 source_group( "EGrammar\\sources"   FILES ${EGrammar} )
-source_group( "jit\\headers"        FILES ${jitHeaders} )
-source_group( "jit\\sources"        FILES ${jit})
-source_group( "parser\\headers"     FILES ${parserHeaders} )
-source_group( "parser\\sources"     FILES ${parser})
-source_group( "ifs\\headers"        FILES ${ifsHeaders} )
-source_group( "ifs\\sources"        FILES ${ifs})
-
-message("------ EGrammarHeaders:   " "${EGrammarHeaders}")
 
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
@@ -83,9 +63,10 @@ set_target_properties(express_ex        PROPERTIES
 )
 
 if(MSVC) 
-    if(NOT CMAKE_CL_64)
-        message(FATAL_ERROR  "WIN32 target is not supported yet" )   
-    endif()
+
+    if(NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11))
+        set(CMAKE_CXX_STACK_SIZE "10000000")
+    endif()  
 
     target_compile_options(express_ex PRIVATE 
         /wd4141   #(level 1)  'modifier' : used more than once  inline inline void func ()
@@ -162,7 +143,7 @@ if(MSVC)
         LLVMBinaryFormat
         LLVMRemarks
         LLVMBitstreamReader
-        LLVMX86Utils
+        #LLVMX86Utils
         LLVMCore
         LLVMExecutionEngine
         LLVMInterpreter
@@ -174,24 +155,16 @@ if(MSVC)
         OpenCL
     )
 
-
-
-
-
-    SET(llvmReleaseLibPath ${llvmDir}/Lib/Release/lib)
-    SET(llvmDebugLibPath ${llvmDir}/../../llvm-project/build_exp/Debug/lib)
-
-    SET(antlrReleaseLibPath ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
-
-    SET(antlrDebugLibPath ${antlr4Dir}/lib/vs-2015/x64/Debug\ DLL)
-    SET(antlrLibPath    ${antlr4Dir}/lib/vs-2015/x64/Release\ DLL)
+    
+    set(openCL_libDir ${cudaPath}/lib/${APlarform})
+    SET(llvmLibPath   ${llvmDir}/build_${SPlatform}/$<CONFIG>/lib)
+    SET(antlrLibPath  ${antlr4Dir}/bin/vs-2019/${SPlatform}/$<CONFIG>\ DLL)
 
     target_link_directories(express_ex PUBLIC 
-        "$<$<CONFIG:Debug>:   ${antlrDebugLibPath}>"   "$<$<CONFIG:Debug>:   ${llvmDebugLibPath}>" 
-        "$<$<CONFIG:Release>: ${antlrReleaseLibPath}>" "$<$<CONFIG:Release>: ${llvmReleaseLibPath}>" 
+        ${antlrLibPath}
+        ${llvmLibPath}
         ${openCL_libDir}
     )
-
 
 
     target_link_libraries(express_ex ${ObjNames} antlr4-runtime )
@@ -221,12 +194,30 @@ if(MSVC)
             COMPILE_DEFINITIONS ${commonMSVC_Definitions} DLL_express_ex_EXPORT
         )
 
-        #set(CP_EX_DLL "$<TARGET_FILE_DIR:express_ex>/express_ex.dll" )
-        #add_custom_command(TARGET express_ex POST_BUILD 
-        #    COMMAND  ${CMAKE_COMMAND} -E copy_if_different
-        #        ${CP_EX_DLL}
-        #        //nas_sy/Common/svk/express_ex/$<CONFIG>.Shared
-        #    ) 
+        set(FILE_NAMES_TO_COPY "express_ex.*" "syntaxhighlighter.*" "topsyntaxhighlighter.*" "antlr4-runtime.*")
+
+
+        
+        foreach( FILE_NAME_MASK ${FILE_NAMES_TO_COPY})
+            file(GLOB FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}")
+            set(FILES_TO_COPYasfsaf "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
+
+            message( "-------------------------FILES_TO_COPY: " "$<TARGET_FILE_DIR:express_ex>" )   
+            #set(FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
+
+            foreach( FILE_NAME_VAR ${FILES_TO_COPY})
+                message( "-------------------------FILE_NAME_VAR: ${FILE_NAME_VAR}" )   
+                add_custom_command(TARGET express_ex POST_BUILD 
+                    COMMAND  ${CMAKE_COMMAND} -E copy_if_different
+                        ${FILE_NAME_VAR}
+                        //nas_sy/Common/svk/express_ex/$<CONFIG>.Shared
+                    ) 
+            endforeach( FILE_NAME_VAR )
+        endforeach( FILE_NAME_MASK )
+        
+        
+
+
     else()
         set_property(TARGET express_ex APPEND PROPERTY
             COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
