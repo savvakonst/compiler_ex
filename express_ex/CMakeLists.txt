@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-SET(IS_SHARED True)
+SET(IS_SHARED False)
 
 if( NOT CMAKE_CL_64 )
     set(SPlatform  x86)
@@ -187,6 +187,7 @@ if(MSVC)
     )
 
    
+
     
     
     if(IS_SHARED)
@@ -220,7 +221,7 @@ if(MSVC)
 
     else()
         set_property(TARGET express_ex APPEND PROPERTY
-            COMPILE_DEFINITIONS ${commonMSVC_Definitions} 
+            COMPILE_DEFINITIONS ${commonMSVC_Definitions} CONSOLE_APP_
         )
     endif()
 

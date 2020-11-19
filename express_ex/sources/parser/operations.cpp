@@ -182,7 +182,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 				"right operand:" + ((op2 != nullptr)? "a"  : "unknown")
 			);
 		}
-		TypeEn targetType = max(op1, op2)->getType();
+		TypeEn targetType = maxTypeVar(op1, op2)->getType();
 		
 		ret = newArithmeticOperation(
 			garbage_container,
@@ -204,7 +204,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 				"right operand:" + ((op2 != nullptr) ? "a" : "unknown")
 			);
 		}
-		TypeEn targetType = max(op1, op2)->getType();
+		TypeEn targetType = maxTypeVar(op1, op2)->getType();
 
 		ret = newComparsionOperation(
 			garbage_container,
@@ -234,7 +234,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 		auto op3 = context->pop();
 		auto op2 = context->pop();
 		auto op1 = context->pop();
-		TypeEn targetType = max(op2, op3)->getType();
+		TypeEn targetType = maxTypeVar(op2, op3)->getType();
 		ret = newSelectOp(
 			garbage_container, 
 			targetType, 
@@ -245,7 +245,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 	else if(isConvolve(opCode)){
 		auto op2 = context->pop();
 		auto op1 = context->pop();
-		TypeEn targetType = max(op1, op2)->getType();
+		TypeEn targetType = maxTypeVar(op1, op2)->getType();
 		ret = newConvolveOperation(
 			garbage_container, 
 			targetType, 

@@ -160,11 +160,9 @@ private:
 class Table
 {
 public:
-    Table ( int maxBufferLength=(1<<20),int minBufferLength=0) {
-        
+    Table ( int maxBufferLength=(1<<20), int minBufferLength=0) {
         max_buffer_length_=maxBufferLength;
         min_buffer_length_=minBufferLength;
-
     }
 
 
@@ -231,7 +229,7 @@ private:
     std::unique_ptr<llvm::Module> module_U_ptr_;    
     std::unique_ptr<llvm::legacy::FunctionPassManager> the_FPM_;
 
-    llvm::Function* mainFunction_;    //external 
+    llvm::Function* mainFunction_ = nullptr;    //external 
 
     std::map<TypeEn, llvm::Function*> convolve_map_;    //external 
 

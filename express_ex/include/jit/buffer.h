@@ -23,12 +23,8 @@ enum class BufferTypeEn {
 ///      |_________________|_________________|_____________________________|_________________|_________________|
 ///     ptr             left_ptr         bottom_ptr                     top_ptr           right_ptr   
 ///
-///
-///
-///
-///
-///
-///
+/// 
+
 
 class Buffer {
 public:

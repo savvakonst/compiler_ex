@@ -75,10 +75,10 @@ public:
 
  int64_t      maxInt  (int64_t   var1, int64_t   var2);
  int64_t      minInt  (int64_t   var1, int64_t   var2);
- Variable*    max     (Variable* var1, Variable* var2);
- Variable*    maxDS   (Variable* var1, Variable* var2);
- Variable*    maxLevel(Variable* var1, Variable* var2);
- Variable*    minLevel(Variable* var1, Variable* var2);
+ Variable*    maxTypeVar     (Variable* var1, Variable* var2);
+ Variable*    maxDSVar   (Variable* var1, Variable* var2);
+ Variable*    maxLevelVar(Variable* var1, Variable* var2);
+ Variable*    minLevelVar(Variable* var1, Variable* var2);
 
 
  inline std::string getTxtType(TypeEn type) {

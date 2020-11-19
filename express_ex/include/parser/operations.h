@@ -6,7 +6,7 @@
 #include "types_jty.h"
 
 
-
+//extern bool g_gpu_acceleration_enable;
 
 
 class Operation :public Variable
@@ -14,9 +14,11 @@ class Operation :public Variable
 public:
     Operation():Variable() { opCode = OpCodeEn::none_op;  }
 
+    // constructor of type conversion operation or shift and decimation 
     Operation(OpCodeEn op, Variable* var, TypeEn targetType, int64_t shiftOrDecimation=0):Variable() {
         CommonSetup(op, var);
         type_ = targetType;
+
 
         if (op == OpCodeEn::shift){
             shiftParameter=shiftOrDecimation;
@@ -33,9 +35,11 @@ public:
         operand.push_back(var); 
     }
 
-    Operation(OpCodeEn op, Variable* largeArr, Variable* smallArr, int64_t shift):Variable(){
-        CommonSetup(op, maxDS(largeArr, smallArr));
-       
+
+    // constructor of convolve operation
+    Operation(OpCodeEn op, Variable* largeArr, Variable* smallArr, int64_t shift):Variable(){ 
+        CommonSetup(op, maxDSVar(largeArr, smallArr));
+      
         if (op == OpCodeEn::convolve) {
             shiftParameter  =shift;
             level_ = largeArr->getLevel()+1;
@@ -56,12 +60,12 @@ public:
         operand.push_back(smallArr);
     }
 
-
+    // constructor of arithetic, logic or comparsion operation 
     Operation(OpCodeEn op, Variable* var1, Variable* var2) :Variable() {
-        CommonSetup(op, maxDS(var1, var2));
+        CommonSetup(op, maxDSVar(var1, var2));
 
-        type_  = isComparsion(op)? TypeEn::int1_jty : max(var1, var2)->getType();
-        level_ = maxLevel(var1, var2)->getLevel();
+        type_  = isComparsion(op)? TypeEn::int1_jty : maxTypeVar(var1, var2)->getType();
+        level_ = maxLevelVar(var1, var2)->getLevel();
 
 
         operand.push_back(var1);
@@ -71,10 +75,11 @@ public:
             if (i->getLevel() < level_) i->getAssignedVal(true)->setBuffered();
     }
 
+    // constructor of trenary operation 
     Operation(OpCodeEn op, Variable* var1, Variable* var2, Variable* var3, TypeEn targetType) :Variable() {
-        CommonSetup(op, maxDS(var1, var2));
+        CommonSetup(op, maxDSVar(var1, var2));
         type_ = targetType;
-        level_ = maxLevel(maxLevel(var1, var2), var3)->getLevel();
+        level_ = maxLevelVar(maxLevelVar(var1, var2), var3)->getLevel();
 
         operand.push_back(var1);
         operand.push_back(var2);

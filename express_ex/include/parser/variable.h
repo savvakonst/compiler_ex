@@ -3,86 +3,16 @@
 
 #include <iostream>
 #include <string>
-#include "types_jty.h"
+
 #include "common.h"
-#include "table.h"
+#include "basic.h"
+
 #include "ParameterIO.h"
+#include "table.h"
+
 
 using std::string;
-class Body;
 class IRGenerator;
-
-class GarbageContainer
-{
-public:
-    ~GarbageContainer();
-        /*
-    ~GarbageContainer() {
-        for (auto i : variable_set_)
-            delete i;
-    }
-*/
-    Variable* add(Variable* var) {
-        if (var != nullptr)
-            variable_set_.insert(var);
-        return var;
-    }
-protected:
-    std::set<Variable*> variable_set_;
-};
-
-class BodyGenContext {
-public:
-    BodyGenContext (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr, bool isPrototype, GarbageContainer* garbage_container) {
-        varStack_       = varStack;
-        namespace_ptr_  = namespace_ptr;
-        isPrototype_    = isPrototype;
-        garbage_container_ = garbage_container;
-    }
-    BodyGenContext (Body & body){}
-    ~BodyGenContext() {}
-
-
-    inline void push(Variable* var) {varStack_->push(var);}
-    inline Variable*  pop() { return varStack_->pop();}
-    inline std::vector< Line*> &getNamespace() { return *namespace_ptr_; }
-    inline GarbageContainer* getGarbageContainer() { return garbage_container_; }
-    inline bool isPrototype() { return isPrototype_; }
-private:
-    GarbageContainer*   garbage_container_=nullptr;
-    stack<Variable*>*   varStack_=nullptr;
-    std::vector<Line*>* namespace_ptr_=nullptr;
-    bool isPrototype_ = false;
-};
-
-extern PosInText g_pos;
-class SmallArr{
-public:
-    SmallArr() {
-        pos=g_pos;
-    }
-    ~SmallArr() {
-        if (bufferPtr_ != nullptr)
-            delete bufferPtr_;
-    }
-
-    void genRange() {};
-    void loadFromFile(const string &filename) {
-    };
-
-    virtual void calculate(){}
-    char * getBufferPtr() {
-        return bufferPtr_; 
-    }
-
-protected:
-    PosInText  pos;
-    double start_=0;
-    double stop_=0;
-
-    char * bufferPtr_=nullptr;
-};
-
 
 class Variable : public SmallArr
 {
@@ -208,8 +138,6 @@ protected:
     string   textValue_ = "" ;
     string   uniqueName_ = "" ;
 
-
-
     int64_t  length_     = 1;
     int64_t  decimation_ = 0;
     int64_t  level_      = 0;
@@ -256,17 +184,17 @@ inline bool isUInteger  (Variable* var) { return false; }
 
 inline int64_t      maxInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var1; }
 inline int64_t      minInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var2; }
-inline Variable*    max     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var2 : var1; }
-inline Variable*    min     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var1 : var2; }
-inline Variable*    max     (std::vector<Variable*> args) { 
+inline Variable*    maxTypeVar     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var2 : var1; }
+inline Variable*    minTypeVar     (Variable* var1, Variable* var2) { return var1->getType  () < var2->getType  () ? var1 : var2; }
+inline Variable*    maxTypeVar     (std::vector<Variable*> args) { 
     Variable * var=args[0];
     for (auto i : args) 
-        var=max(i, var);
+        var=maxTypeVar(i, var);
     return var; 
 } //unsafe function .zero size array check missing
 
-inline Variable*    maxDS   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
-inline Variable*    maxLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
-inline Variable*    minLevel(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }
+inline Variable*    maxDSVar   (Variable* var1, Variable* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
+inline Variable*    maxLevelVar(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
+inline Variable*    minLevelVar(Variable* var1, Variable* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }
 
 #endif

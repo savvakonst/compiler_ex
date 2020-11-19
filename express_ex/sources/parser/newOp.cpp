@@ -279,7 +279,7 @@ Variable* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Variable*
 	
 	bool  allIsConst =true;
 	for (auto i : args) {
-		var=max(i, var);
+		var=maxTypeVar(i, var);
 		allIsConst &= isConst(var);
 	}
 

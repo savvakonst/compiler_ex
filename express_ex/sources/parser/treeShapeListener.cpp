@@ -193,10 +193,14 @@ void TreeShapeListener::exitCallFunc(EGrammarParser::CallFuncContext* ctx) {
     for (auto k : context_) {
         if (k->getName() == targName) {
             b = false;
-            if (k->getArgCount() != exprs.size()) {
-                print_error("there are invalid signature in func: " + targName + " call");
+            if (k->getArgCount() != exprs.size()) 
+                print_error("there are invalid signature call in function: " + targName + " ");
+            
+            if (activ_body_->getName() == targName) {
+                print_error("it is recursive call in function: " + targName + " ");
             }
-            activ_body_->addCall(k);
+            else
+                activ_body_->addCall(k);
             break;
         }
     }

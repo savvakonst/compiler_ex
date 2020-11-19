@@ -244,7 +244,7 @@ TableColumn::TableColumn (Variable* var) {
 
 void    TableColumn::setUint(Variable * var){
     auto  varlevel= var->getLevel();
-    for (auto i : blockList_) 
+    for (Block* i : blockList_) 
         if (i->getLevel() == varlevel){
             i->setUint(var);
             return;
@@ -717,8 +717,8 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbCycleExit);
     builder.SetCycleExitInsertPoint(bbCycleExit);
 
-    ///global index increment, and index comparsion with max iteration number
-    ///increasing the global index and comparing the index with the max iteration number
+    ///global index increment, and index comparsion with maxTypeVar iteration number
+    ///increasing the global index and comparing the index with the maxTypeVar iteration number
     Value* nextGlobIndex = builder.CreateAdd(globIndex, builder.getInt64(1));
     builder.CreateStore(nextGlobIndex, globIndexAlloca);
     builder.SetCurrentCMPRes(

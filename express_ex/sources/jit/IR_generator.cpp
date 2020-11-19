@@ -6,10 +6,6 @@
 using namespace llvm;
 
 
-
-
-
-
 IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context){
     table=table_;
 }
@@ -285,12 +281,7 @@ Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
 
 void IRGenerator::CreateStartBRs()
 {
-    SetLoadInsertPoint();
-    CreateBr(getCalcBlock());
-    SetCalcInsertPoint();
-    CreateBr(getStoreBlock());
-    //SetStoreInsertPoint();
-    SetLastInsertPoint();
+    CreateMidleBRs();
 }
 
 void IRGenerator::CreateMidleBRs()
@@ -306,19 +297,11 @@ void IRGenerator::CreateMidleBRs()
     SetLastInsertPoint();
 }
 
-
-
-
-
 void * IRGenerator::AddBufferAlloca(Buffer *s)
 {
     buffer_list_.push_back(s);
     return nullptr;
 }
-
-
-
-
 
 void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr) //atavism
 {
