@@ -1,35 +1,97 @@
 #ifndef CALL_H_
 #define CALL_H_
 
-class Call :public Variable
-{
+class TailCallDirective:public Variable{
 public:
-    Call(Body* body, stack<Variable*> args ={}) :Variable() {
+    TailCallDirective(stack<Variable*> args):Variable(){
+        args_ = args;
+    }
+
+    ~TailCallDirective(){
+
+    }
+
+    virtual void visitEnter(stack<Variable*>* visitorStack) override{
+        visitorStack->push(this);
+        for(int i= (args_.size() - 1); i >= 0; i--){
+            visitorStack->push(args_[i]);
+        }
+        is_visited_ = true;
+    };
+
+    virtual NodeTypeEn getNodeType(){ return   NodeTypeEn::tailCall; }
+
+private:
+    stack<Variable*>  args_;
+};
+
+
+
+
+class CallRecursiveFunction: public Variable{
+public:
+    CallRecursiveFunction(Body* body, stack<Variable*> args ={}):Variable(){
         body_ = body;
         args_ = args;
 
-        auto ret = body_->getRet()[0];
+        auto ret = body_->getRet().front();
 
-        level_       = ret->getLevel();
-        type_        = ret->getType();
-        dsType_      = ret->getDSType();
-        length_      = ret->getLength();
+        level_ = ret->getLevel();
+        type_ = ret->getType();
+        dsType_ = ret->getDSType();
+        length_ = ret->getLength();
 
-        if (isConst(ret)) {
-            binaryValue_ = ret->getBinaryValue();
-            textValue_   = ret->getTextValue();
+        if(isConst(ret)){
+            binary_value_ = ret->getBinaryValue();
+            text_value_   = ret->getTextValue();
         }
     }
-    ~Call() {}
 
-    //safe functions .external stack is used
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override {
+    ~CallRecursiveFunction(){}
+
+    virtual void visitEnter(stack<Variable*>* visitorStack) override{
+        visitorStack->push(this);
+        for(int i= (args_.size() - 1); i >= 0; i--){
+            visitorStack->push(args_[i]);
+        }
+        is_visited_ = true;
+    };
+
+    virtual NodeTypeEn getNodeType(){ return   NodeTypeEn::call; }
+private:
+    stack<Variable*>  args_;
+    Body* body_ = nullptr;
+};
+
+
+class Call: public Variable{
+public:
+    Call(Body* body, stack<Variable*> args ={}): Variable(){
+        body_ = body;
+        args_ = args;
+
+        auto ret = body_->getRet().front();
+
+        level_ = ret->getLevel();
+        type_ = ret->getType();
+        dsType_ = ret->getDSType();
+        length_ = ret->getLength();
+
+        if(isConst(ret)){
+            binary_value_ = ret->getBinaryValue();
+            text_value_ = ret->getTextValue();
+        }
+    }
+    ~Call(){}
+
+    // safe functions .external stack is used
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override{
         commoMmarkUnusedVisitEnter(visitorStack);
-        //for (int i = (args.size() - 1); i >= 0; i--) {
+        // for (int i = (args.size() - 1); i >= 0; i--) {
         //    visitorStack->push(args[i]);
         //    //args[i]->setBufferLength(this);
         //}
-        auto ret = body_->getRet()[0];
+        auto ret = body_->getRet().front();
         visitorStack->push(ret);
         ret->setBufferLength(this);
 
@@ -45,31 +107,32 @@ public:
         is_visited = true;
     }
     */
-    virtual void genBlocksVisitExit  (TableGenContext*  context) override {
+    virtual void genBlocksVisitExit(TableGenContext* context) override{
 
         body_->genTable(context);
-        uniqueName_ =(isLargeArr(this) ? "fb" : "fs") + std::to_string(context->getUniqueIndex());
+        uniqueName_ = (isLargeArr(this) ? "fb" : "fs") +
+            std::to_string(context->getUniqueIndex());
         context->setUint(this);
         is_visited_ = false;
     };
 
-    virtual void visitEnter(stack<Variable*>* visitorStack) override {
+    virtual void visitEnter(stack<Variable*>* visitorStack) override{
         visitorStack->push(this);
-        for (int i= (args_.size() - 1); i >= 0; i--) {
+        for(int i = (args_.size() - 1); i >= 0; i--){
             visitorStack->push(args_[i]);
         }
         is_visited_ = true;
     };
 
-    virtual void genBodyVisitExit(BodyGenContext * context) override {
+    virtual void genBodyVisitExit(BodyGenContext* context) override{
 
         stack<Variable*> a;
-        for (auto &i : args_)
+        for(auto& i : args_)
             a.push(context->pop());
 
-        Body * b = body_;
+        Body* b = body_;
 
-        if (!context->isPrototype())
+        if(!context->isPrototype())
             b = body_->genBodyByPrototype(a, false);
 
         auto call = new Call(b, a);
@@ -78,42 +141,42 @@ public:
         is_visited_ = false;
     }
 
-
-
-    virtual void printVisitExit(stack<std::string>* Stack) override {
+    virtual void printVisitExit(stack<std::string>* Stack) override{
 
         llvm::outs() << body_->print("    ") << "\n";
 
-        for (auto& i : args_)
-            auto x=Stack->pop();
+        for(auto& i : args_)
+            auto x = Stack->pop();
 
         Stack->push(body_->getName() + ".ret." + toString(type_));
         is_visited_ = false;
     };
 
-    virtual void reduceLinksVisitExit() override {
-        is_visited_ = false;
+    
+
+    virtual void reduceLinksVisitExit() override{ is_visited_ = false; }
+
+    virtual string printUint(){
+
+        return uniqueName_ + " = assignCall(" +
+            body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")";
     }
+    virtual void setupIR(IRGenerator& builder) override;
 
-
-    virtual string printUint() {
-
-        return uniqueName_ + " = assignCall(" + body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")";
-    }
-    virtual void setupIR(IRGenerator & builder)override;
-
-    virtual Variable*   getAssignedVal(bool deep = false)  override {
-        if (is_buffered & deep) {
+    virtual Variable* getAssignedVal(bool deep = false) override{
+        if(is_buffered & deep){
             body_->getRet()[0]->getAssignedVal(true)->setBuffered();
         }
 
         return body_->getRet()[0]->getAssignedVal(deep);
     }
-    //virtual Variable*   getAssignedVal(bool deep = false)  override { return this; }
-private:
-    stack<Variable*>  args_;
-    Body*             body_ = nullptr;
 
+    virtual NodeTypeEn getNodeType(){ return   NodeTypeEn::call; }
+    // virtual Variable*   getAssignedVal(bool deep = false)  override { return
+    // this; }
+private:
+    stack<Variable*> args_;
+    Body* body_ = nullptr;
 };
 
 

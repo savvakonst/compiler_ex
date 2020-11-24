@@ -89,8 +89,11 @@ private:
 
     GarbageContainer * garbage_contaiiner_;
 
+
+    bool is_opeator_ = false;
     bool is_tail_callable_ = false;
     bool is_prototype_ = false;
+
     std::string name_="main";
     std::vector<Line*> lines_;
 

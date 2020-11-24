@@ -20,9 +20,9 @@
 
 
 void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
-	if (isConvolve(opCode)) {
-		auto smallArray = operand[1];
-		auto shift = shiftParameter;
+	if (isConvolve(op_code_)) {
+		auto smallArray = operand_[1];
+		auto shift = shift_parameter_;
 
 		int64_t len = smallArray->getLength();
 		int64_t le  = len / 2;
@@ -32,26 +32,26 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 		auto right  =this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) + ri;
 
 
-		operand[0]->getAssignedVal(true)->setBuffered();
-		operand[0]->setBufferLength(left, right);
+		operand_[0]->getAssignedVal(true)->setBuffered();
+		operand_[0]->setBufferLength(left, right);
 	}
-	else if (isShift(opCode)) {
-		auto shift  = shiftParameter;
+	else if (isShift(op_code_)) {
+		auto shift  = shift_parameter_;
 
 		auto left   = this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) ;
 		auto right  = this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) ;
 
-		operand[0]->getAssignedVal(true)->setBuffered();
-		operand[0]->setBufferLength(left, right);
+		operand_[0]->getAssignedVal(true)->setBuffered();
+		operand_[0]->setBufferLength(left, right);
 	}
-	else if (isDecimation(opCode)) {
+	else if (isDecimation(op_code_)) {
 		//print_error("decimation operation is not supported yet");
 
-		operand[0]->getAssignedVal(true)->setBuffered();
-		operand[0]->setBufferLength(this);
+		operand_[0]->getAssignedVal(true)->setBuffered();
+		operand_[0]->setBufferLength(this);
 	}
 	else {
-		for (auto i : operand) {
+		for (auto i : operand_) {
 			i->setBufferLength(this);
 		}
 	}
@@ -59,37 +59,37 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 
 
 void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
-	if (isArithetic(opCode)) {
-		visitorStack->push(operand[1]);
-		visitorStack->push(operand[0]);
+	if (isArithetic(op_code_)) {
+		visitorStack->push(operand_[1]);
+		visitorStack->push(operand_[0]);
 	}
-	else if (isComparsion(opCode)) {
-		visitorStack->push(operand[1]);
-		visitorStack->push(operand[0]);
+	else if (isComparsion(op_code_)) {
+		visitorStack->push(operand_[1]);
+		visitorStack->push(operand_[0]);
 	}
-	else if (isInv(opCode)) {
-		visitorStack->push(operand[0]);
+	else if (isInv(op_code_)) {
+		visitorStack->push(operand_[0]);
 	}
-	else if (isTypeConv(opCode)) {
-		visitorStack->push(operand[0]);
+	else if (isTypeConv(op_code_)) {
+		visitorStack->push(operand_[0]);
 	}
-	else if (isBuiltInFunc(opCode)) {
-		visitorStack->push(operand[0]);
+	else if (isBuiltInFunc(op_code_)) {
+		visitorStack->push(operand_[0]);
 	}
-	else if (isSelect(opCode)) {
-		visitorStack->push(operand[2]);
-		visitorStack->push(operand[1]);
-		visitorStack->push(operand[0]);
+	else if (isSelect(op_code_)) {
+		visitorStack->push(operand_[2]);
+		visitorStack->push(operand_[1]);
+		visitorStack->push(operand_[0]);
 	}
-	else if (isConvolve(opCode)) {
-		visitorStack->push(operand[1]);
-		visitorStack->push(operand[0]);
+	else if (isConvolve(op_code_)) {
+		visitorStack->push(operand_[1]);
+		visitorStack->push(operand_[0]);
 	}
-	else if (isSlice(opCode)) {
-		visitorStack->push(operand[0]);
+	else if (isSlice(op_code_)) {
+		visitorStack->push(operand_[0]);
 	}
-	else if (isSmallArrayDef(opCode)) {
-		for (auto i = operand.rbegin(); i != operand.rend(); i++)
+	else if (isSmallArrayDef(op_code_)) {
+		for (auto i = operand_.rbegin(); i != operand_.rend(); i++)
 			visitorStack->push(*i);
 	}
 	else {
@@ -113,21 +113,21 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 
 	PRMTypesEn RPMType=JITType2PRMType(type_);
 
-	if (isSelect(opCode)	 || 
-		isArithetic(opCode)  || 
-		isComparsion(opCode) ||
-		isBuiltInFunc(opCode)||
-		isSelect(opCode)	 ||
-		isConvolve(opCode)) {
+	if (isSelect(op_code_)	 || 
+		isArithetic(op_code_)  || 
+		isComparsion(op_code_) ||
+		isBuiltInFunc(op_code_)||
+		isSelect(op_code_)	 ||
+		isConvolve(op_code_)) {
 
 		std::vector<SyncParameter *> p_list;
-		for (auto i : operand) p_list.push_back(i->getAssignedVal(true)->getPatameter());
+		for (auto i : operand_) p_list.push_back(i->getAssignedVal(true)->getPatameter());
 		parameter_=intersection(p_list, RPMType, "");
 	}
-	else if (isTypeConv(opCode) ) {
-		parameter_ =retyping(operand.front()->getAssignedVal(true)->getPatameter(), RPMType, "");
+	else if (isTypeConv(op_code_) ) {
+		parameter_ =retyping(operand_.front()->getAssignedVal(true)->getPatameter(), RPMType, "");
 	}
-	else if (isSlice(opCode)) {
+	else if (isSlice(op_code_)) {
 
 	}
 
@@ -144,8 +144,8 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 
 void Operation::reduceLinksVisitExit()
 {
-	//for (size_t i=0; i<operand.size();i++)
-	//	operand[i]->getAssignedVal(true);
+	//for (size_t i=0; i<operand_.size();i++)
+	//	operand_[i]->getAssignedVal(true);
 	is_visited_ = false;
 }
 
@@ -170,12 +170,12 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 
 	is_visited_ = false;
 	Variable* ret = nullptr;
-	if (isArithetic(opCode)) {
+	if (isArithetic(op_code_)) {
 		auto op2 = context->pop();
 		auto op1 = context->pop();
 		
 		if ((op2 == nullptr) || (op1 == nullptr)) {
-			auto txtOperation = txtArOp(opCode);
+			auto txtOperation = txtArOp(op_code_);
 			print_error(
 				txtOperation + " "
 				"left operand:" + ((op1 != nullptr) ? "a"  : "unknown") + ".  " +
@@ -189,15 +189,15 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 			targetType, 
 			newTypeConvOp(garbage_container, targetType, op1), 
 			newTypeConvOp(garbage_container, targetType, op2),  
-			(OpCodeEn)(int)opCode);
+			(OpCodeEn)(int)op_code_);
 
 	}
-	else if (isComparsion(opCode)) {
+	else if (isComparsion(op_code_)) {
 		auto op2 = context->pop();
 		auto op1 = context->pop();
 
 		if ((op2 == nullptr) || (op1 == nullptr)) {
-			auto txtOperation =txtCompOp(opCode);
+			auto txtOperation =txtCompOp(op_code_);
 			print_error(
 				txtOperation + " "
 				"left operand:" + ((op1 != nullptr) ? "a" : "unknown") + ".  " +
@@ -211,26 +211,26 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 			targetType,
 			newTypeConvOp(garbage_container, targetType, op1),
 			newTypeConvOp(garbage_container, targetType, op2),
-			(OpCodeEn)(int)opCode);
+			(OpCodeEn)(int)op_code_);
 
 	}
-	else if (isInv(opCode)) {
+	else if (isInv(op_code_)) {
 		auto op1 = context->pop();
 		ret = newInvOperation(garbage_container, op1);
 	}
-	else if (isTypeConv(opCode)) {
+	else if (isTypeConv(op_code_)) {
 		auto op1 = context->pop();
 		ret = newTypeConvOp(garbage_container, type_, op1);
 	}
-	else if (isBuiltInFunc(opCode)) {
+	else if (isBuiltInFunc(op_code_)) {
 		auto * op1 = context->pop();
 		if (TypeEn::float_jty > op1->getType()) {
 			op1 = newTypeConvOp(garbage_container, TypeEn::float_jty, op1);
 		}
 		TypeEn targetType = op1->getType();
-		ret = newBuiltInFuncOperation(garbage_container, targetType, op1 , opCode);
+		ret = newBuiltInFuncOperation(garbage_container, targetType, op1 , op_code_);
 	}
-	else if (isSelect(opCode)) {
+	else if (isSelect(op_code_)) {
 		auto op3 = context->pop();
 		auto op2 = context->pop();
 		auto op1 = context->pop();
@@ -242,7 +242,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 			newTypeConvOp(garbage_container, targetType, op2), 
 			newTypeConvOp(garbage_container, targetType, op3));
 	}
-	else if(isConvolve(opCode)){
+	else if(isConvolve(op_code_)){
 		auto op2 = context->pop();
 		auto op1 = context->pop();
 		TypeEn targetType = maxTypeVar(op1, op2)->getType();
@@ -251,23 +251,23 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 			targetType, 
 			newTypeConvOp(garbage_container, targetType, op1), 
 			newTypeConvOp(garbage_container, targetType, op2), 
-			shiftParameter, 
-			opCode);
+			shift_parameter_, 
+			op_code_);
 	}
-	else if (isSlice(opCode)) {
+	else if (isSlice(op_code_)) {
 		auto op1 = context->pop();
-		ret =newSliceOp(garbage_container, op1,getSliceParameter(),opCode);
+		ret =newSliceOp(garbage_container, op1,getSliceParameter(),op_code_);
 	}
-	else if (isStoreToBuffer(opCode)) {
+	else if (isStoreToBuffer(op_code_)) {
 		print_error("visitExitTxt StoreToBuffer unknown command .");
 	}
-	else if (isSmallArrayDef(opCode)) {
-		size_t size = operand.size();
+	else if (isSmallArrayDef(op_code_)) {
+		size_t size = operand_.size();
 		stack<Variable*> op;
 		for (size_t i = 0; i < size; i++)
 			op.push(context->pop());
 		std::reverse(op.begin(), op.end());
-		ret = newSmallArrayDefOp(garbage_container, op, opCode);
+		ret = newSmallArrayDefOp(garbage_container, op, op_code_);
 	}
 	else {
 		print_error("visitExit unknown command . In line : " +std::to_string(context->getNamespace().size() ) );
@@ -280,42 +280,42 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 void Operation::printVisitExit(stack<std::string>* Stack) {
 	is_visited_ = false;
 	std::string txtOperation = "";
-#define OP(i) (operand[(i)]->getUniqueName() )
+#define OP(i) (operand_[(i)]->getUniqueName() )
 
-	if (isArithetic(opCode)) {
+	if (isArithetic(op_code_)) {
 		auto op2 = Stack->pop();auto op1 = Stack->pop();
-		Stack->push(checkBuffer("(" + op1 + txtArOp(opCode) + op2 + ")" ));
+		Stack->push(checkBuffer("(" + op1 + txtArOp(op_code_) + op2 + ")" ));
 	}
-	else if (isComparsion(opCode)) {
+	else if (isComparsion(op_code_)) {
 		auto op2 = Stack->pop(); auto op1 = Stack->pop();
-		Stack->push(checkBuffer("(" + op1 + txtCompOp(opCode) + op2 + ")"));
+		Stack->push(checkBuffer("(" + op1 + txtCompOp(op_code_) + op2 + ")"));
 	}
-	else if (isInv(opCode)) {
+	else if (isInv(op_code_)) {
 		Stack->push(checkBuffer("(-" + Stack->pop() + ")"));
 	}
-	else if (isTypeConv(opCode)) {
-		Stack->push(checkBuffer(txtTConOp(opCode) + "(" + Stack->pop() + ")"));
+	else if (isTypeConv(op_code_)) {
+		Stack->push(checkBuffer(txtTConOp(op_code_) + "(" + Stack->pop() + ")"));
 	}
-	else if (isBuiltInFunc(opCode)) {
-		txtOperation = arBuiltIn[((int)opCode - (int)TypeOpCodeEn::builtInFunc)];
-		Stack->push(checkBuffer(txtBuiltInOp(opCode) + "(" + Stack->pop() + ")"));
+	else if (isBuiltInFunc(op_code_)) {
+		txtOperation = arBuiltIn[((int)op_code_ - (int)TypeOpCodeEn::builtInFunc)];
+		Stack->push(checkBuffer(txtBuiltInOp(op_code_) + "(" + Stack->pop() + ")"));
 	}
-	else if (isSelect(opCode)) {
+	else if (isSelect(op_code_)) {
 		auto op3 = Stack->pop();auto op2 = Stack->pop();auto op1 = Stack->pop();
 		Stack->push(checkBuffer("(" + op1 +"? "+ op2 + ": "+ op3 + ")"));
 	}
-	else if (isConvolve(opCode)) {
+	else if (isConvolve(op_code_)) {
 		auto op2 = Stack->pop();auto op1 = Stack->pop();
-		Stack->push(checkBuffer("convolve(" + op1 + ", " + op2 + "," + std::to_string(shiftParameter) + ")"));
+		Stack->push(checkBuffer("convolve(" + op1 + ", " + op2 + "," + std::to_string(shift_parameter_) + ")"));
 	}
-	else if (isSlice(opCode)) {
-		Stack->push(checkBuffer(txtSliceOp(opCode) +"(" + Stack->pop() + ", " + std::to_string(getSliceParameter()) + ")"));
+	else if (isSlice(op_code_)) {
+		Stack->push(checkBuffer(txtSliceOp(op_code_) +"(" + Stack->pop() + ", " + std::to_string(getSliceParameter()) + ")"));
 	}
-	else if (isStoreToBuffer(opCode)) {
+	else if (isStoreToBuffer(op_code_)) {
 		print_error("visitExitTxt StoreToBuffer unknown command .");
 	}
-	else if (isSmallArrayDef(opCode)) {
-		size_t size = operand.size();
+	else if (isSmallArrayDef(op_code_)) {
+		size_t size = operand_.size();
 		stack<string > op;
 
 		for (size_t i = 0; i < size; i++)
@@ -326,7 +326,7 @@ void Operation::printVisitExit(stack<std::string>* Stack) {
 		for (auto &i : op)
 			out += i + ", ";
 
-		if (opCode == OpCodeEn::smallArrayDef)
+		if (op_code_ == OpCodeEn::smallArrayDef)
 			Stack->push("[" + out + "]");
 		else
 			Stack->push("range[" + out + "]");
@@ -343,23 +343,23 @@ string Operation::printUint() {
 	std::string txtOperation = "";
 	std::string uName = getUniqueName();
 
-#define OP(i) (operand[(i)]->getAssignedVal(true)->getUniqueName() )
+#define OP(i) (operand_[(i)]->getAssignedVal(true)->getUniqueName() )
 
-	if (isArithetic(opCode))          return uName + " = " + OP(0) + txtArOp(opCode) + OP(1);
-	if (isComparsion(opCode))          return uName + " = " + OP(0) + txtCompOp(opCode) + OP(1);
-	else if (isInv(opCode))           return uName + " = " + "( -" + OP(0) + ")";
-	else if (isTypeConv(opCode))      return uName + " = " + txtTConOp(opCode) + "( " + OP(0) + ")";
-	else if (isBuiltInFunc(opCode))   return uName + " = " + txtBuiltInOp(opCode) + "( " + OP(0) + ")";
-	else if (isSelect(opCode))        return uName + " = " + OP(0) + "? " + OP(1) + ": " + OP(2);
-	else if (isConvolve(opCode))      return uName + " = convolve( " + OP(0) + ", " + OP(1) + ", " + std::to_string(shiftParameter) + ")";
-	else if (isSlice(opCode))         return uName + " = " + txtSliceOp(opCode) + "( " + OP(0) + ", " + std::to_string(getSliceParameter()) + ")";
-	else if (isStoreToBuffer(opCode)) print_error("visitExitTxt StoreToBuffer unknown command .");
-	else if (isSmallArrayDef(opCode)) {
+	if (isArithetic(op_code_))          return uName + " = " + OP(0) + txtArOp(op_code_) + OP(1);
+	if (isComparsion(op_code_))          return uName + " = " + OP(0) + txtCompOp(op_code_) + OP(1);
+	else if (isInv(op_code_))           return uName + " = " + "( -" + OP(0) + ")";
+	else if (isTypeConv(op_code_))      return uName + " = " + txtTConOp(op_code_) + "( " + OP(0) + ")";
+	else if (isBuiltInFunc(op_code_))   return uName + " = " + txtBuiltInOp(op_code_) + "( " + OP(0) + ")";
+	else if (isSelect(op_code_))        return uName + " = " + OP(0) + "? " + OP(1) + ": " + OP(2);
+	else if (isConvolve(op_code_))      return uName + " = convolve( " + OP(0) + ", " + OP(1) + ", " + std::to_string(shift_parameter_) + ")";
+	else if (isSlice(op_code_))         return uName + " = " + txtSliceOp(op_code_) + "( " + OP(0) + ", " + std::to_string(getSliceParameter()) + ")";
+	else if (isStoreToBuffer(op_code_)) print_error("visitExitTxt StoreToBuffer unknown command .");
+	else if (isSmallArrayDef(op_code_)) {
 		std::string out="";
-		for (auto &i : operand)
+		for (auto &i : operand_)
 			out += i->getAssignedVal(true)->getUniqueName() + ", ";
 	
-		if (opCode == OpCodeEn::smallArrayDef)
+		if (op_code_ == OpCodeEn::smallArrayDef)
 			return "[" + out + "]";
 		else
 			return "range[" + out + "]";
@@ -374,59 +374,59 @@ string Operation::printUint() {
 
 void Operation::calculate(){
 
-#define OP(i) (operand[(i)]->getAssignedVal(true) )
+#define OP(i) (operand_[(i)]->getAssignedVal(true) )
 
-	if (isArithetic(opCode)) {
+	if (isArithetic(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 
 		if (aOperand->isArray() && bOperand->isArray())
-			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
+			bufferPtr_=calcAritheticSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
 		else if (aOperand->isArray())
-			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
+			bufferPtr_=calcAritheticSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
 		else
-			bufferPtr_=calcAritheticSmallArray(opCode, type_, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
+			bufferPtr_=calcAritheticSmallArray(op_code_, type_, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
 	}
-	if (isComparsion(opCode)) {
+	if (isComparsion(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 		auto localType=aOperand->getType();
 		if (aOperand->isArray() && bOperand->isArray())
-			bufferPtr_=calcComparsionSmallArray(opCode, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
+			bufferPtr_=calcComparsionSmallArray(op_code_, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
 		else if (aOperand->isArray())
-			bufferPtr_=calcComparsionSmallArray(opCode, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
+			bufferPtr_=calcComparsionSmallArray(op_code_, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
 		else
-			bufferPtr_=calcComparsionSmallArray(opCode, localType, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
+			bufferPtr_=calcComparsionSmallArray(op_code_, localType, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
 	}
-	else if (isInv(opCode))
+	else if (isInv(op_code_))
 		bufferPtr_=invAritheticSmallArray(type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
-	else if (isTypeConv(opCode))
+	else if (isTypeConv(op_code_))
 		bufferPtr_=typeConvSmallArray(type_, OP(0)->getType(), bufferPtr_, OP(0)->getBufferPtr(), length_);
-	else if (isBuiltInFunc(opCode))
-		bufferPtr_=builtInFuncSmallArray(opCode, type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
-	else if (isSelect(opCode)){
+	else if (isBuiltInFunc(op_code_))
+		bufferPtr_=builtInFuncSmallArray(op_code_, type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
+	else if (isSelect(op_code_)){
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 		auto cOperand = OP(2);
 		if (bOperand->isArray() && cOperand->isArray())
-			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length_);
+			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length_);
 		else if (bOperand->isArray())
-			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length_);
+			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length_);
 		else if (cOperand->isArray())
-			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length_);
+			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length_);
 		else 
-			bufferPtr_=calcSelectSmallArray(opCode, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length_);
+			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length_);
 	}
-	else if (isConvolve(opCode)) {
+	else if (isConvolve(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 		bufferPtr_=calcConvolveSmallArray(type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), aOperand->getLength(), bOperand->getLength());
 	}
-	else if (isSlice(opCode))         return;
-	else if (isStoreToBuffer(opCode)) return;
-	else if (isSmallArrayDef(opCode)) {
-		if (opCode == OpCodeEn::smallArrayDef)
-			bufferPtr_=calcSmallArrayDef(type_, operand);
+	else if (isSlice(op_code_))         return;
+	else if (isStoreToBuffer(op_code_)) return;
+	else if (isSmallArrayDef(op_code_)) {
+		if (op_code_ == OpCodeEn::smallArrayDef)
+			bufferPtr_=calcSmallArrayDef(type_, operand_);
 		else
 			smallArrayGen();
 	}
@@ -438,10 +438,10 @@ void Operation::calculate(){
 
 
 void Operation::smallArray() {
-	size_t argsSize = operand.size();
-	if (argsSize == 1)       smallArray(operand[0]);
-	else if (argsSize == 2)  smallArray(operand[0], operand[1]);
-	else if (argsSize == 3)  smallArray(operand[0], operand[1], operand[2]);
+	size_t argsSize = operand_.size();
+	if (argsSize == 1)       smallArray(operand_[0]);
+	else if (argsSize == 2)  smallArray(operand_[0], operand_[1]);
+	else if (argsSize == 3)  smallArray(operand_[0], operand_[1], operand_[2]);
 }
 
 void Operation::smallArrayGen(){

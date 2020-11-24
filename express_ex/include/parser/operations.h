@@ -12,7 +12,9 @@
 class Operation :public Variable
 {
 public:
-    Operation():Variable() { opCode = OpCodeEn::none_op;  }
+    Operation():Variable() {
+        op_code_ = OpCodeEn::none_op; 
+    }
 
     // constructor of type conversion operation or shift and decimation 
     Operation(OpCodeEn op, Variable* var, TypeEn targetType, int64_t shiftOrDecimation=0):Variable() {
@@ -21,18 +23,18 @@ public:
 
 
         if (op == OpCodeEn::shift){
-            shiftParameter=shiftOrDecimation;
+            shift_parameter_=shiftOrDecimation;
             level_ = var->getLevel() + 1;
         }
         else if (op == OpCodeEn::decimation) {
-            decimationParameter=shiftOrDecimation;
+            decimation_parameter_=shiftOrDecimation;
             level_ = var->getLevel() + 1;
         }
         else {
             level_ = var->getLevel();
         }
 
-        operand.push_back(var); 
+        operand_.push_back(var); 
     }
 
 
@@ -41,7 +43,7 @@ public:
         CommonSetup(op, maxDSVar(largeArr, smallArr));
       
         if (op == OpCodeEn::convolve) {
-            shiftParameter  =shift;
+            shift_parameter_  =shift;
             level_ = largeArr->getLevel()+1;
         }else {
             print_error("unknown convolve op");
@@ -54,51 +56,58 @@ public:
         else
             length_ = maxInt(largeArr->getLength(), smallArr->getLength());
         
-        shiftParameter = shift;
+        shift_parameter_ = shift;
 
-        operand.push_back(largeArr);
-        operand.push_back(smallArr);
+        operand_.push_back(largeArr);
+        operand_.push_back(smallArr);
     }
 
     // constructor of arithetic, logic or comparsion operation 
     Operation(OpCodeEn op, Variable* var1, Variable* var2) :Variable() {
         CommonSetup(op, maxDSVar(var1, var2));
 
-        type_  = isComparsion(op)? TypeEn::int1_jty : maxTypeVar(var1, var2)->getType();
+        type_  = maxTypeVar(var1, var2)->getType();
+        type_  = isComparsion(op) && !isUnknownTy(type_) ? TypeEn::int1_jty : type_;
+
         level_ = maxLevelVar(var1, var2)->getLevel();
 
 
-        operand.push_back(var1);
-        operand.push_back(var2);
+        operand_.push_back(var1);
+        operand_.push_back(var2);
 
-        for (auto i : operand)
+        for (auto i : operand_)
             if (i->getLevel() < level_) i->getAssignedVal(true)->setBuffered();
     }
 
     // constructor of trenary operation 
-    Operation(OpCodeEn op, Variable* var1, Variable* var2, Variable* var3, TypeEn targetType) :Variable() {
+    Operation(OpCodeEn op, Variable* var1, Variable* var2, Variable* var3, TypeEn targetType, bool rec_call = false) :Variable() {
         CommonSetup(op, maxDSVar(var1, var2));
         type_ = targetType;
         level_ = maxLevelVar(maxLevelVar(var1, var2), var3)->getLevel();
 
-        operand.push_back(var1);
-        operand.push_back(var2);
-        operand.push_back(var3);
+        operand_.push_back(var1);
+        operand_.push_back(var2);
+        operand_.push_back(var3);
 
-        for (auto i : operand)
+        contain_rec_call_ = rec_call;
+
+        if(rec_call)
+            print_error("contain_rec_call_");
+
+        for (auto i : operand_)
             if (i->getLevel() < level_) i->getAssignedVal(true)->setBuffered();
     }
 
     Operation(OpCodeEn op, stack<Variable*> &args, TypeEn targetType) :Variable() {
 
         size_t argsSize=args.size();
-        opCode = op;
+        op_code_ = op;
 
         if (argsSize < 1) print_error("range() - invalid signature");
 
         if (op==OpCodeEn::smallArrayDef) {
             for (auto &i : args)
-                operand.push_back(i);
+                operand_.push_back(i);
 
             type_ = targetType;
             dsType_ = DataStructTypeEn::smallArr_dsty;
@@ -108,7 +117,7 @@ public:
         }
         else if (op == OpCodeEn::smallArrayRange) {
             for (auto &i : args)
-                operand.push_back(i);
+                operand_.push_back(i);
 
             if (isUnknownTy(targetType))
                 return;
@@ -118,24 +127,27 @@ public:
 
             if (argsSize > 3)print_error("range( .. ) -invalid signature");
         }
+
     }
 
     void CommonSetup(OpCodeEn op, Variable* var) {
-        opCode = op;
+        op_code_ = op;
         dsType_ = var->getDSType();
         length_ = var->getLength();
     }
 
     int64_t getSliceParameter() {
-        if (opCode == OpCodeEn::shift)
-            return shiftParameter;
-        else if (opCode == OpCodeEn::decimation)
-            return decimationParameter;
+        if (op_code_ == OpCodeEn::shift)
+            return shift_parameter_;
+        else if (op_code_ == OpCodeEn::decimation)
+            return decimation_parameter_;
         else 
             print_error("getSliceParameter");
         return -1;
     }
 
+
+    virtual NodeTypeEn getNodeType(){ return  contain_rec_call_ ? NodeTypeEn::tailCallSelect :  NodeTypeEn::operation; }
 
     //safe functions .external stack is used
     void         visitEnterSetupBuffer(stack<Variable*>* visitorStack);
@@ -167,15 +179,16 @@ private:
     void smallArray(Variable* arg1);
 
 
-    std::vector<Variable*> operand;
-    std::vector<Variable*> simplified_operand;
+    std::vector<Variable*> operand_;
+    std::vector<Variable*> simplified_operand_;
 
-    OpCodeEn opCode = OpCodeEn::none_op;
+    OpCodeEn op_code_ = OpCodeEn::none_op;
 
     // convolve params
-    int64_t shiftParameter = 0; 
-    int64_t decimationParameter = 0;
+    int64_t shift_parameter_ = 0; 
+    int64_t decimation_parameter_ = 0;
 
+    bool contain_rec_call_ = false;
 
     std::string arSym[14]    = { "+","+.","-","-.","*","*.","/","/","/.","%","%","%.","**","**." };
     std::string arComp[16]   = { "==","!=","/","/","/","/",    ">",">=","<","<=", 
@@ -202,9 +215,9 @@ Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targ
 Variable* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
 Variable* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, uint32_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
 Variable* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1);
-Variable* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3);
+Variable* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3, bool rec_call = false);
 Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
 Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, int64_t intVal, OpCodeEn uTypeOp);
-Variable* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Variable*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool isPrototype=false);
+Variable* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Variable*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool isPrototype = false);
 
 #endif

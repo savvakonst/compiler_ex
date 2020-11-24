@@ -195,7 +195,7 @@ Value * IRGenerator::CreatePositionalOffset( std::string name,int64_t startValue
 {
     Value* ret=CreatePositionalOffsetAlloca("", startValue);
     SetLoadInsertPoint();
-    currentOffsetValue=CreateLoad(ret, "offset" );
+    current_offset_value_=CreateLoad(ret, "offset" );
     SetCalcInsertPoint();
     return ret;
 }
@@ -237,8 +237,8 @@ Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, bool isVolatil
 
 llvm::Value * IRGenerator::CreateLoadOffset( const std::string & name)
 {
-    currentOffsetValue =CreateLoad(current_offset_value_alloca_, name);
-    return currentOffsetValue;
+    current_offset_value_ =CreateLoad(current_offset_value_alloca_, name);
+    return current_offset_value_;
 }
 
 void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * ptr, bool isVolatile )

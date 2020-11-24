@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////
+/// 
+/// if you want declare some variable for debugging purposes, you should name it like this _debug_var_<name of variable>.
+/// it will allow you to easily find debug variables before release to remove them.
+/// 
+////////////////////////////////////////////////////////////////
+
 
 #include "operations.h"
 #include <string>
@@ -6,19 +13,21 @@
 
 //void print_error(std::string content);
 
-Variable* newInvOperation(GarbageContainer* garbageContainer, Variable* arg1) {
+Variable* newInvOperation(GarbageContainer* garbage_container, Variable* arg) {
 	print_error("inverse operation is not supported yet");
-	return arg1;
+	return arg;
 }
 
-Variable* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1)
+Variable* newTypeConvOp(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg)
 {
-	//arg1 = arg1->getAssignedVal(true);
+	const TypeEn arg_type = arg->getType();
 	Variable * ret_val = nullptr;
-#define OP_LV2(T1,T2)   	 *((T1*)(&V)) = (T1 )arg1->getConvTypeVal<T2>()
+
+
+#define OP_LV2(T1,T2)   	 *((T1*)(&V)) = (T1 )arg->getConvTypeVal<T2>()
 #define CONV_OP(depend,target) case (depend):  target ;  break
 
-#define OP_LV1(T)   		switch (arg1->getType())  \
+#define OP_LV1(T)   		switch (arg_type)  \
 	{   \
 		CONV_OP(TypeEn::double_jty, OP_LV2(T,double)   ); \
 		CONV_OP(TypeEn::float_jty,  OP_LV2(T,float)    ); \
@@ -28,10 +37,9 @@ Variable* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, V
 		CONV_OP(TypeEn::int8_jty,   OP_LV2(T,int8_t)   ); \
 		CONV_OP(TypeEn::int1_jty,   OP_LV2(T,bool)     ); \
 	} 
-
-	if (!isUnknownTy(arg1) && isConst(arg1)  ) {
+	if (!isUnknownTy(arg_type) && isConst(arg) ) {
 		uint64_t V = 0;
-		switch (targetType)
+		switch (target_type)
 		{
 			CONV_OP(TypeEn::double_jty, OP_LV1(double));
 			CONV_OP(TypeEn::float_jty, OP_LV1(float));
@@ -41,85 +49,83 @@ Variable* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, V
 			CONV_OP(TypeEn::int8_jty, OP_LV1(int8_t));
 			CONV_OP(TypeEn::int1_jty, OP_LV1(bool));
 		}
-		ret_val = new Variable(V, targetType);
-
-		return garbageContainer->add(ret_val);
+		ret_val = new Variable(V, target_type);
+		return garbage_container->add(ret_val);
 	}
 #undef CONV_OP
 #undef OP
 
-	if (targetType == arg1->getType()) {
-		return arg1; 
+	if ( (target_type == arg_type) || isUnknownTy(arg_type) ) {
+		return arg; 
 	}
-	else if (isFloating(targetType) && isFloating(arg1)) {
-		if (targetType < arg1)
-			ret_val= new Operation(OpCodeEn::fptrunc, arg1, targetType);
+	else if (isFloating(target_type) && isFloating(arg_type)) {
+		if (target_type < arg_type)
+			ret_val= new Operation(OpCodeEn::fptrunc, arg, target_type);
 		else
-			ret_val= new Operation(OpCodeEn::fpext, arg1, targetType);
+			ret_val= new Operation(OpCodeEn::fpext, arg, target_type);
 	}
-	else if (isFloating(targetType) && isInteger(arg1)) {
-		ret_val= new Operation(OpCodeEn::sitofp, arg1, targetType);;
+	else if (isFloating(target_type) && isInteger(arg_type)) {
+		ret_val= new Operation(OpCodeEn::sitofp, arg, target_type);;
 	}
-	else if (isInteger(targetType) && isFloating(arg1)) {
-		ret_val= new Operation(OpCodeEn::fptosi, arg1, targetType);
+	else if (isInteger(target_type) && isFloating(arg_type)) {
+		ret_val= new Operation(OpCodeEn::fptosi, arg, target_type);
 	}
-	else if (isInteger(targetType) && isInteger(arg1))
+	else if (isInteger(target_type) && isInteger(arg_type))
 	{
-		if (targetType < arg1)
-			ret_val= new Operation(OpCodeEn::trunc, arg1, targetType);
+		if (target_type < arg_type)
+			ret_val= new Operation(OpCodeEn::trunc, arg, target_type);
 		else
-			ret_val= new Operation(OpCodeEn::sext, arg1, targetType);
+			ret_val= new Operation(OpCodeEn::sext, arg, target_type);
 	}
 	else { 
 		print_error("newTypeConvOp"); 
 	}
 
-	return garbageContainer->add(ret_val);
+	return garbage_container->add(ret_val);
 }
 
 //#include "llvm/Support/raw_ostream.h"
 
-Variable* newBuiltInFuncOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg, OpCodeEn uTypeOp) {
+Variable* newBuiltInFuncOperation(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg, OpCodeEn type_op) {
 
 	Variable* var = arg;
 
 
-	if (TypeEn::float_jty > targetType) {
-		var = newTypeConvOp(garbageContainer,TypeEn::double_jty, arg);
-		targetType=var->getType();
+	if (TypeEn::float_jty > target_type) {
+		var = newTypeConvOp(garbage_container,TypeEn::double_jty, arg);
+		target_type=var->getType();
 	}
 
 
 #define CONV_OP(depend,target) case (depend):  (target) ;  break
-#define OP(T)   calcBuiltInFuncOperation<T> ( var->getConvTypeVal<T>(),uTypeOp )
-	if (isConst(var) && !isUnknownTy(targetType)) {
+#define OP(T)   calcBuiltInFuncOperation<T> ( var->getConvTypeVal<T>(),type_op )
+	if (isConst(var) && !isUnknownTy(target_type)) {
 		uint64_t V=0;
-		switch (targetType) {
+		switch (target_type) {
 			CONV_OP(TypeEn::double_jty, V =OP(double));
 			CONV_OP(TypeEn::float_jty, V =OP(float));
 		default: print_error("type is not float");
 		}
-		return garbageContainer->add(new Variable(V, targetType));
+		return garbage_container->add(new Variable(V, target_type));
 	}
 #undef CONV_OP
 #undef OP
 
-	return garbageContainer->add(new Operation(uTypeOp, var, targetType));;
+	return garbage_container->add(new Operation(type_op, var, target_type));;
 }
 
-Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp) {
+Variable* newArithmeticOperation(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg_a, Variable* arg_b, OpCodeEn type_op) {
 
 	OpCodeEn opType = OpCodeEn::add;
 	
-
-	if (!is—ompatible(arg1, arg2))
+	if (!is—ompatible(arg_a, arg_b))
 		print_error("uncompatible values");
 
 #define CONV_OP(depend,target) case (depend):  (target) ;  break
-#define OP(T)   calcArithmeticOperation<T> ( arg1->getConvTypeVal<T>(),arg2->getConvTypeVal<T>(),uTypeOp )
-	if (isConst(arg1) && isConst(arg2) && !isUnknownTy(targetType)) {
+#define OP(T)   calcArithmeticOperation<T> ( arg_a->getConvTypeVal<T>(),arg_b->getConvTypeVal<T>(),type_op )
+	if (isConst(arg_a) && isConst(arg_b) && !isUnknownTy(target_type)) {
 		uint64_t V=0;
-		switch (targetType)
+		switch (target_type)
 		{
 			CONV_OP(TypeEn::double_jty, V =OP(double));
 			CONV_OP(TypeEn::float_jty, V =OP(float));
@@ -127,30 +133,19 @@ Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targ
 			CONV_OP(TypeEn::int32_jty, V =OP(int32_t));
 			CONV_OP(TypeEn::int16_jty, V =OP(int16_t));
 			CONV_OP(TypeEn::int8_jty, V =OP(int8_t));
-			CONV_OP(TypeEn::int1_jty, print_error(" Int1_jty "));
+			CONV_OP(TypeEn::int1_jty, print_error("invalid type: Int1_jty "));
 		}
-		return garbageContainer->add(new Variable(V, targetType));
+		return garbage_container->add(new Variable(V, target_type));
 	}
 #undef CONV_OP
 #undef OP
 	
 #define CONV_OP(depend,target) case (depend):  opType=(target) ;  break
-	if (isInteger(targetType) || isUnknownTy(targetType)) {
-		/* 
-		switch (uTypeOp) 
-		{
-			CONV_OP(OpCodeEn::add, OpCodeEn::add);
-			CONV_OP(OpCodeEn::sub, OpCodeEn::sub);
-			CONV_OP(OpCodeEn::mul, OpCodeEn::mul);
-			CONV_OP(OpCodeEn::sdiv, OpCodeEn::sdiv);
-			CONV_OP(OpCodeEn::srem, OpCodeEn::srem);
-			CONV_OP(OpCodeEn::pow, OpCodeEn::pow);
-		}
-		*/
-		opType=uTypeOp;
+	if (isInteger(target_type) || isUnknownTy(target_type)) {
+		opType=type_op;
 	}
-	else if (isFloating(targetType)) {
-		switch (uTypeOp)
+	else if (isFloating(target_type)) {
+		switch (type_op)
 		{
 			CONV_OP(OpCodeEn::add, OpCodeEn::fadd);
 			CONV_OP(OpCodeEn::sub, OpCodeEn::fsub);
@@ -162,25 +157,24 @@ Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targ
 	}
 	else {
 		print_error("newArithmeticOperation - unsigned is not supported yet");
-
 	}
 #undef CONV_OP
-	return garbageContainer->add(new Operation(opType, arg1, arg2));
+	return garbage_container->add(new Operation(opType, arg_a, arg_b));
 }
 
 
-Variable* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp) {
+Variable* newComparsionOperation(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg_a, Variable* arg_b, OpCodeEn type_op) {
 
 	OpCodeEn opType = OpCodeEn::add;
 
-	if (!is—ompatible(arg1, arg2))
+	if (!is—ompatible(arg_a, arg_b))
 		print_error("uncompatible values");
 
 #define CONV_OP(depend,target) case (depend):  (target) ;  break
-#define OP(T)   calcComparsionOperation<T> ( arg1->getConvTypeVal<T>(),arg2->getConvTypeVal<T>(),uTypeOp )
-	if (isConst(arg1) && isConst(arg2) && !isUnknownTy(targetType)) {
+#define OP(T)   calcComparsionOperation<T> ( arg_a->getConvTypeVal<T>(),arg_b->getConvTypeVal<T>(),type_op )
+	if (isConst(arg_a) && isConst(arg_b) && !isUnknownTy(target_type)) {
 		uint64_t V = 0;
-		switch (targetType)
+		switch (target_type)
 		{
 			CONV_OP(TypeEn::double_jty, V =OP(double));
 			CONV_OP(TypeEn::float_jty, V =OP(float));
@@ -190,17 +184,17 @@ Variable* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targ
 			CONV_OP(TypeEn::int8_jty, V =OP(int8_t));
 			CONV_OP(TypeEn::int1_jty, print_error(" Int1_jty "));
 		}
-		return garbageContainer->add(new Variable(V, TypeEn::int1_jty));
+		return garbage_container->add(new Variable(V, TypeEn::int1_jty));
 	}
 #undef CONV_OP
 #undef OP
 
 #define CONV_OP(depend,target) case (depend):  opType=(target) ;  break
-	if (isInteger(targetType) || isUnknownTy(targetType)) {
-		opType=uTypeOp;
+	if (isInteger(target_type) || isUnknownTy(target_type)) {
+		opType=type_op;
 	}
-	else if (isFloating(targetType)) {
-		switch (uTypeOp)
+	else if (isFloating(target_type)) {
+		switch (type_op)
 		{
 			CONV_OP(OpCodeEn::eq,  OpCodeEn::oeq);
 			CONV_OP(OpCodeEn::ne,  OpCodeEn::one);
@@ -214,64 +208,70 @@ Variable* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targ
 		print_error("newComparsionOperation - unsigned is not supported yet");
 	}
 #undef CONV_OP
-	return garbageContainer->add(new Operation(opType, arg1, arg2));
+	return garbage_container->add(new Operation(opType, arg_a, arg_b));
 }
 
 
-Variable* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, uint32_t shift, OpCodeEn uTypeOp) {
+Variable* newConvolveOperation(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg_a, Variable* arg_b, uint32_t shift, OpCodeEn type_op) {
 
-	if (uTypeOp != OpCodeEn::convolve)
+	if (type_op != OpCodeEn::convolve)
 		print_error("convolve_f operation is not supported yet");
 
-	if ((isConst(arg1) || isConst(arg2) )&& !(isUnknownTy(arg1) || isUnknownTy(arg2))) {
-		return garbageContainer->add(newArithmeticOperation(garbageContainer,targetType, arg1, arg2, OpCodeEn::mul));
+	if ((isConst(arg_a) || isConst(arg_b) )&& !(isUnknownTy(arg_a) || isUnknownTy(arg_b))) {
+		return garbage_container->add(newArithmeticOperation(garbage_container,target_type, arg_a, arg_b, OpCodeEn::mul));
 	}
-	else if (isSmallArr(arg1) && isSmallArr(arg2)) {
-		return garbageContainer->add(new Operation(uTypeOp, arg1, arg2, shift));
+	else if (isSmallArr(arg_a) && isSmallArr(arg_b)) {
+		return garbage_container->add(new Operation(type_op, arg_a, arg_b, shift));
 		//print_error("convolve(SmallArr_t,SmallArr_t) - is not supported yet");
 	}
-	else if (isSmallArr(arg1) || isSmallArr(arg2)) {
-		if (isSmallArr(arg2))
-			return garbageContainer->add(new Operation(uTypeOp, arg1, arg2, shift));
+	else if (isSmallArr(arg_a) || isSmallArr(arg_b)) {
+		if (isSmallArr(arg_b))
+			return garbage_container->add(new Operation(type_op, arg_a, arg_b, shift));
 		else
-			return garbageContainer->add(new Operation(uTypeOp, arg2, arg1, shift));
+			return garbage_container->add(new Operation(type_op, arg_b, arg_a, shift));
 	}
-	else if (isLargeArr(arg1) && isLargeArr(arg2)) {
+	else if (isLargeArr(arg_a) && isLargeArr(arg_b)) {
 		print_error("convolve(LargeArr_t,LargeArr_t) - is not supported");
 	}
 
-	return garbageContainer->add(new Operation(uTypeOp, arg1, arg2));
+	return garbage_container->add(new Operation(type_op, arg_a, arg_b));
 }
 
 
-Variable* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3){
+Variable* newSelectOp(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg_a, Variable* arg_b, Variable* arg_c ,bool rec_call){
 
-	if (!is—ompatible(arg2, arg3) || !is—ompatible(arg1, arg2))
+	if (!is—ompatible(arg_b, arg_c) || !is—ompatible(arg_a, arg_b))
 		print_error("uncompatible values");
 
-	auto i1=newTypeConvOp(garbageContainer,TypeEn::int1_jty, arg1);
-	if (isConst(i1))
+
+	auto i1=newTypeConvOp(garbage_container,TypeEn::int1_jty, arg_a);
+	
+
+	if (isConst(i1) && !isUnknownTy(i1))
 		if (i1->getConvTypeVal<bool>())
-			return arg2;
+			return arg_b;
 		else
-			return arg3;
+			return arg_c;
 
-	return garbageContainer->add(new Operation(OpCodeEn::select, i1, arg2, arg3, targetType));
+	if(rec_call)
+		print_error("contain_rec_call_________");
+
+	return garbage_container->add(new Operation(OpCodeEn::select, i1, arg_b, arg_c, target_type, rec_call));
 }
 
-Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp) {
-	if (!(isConst(arg2) && isInteger(arg2)))
+Variable* newSliceOp(GarbageContainer* garbage_container, Variable* arg_a, Variable* arg_b, OpCodeEn type_op) {
+	if (!(isConst(arg_b) && isInteger(arg_b)))
 		print_error("(arr,int) - second argument must be integer consant");
-	int64_t intVal =arg2->getBinaryValue();
+	int64_t intVal =arg_b->getBinaryValue();
 
-	return garbageContainer->add(new Operation(uTypeOp, arg1, arg1->getType(), intVal));
+	return garbage_container->add(new Operation(type_op, arg_a, arg_a->getType(), intVal));
 }
 
-Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, int64_t intVal, OpCodeEn uTypeOp) {
-	return garbageContainer->add(new Operation(uTypeOp, arg1, arg1->getType(), intVal));
+Variable* newSliceOp(GarbageContainer* garbage_container, Variable* arg_a, int64_t intVal, OpCodeEn uTypeOp) {
+	return garbage_container->add(new Operation(uTypeOp, arg_a, arg_a->getType(), intVal));
 }
 
-Variable* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Variable*> &args, OpCodeEn uTypeOp, bool isPrototype) {
+Variable* newSmallArrayDefOp(GarbageContainer* garbage_container, stack<Variable*> &args, OpCodeEn type_op, bool is_prototype) {
 	if (args.empty())
 		print_error("SmallArray is empty");
 
@@ -288,17 +288,17 @@ Variable* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Variable*
 
 	TypeEn targertType =var->getType();
 	
-	if (isUnknownTy(targertType) || uTypeOp == OpCodeEn::smallArrayRange)
-		return garbageContainer->add(new Operation(uTypeOp, args, targertType));
+	if (isUnknownTy(targertType) || type_op == OpCodeEn::smallArrayRange)
+		return garbage_container->add(new Operation(type_op, args, targertType));
 
 	
-	if (isPrototype)
-		return garbageContainer->add(new Operation(OpCodeEn::smallArrayDef, args, targertType));
+	if (is_prototype)
+		return garbage_container->add(new Operation(OpCodeEn::smallArrayDef, args, targertType));
 
 	stack<Variable*> typedArgs;
 	for (auto i : args)
-		typedArgs.push(newTypeConvOp(garbageContainer,targertType, i));
+		typedArgs.push(newTypeConvOp(garbage_container,targertType, i));
 
-	return garbageContainer->add(new Operation(OpCodeEn::smallArrayDef, typedArgs, targertType));
+	return garbage_container->add(new Operation(OpCodeEn::smallArrayDef, typedArgs, targertType));
 }
 

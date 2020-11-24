@@ -161,9 +161,10 @@ enum class TypeOpCodeEn {
 enum class NodeTypeEn {
     variable,
     operation,
-    terminalLine,
     line,
-    call
+    call,
+    tailCall,
+    tailCallSelect
 };
 
 
@@ -246,8 +247,22 @@ inline std::string toString(TypeEn type)
 }
 
 
+inline std::string toString(DataStructTypeEn type){
+    std::string t = "pass";
+#define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
+    switch(type){
+        ENUM2STR(constant_dsty);
+        ENUM2STR(largeArr_dsty);
+        ENUM2STR(smallArr_dsty);
+    }
+    return t;
+#undef ENUM2STR
+}
+
+
+
 inline bool isUnknownTy (TypeEn type) { return type == TypeEn::unknown_jty; }
-inline bool isFloating  (TypeEn type) { return type >= TypeEn::float_jty; }
+inline bool isFloating  (TypeEn type) { return (type >= TypeEn::float_jty) && !isUnknownTy(type); }
 inline bool isInteger   (TypeEn type) { return type <= TypeEn::int64_jty; }
 inline bool isUInteger  (TypeEn type) { return false; }
 

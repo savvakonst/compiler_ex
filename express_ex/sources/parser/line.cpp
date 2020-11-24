@@ -14,7 +14,7 @@ bool Line::isArg() {
 }
 
 void Line::assignValue(Variable* var) {
-	assignedVal_ = var;
+	assigned_val_ = var;
 	type_ = var->getType();
 }
 
@@ -34,10 +34,10 @@ Variable * Line::getAssignedVal(bool deep)
 	if (is_arg)
 		return this;
 	else if (deep){
-		return assignedVal_->getAssignedVal(true);
+		return assigned_val_->getAssignedVal(true);
 	}
 	else {
-		return assignedVal_;
+		return assigned_val_;
 	}
 }
 
@@ -46,8 +46,8 @@ Variable * Line::getAssignedVal(bool deep)
 void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){
 	commoMmarkUnusedVisitEnter(visitorStack);
 	if (!is_arg) {
-		visitorStack->push(assignedVal_);
-		assignedVal_->setBufferLength(this);
+		visitorStack->push(assigned_val_);
+		assigned_val_->setBufferLength(this);
 	}
 	is_nused_ = false;
 }

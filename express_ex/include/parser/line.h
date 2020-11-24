@@ -14,10 +14,10 @@ public:
         names_.push_back(name);
         name_=name;
         if (isConst(var)) {
-            binaryValue_ = var->getBinaryValue();
-            textValue_   = var->getTextValue();
+            binary_value_ = var->getBinaryValue();
+            text_value_   = var->getTextValue();
         }
-        assignedVal_ = var;
+        assigned_val_ = var;
         level_       = var->getLevel();
         type_        = var->getType();
         dsType_      = var->getDSType();
@@ -39,7 +39,7 @@ public:
         //llvm::outs() <<"isLargeArr(dsty):"<< (DataStructTypeEn::largeArr_dsty==dsty)<<"\n";
         names_.push_back(name);
         name_=name;
-        linkName_=linkName;
+        link_name_=linkName;
         dsType_ = dsty;
         is_arg = true;
     }
@@ -47,7 +47,7 @@ public:
     Line(std::string name, ParameterInfo parameterInfo) {
         names_.push_back(name);
         name_       = name;
-        linkName_   = parameterInfo.parameter_name;
+        link_name_   = parameterInfo.parameter_name;
         type_       = parameterInfo.extended_info->jit_type;
         length_     = parameterInfo.extended_info->virtual_size;
         dsType_     = DataStructTypeEn::largeArr_dsty;
@@ -59,7 +59,7 @@ public:
     Line(std::string name, SyncParameter * parameter) :Variable() {
         names_.push_back(name);
         name_       = name;
-        linkName_   = parameter->getName();
+        link_name_   = parameter->getName();
         type_       = PRMType2JITType(parameter->getRPMType());
         length_     = parameter->getVirtualSize();
         dsType_     = DataStructTypeEn::largeArr_dsty;
@@ -92,8 +92,10 @@ public:
     bool isTermialLargeArray() { return isArg(); }
 
     const std::string getName(bool onlyName = false)      { return onlyName ? name_ :checkBuffer(name_); }
-    const std::string getLinkName()  { return linkName_; }
+    const std::string getLinkName()  { return link_name_; }
     //virtual Variable* getAssignedVal() { assignedVal; };
+
+    virtual NodeTypeEn getNodeType(){ return   NodeTypeEn::line; }
 
     //safe functions .external stack is used
     virtual void visitEnter (stack<Variable*>* visitorStack)                                            override;
@@ -106,7 +108,7 @@ public:
     virtual void setupIR(IRGenerator & builder)                                                         override;
     virtual void reduceLinksVisitExit() override { is_visited_ = false; }
 
-    virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assignedVal_->getUniqueName()+")"); }
+    virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
 
     
 
@@ -114,12 +116,12 @@ public:
 private:
     bool        is_arg       = false;
 
-    Variable    *assignedVal_ = nullptr;
+    Variable    *assigned_val_ = nullptr;
 
     std::vector<std::string> names_;
 
     std::string name_        = std::string();
-    std::string linkName_    = std::string();
+    std::string link_name_    = std::string();
 
     
 };

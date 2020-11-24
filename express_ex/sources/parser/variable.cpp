@@ -1,20 +1,20 @@
 #include "variable.h"
 
 Variable::Variable(string text, TypeEn type) :SmallArr() {
-    textValue_ = text;
+    text_value_ = text;
     type_ = type;
 
-    binaryValue_ = 0;
+    binary_value_ = 0;
 
     switch (type)
     {
-    case TypeEn::int1_jty:   *((bool   *)(&binaryValue_)) = (bool)stoi(textValue_); break;
-    case TypeEn::int8_jty:   *((int8_t *)(&binaryValue_)) = stoi(textValue_);   break;
-    case TypeEn::int16_jty:  *((int16_t*)(&binaryValue_)) = stoi(textValue_);   break;
-    case TypeEn::int32_jty:  *((int32_t*)(&binaryValue_)) = stoi(textValue_);   break;
-    case TypeEn::int64_jty:  *((int64_t*)(&binaryValue_)) = stol(textValue_);   break;
-    case TypeEn::float_jty:  *((float  *)(&binaryValue_)) = stof(textValue_);   break;
-    case TypeEn::double_jty: *((double *)(&binaryValue_)) = stod(textValue_);   break;
+    case TypeEn::int1_jty:   *((bool   *)(&binary_value_)) = (bool)stoi(text_value_); break;
+    case TypeEn::int8_jty:   *((int8_t *)(&binary_value_)) = stoi(text_value_);   break;
+    case TypeEn::int16_jty:  *((int16_t*)(&binary_value_)) = stoi(text_value_);   break;
+    case TypeEn::int32_jty:  *((int32_t*)(&binary_value_)) = stoi(text_value_);   break;
+    case TypeEn::int64_jty:  *((int64_t*)(&binary_value_)) = stol(text_value_);   break;
+    case TypeEn::float_jty:  *((float  *)(&binary_value_)) = stof(text_value_);   break;
+    case TypeEn::double_jty: *((double *)(&binary_value_)) = stod(text_value_);   break;
     case TypeEn::unknown_jty:                                                   break;
     default: print_error("constant reading error");                             break;
     }
@@ -23,9 +23,9 @@ Variable::Variable(string text, TypeEn type) :SmallArr() {
 
 Variable::Variable(int64_t value, TypeEn type) :SmallArr() {
 
-    binaryValue_ = value;
+    binary_value_ = value;
     type_ = type;
-#define OP(T) textValue_ = std::to_string(*((T   *)(&binaryValue_)))
+#define OP(T) text_value_ = std::to_string(*((T   *)(&binary_value_)))
     SWITCH_TYPE_OP(type, ;);
 #undef OP 
 };
@@ -51,7 +51,7 @@ Variable::Variable(Variable* arg1, Variable* arg2) :SmallArr() {
         length_    = arg2->getBinaryValue() - arg1->getBinaryValue();
         dsType_    = DataStructTypeEn::smallArr_dsty;
         type_      = TypeEn::int64_jty;
-        textValue_ = "range(" + std::to_string(arg1->getBinaryValue()) + "," + std::to_string(arg2->getBinaryValue()) + ")";
+        text_value_ = "range(" + std::to_string(arg1->getBinaryValue()) + "," + std::to_string(arg2->getBinaryValue()) + ")";
         start_ = arg1->getBinaryValue(); 
         stop_  = arg2->getBinaryValue();
     }
@@ -65,7 +65,7 @@ Variable::Variable(Variable* arg1) :SmallArr() {
         length_    = arg1->getBinaryValue();
         dsType_    = DataStructTypeEn::smallArr_dsty;
         type_      = TypeEn::int64_jty;
-        textValue_ = "range(" + std::to_string(arg1->getBinaryValue()) + ")";
+        text_value_ = "range(" + std::to_string(arg1->getBinaryValue()) + ")";
         start_     = 0;
         stop_      = length_ ;
     }
@@ -81,20 +81,20 @@ void Variable::setBuffered() {
 }
 
 void Variable::setBufferLength(uint64_t central_length) {
-    bufferLength_ = central_length;
+    buffer_length_ = central_length;
 }
 
 void Variable::setBufferLength(uint64_t left, uint64_t right) {
     if (isLargeArr(this)) {
-        leftBufferLength_=maxInt(leftBufferLength_, left);
-        rightBufferLength_=maxInt(rightBufferLength_, right);
+        left_buffer_length_=maxInt(left_buffer_length_, left);
+        right_buffer_length_=maxInt(right_buffer_length_, right);
     }
 }
 
 void Variable::setBufferLength(Variable * var) {
     if (isLargeArr(this)) {
-        leftBufferLength_ =maxInt(leftBufferLength_, var->getLeftBufferLen());
-        rightBufferLength_ =maxInt(rightBufferLength_, var->getRightBufferLen());
+        left_buffer_length_ =maxInt(left_buffer_length_, var->getLeftBufferLen());
+        right_buffer_length_ =maxInt(right_buffer_length_, var->getRightBufferLen());
     }
 }
 
@@ -102,7 +102,7 @@ void Variable::setLevel(int64_t var) {
     level_=maxInt(level_, var);
 }
 
-string Variable::getTxtDSType() {
+string Variable::getTxtDSType()const{
     string t = "pass";
 #define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
     switch (dsType_)
@@ -115,10 +115,10 @@ string Variable::getTxtDSType() {
 #undef ENUM2STR
 }
 
-double Variable::getDoubleValue()
+double Variable::getDoubleValue()const
 {
     double ret=0.0;
-#define OP(T) ret = (double)(*((T*)(&binaryValue_)))
+#define OP(T) ret = (double)(*((T*)(&binary_value_)))
     SWITCH_TYPE_OP(type_, print_error("getDoubleValue error");)
 #undef OP
     return ret;

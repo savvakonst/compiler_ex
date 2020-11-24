@@ -835,69 +835,69 @@ std::string Table::printllvmIr() {
 Value* Variable::getIRValue(IRGenerator & builder, int64_t parentLevel) {
     Value * ret=nullptr;
     if (isBuffered() & (parentLevel != level_) ) {
-        if (!builder.CheckExistence(IRBufferBasePtr_)) {
-            IRBufferPtr_=builder.CreatePositionalInBoundsGEP(IRBufferBasePtr_, builder.getCurrentOffsetValue(), "offset_incr");
-            IRLoadedBufferValue_=builder.CreatePositionalLoad(IRBufferPtr_, "buffer_");
-            builder.AddInitializedVariable(IRBufferBasePtr_);
+        if (!builder.CheckExistence(IR_buffer_base_ptr_)) {
+            IR_buffer_ptr_=builder.CreatePositionalInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
+            IR_loaded_buffer_value_=builder.CreatePositionalLoad(IR_buffer_ptr_, "buffer_");
+            builder.AddInitializedVariable(IR_buffer_base_ptr_);
         }
-        ret=IRLoadedBufferValue_;
+        ret=IR_loaded_buffer_value_;
     }
-    else ret=IRValue_;
+    else ret=IR_value_;
 
     if (ret == nullptr) print_IR_error("IRValue - is nullptr :" + getUniqueName());
     return ret;
 }
 
 Value* Variable::getIRValueBasePtr(IRGenerator & builder, int64_t parentLevel) {
-    auto ret =isBuffered () ? IRBufferBasePtr_ : nullptr;
+    auto ret =isBuffered () ? IR_buffer_base_ptr_ : nullptr;
     if (ret == nullptr) print_IR_error("getIRValueBasePtr - is nullptr :" + getUniqueName());
     return ret;
 }
 
 Value* Variable::getIRValuePtr(IRGenerator & builder, int64_t parentLevel) {
-    auto ret =isBuffered () ? IRBufferPtr_ : nullptr;
+    auto ret =isBuffered () ? IR_buffer_ptr_ : nullptr;
     if (ret == nullptr) print_IR_error("getIRValuePtr - is nullptr :" + getUniqueName());
     return ret;
 }
 
 void  Variable::setupIR(IRGenerator & builder) {
-    IRValue_=builder.CreateConst(binaryValue_, type_, "");
+    IR_value_=builder.CreateConst(binary_value_, type_, "");
 }
 
 void  Operation::setupIR(IRGenerator & builder){
 
-#define OP(i)     (operand[(i)]->getAssignedVal(true)->getIRValue(builder,level_) )
-#define OP_PTR(i) (operand[(i)]->getAssignedVal(true)->getIRValuePtr(builder,level_) )
+#define OP(i)     (operand_[(i)]->getAssignedVal(true)->getIRValue(builder,level_) )
+#define OP_PTR(i) (operand_[(i)]->getAssignedVal(true)->getIRValuePtr(builder,level_) )
 
-    if (isArithetic(opCode)) {
-        IRValue_ =builder.CreateArithmetic(OP(0), OP(1), opCode, getUniqueName());
+    if (isArithetic(op_code_)) {
+        IR_value_ =builder.CreateArithmetic(OP(0), OP(1), op_code_, getUniqueName());
     }
-    else if (isComparsion(opCode)) {
-        IRValue_ =builder.CreateComparsion(OP(0), OP(1), opCode, getUniqueName());
+    else if (isComparsion(op_code_)) {
+        IR_value_ =builder.CreateComparsion(OP(0), OP(1), op_code_, getUniqueName());
     }
-    else if (isInv(opCode)) {
-        IRValue_ =builder.CreateInv(OP(0), opCode, getUniqueName());
+    else if (isInv(op_code_)) {
+        IR_value_ =builder.CreateInv(OP(0), op_code_, getUniqueName());
     }
-    else if (isTypeConv(opCode)) {
-        IRValue_ =builder.CreateTypeConv(OP(0), opCode, type_, getUniqueName());
+    else if (isTypeConv(op_code_)) {
+        IR_value_ =builder.CreateTypeConv(OP(0), op_code_, type_, getUniqueName());
     }
-    else if (isBuiltInFunc(opCode)) {
-        IRValue_ =builder.CreateBuiltInFunc(OP(0), opCode, getUniqueName());
+    else if (isBuiltInFunc(op_code_)) {
+        IR_value_ =builder.CreateBuiltInFunc(OP(0), op_code_, getUniqueName());
     }
-    else if (isSelect(opCode)) {
-        IRValue_ =builder.CreateSelect(OP(0), OP(1), OP(2),  getUniqueName());
+    else if (isSelect(op_code_)) {
+        IR_value_ =builder.CreateSelect(OP(0), OP(1), OP(2),  getUniqueName());
     }
-    else if (isConvolve(opCode)) {
+    else if (isConvolve(op_code_)) {
         //outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
-        auto second_op=operand[1]->getAssignedVal(true);
+        auto second_op=operand_[1]->getAssignedVal(true);
         auto length = second_op->getLength();
         auto f = OP(0);
-        IRValue_ =builder.CreateConvolve(OP_PTR(0), second_op->getBufferPtr(), length, -(length / 2 + shiftParameter),type_, getUniqueName());
+        IR_value_ =builder.CreateConvolve(OP_PTR(0), second_op->getBufferPtr(), length, -(length / 2 + shift_parameter_),type_, getUniqueName());
     }
-    else if (isSlice(opCode)) {
+    else if (isSlice(op_code_)) {
 
     }
-    else if (isStoreToBuffer(opCode)) {
+    else if (isStoreToBuffer(op_code_)) {
         print_IR_error("visitExitTxt StoreToBuffer unknown command .");
     }
     else {
@@ -914,12 +914,12 @@ void  Operation::setupIR(IRGenerator & builder){
             else 
                 builder.AddBufferAlloca(new Buffer(this));
             
-            IRBufferBasePtr_=builder.CreateBufferInit(type_,"internal_");
+            IR_buffer_base_ptr_=builder.CreateBufferInit(type_,"internal_");
             is_initialized=true;
         }
         builder.SetStoreInsertPoint();
-        IRBufferPtr_ = builder.CreateInBoundsGEP(IRBufferBasePtr_, builder.getCurrentOffsetValue(), "offset_incr");
-        builder.CreatePositionalStore(IRValue_, IRBufferPtr_);
+        IR_buffer_ptr_ = builder.CreateInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
+        builder.CreatePositionalStore(IR_value_, IR_buffer_ptr_);
     }
 
 
@@ -937,11 +937,11 @@ void  Line::setupIR(IRGenerator & builder) {
         Type * volatile t= builder.getLLVMType(type_);
         if (!is_initialized) {
             builder.AddBufferAlloca(new InputBuffer(this));
-            IRBufferBasePtr_ = builder.CreateBufferInit(type_, "external_");
+            IR_buffer_base_ptr_ = builder.CreateBufferInit(type_, "external_");
             is_initialized  = true;
         }
-        IRBufferPtr_   = builder.CreatePositionalInBoundsGEP(IRBufferBasePtr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
-        IRValue_       = builder.CreatePositionalLoad(IRBufferPtr_, "arg_buffer_");
+        IR_buffer_ptr_   = builder.CreatePositionalInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
+        IR_value_       = builder.CreatePositionalLoad(IR_buffer_ptr_, "arg_buffer_");
     }
 }
 

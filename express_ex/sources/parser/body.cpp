@@ -1,7 +1,7 @@
 #include <string>
 #include "body.h"
 #include "types_jty.h"
-
+#include "call.h"
 //void print_error(const std::string &content);
 
 Body::Body( std::string name,  bool isPrototype )
@@ -26,7 +26,6 @@ Body::~Body()
 
 void Body::addLine(const std::string &name, Variable* var)
 {
-	
 	auto line = new Line(name,var);
 	garbage_contaiiner_->add(line);
 	lines_.push_back(line);
@@ -66,6 +65,15 @@ void Body::addParam(const std::string &name, const std::string &linkName,DataStr
 void Body::addReturn(const std::string &name, Variable* var)
 {
 	auto line = new Line(name, var);
+
+	if(is_tail_callable_){
+		var = var->getAssignedVal(true);
+
+		bool valid_recursion = var->getNodeType() == NodeTypeEn::tailCallSelect;
+		if (!valid_recursion)
+			print_error("it isn't tail recursion");
+	}
+
 	garbage_contaiiner_->add(line);
 	return_stack_.push_back(line);
 }
@@ -88,7 +96,7 @@ Variable* Body::pop()
 
 stack<Variable*> Body::pop(size_t length)
 {
-	//if (varStack_.size() < length_) 
+	//if (var_stack_.size() < length_) 
 	//	print_error("stack is empty");
 	return varStack_.pop(length);
 }
@@ -132,7 +140,7 @@ Variable* Body::arithmeticOp(OpCodeEn uTypeOp,Variable* arg1, Variable* arg2)
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
 	}
-	return newArithmeticOperation(garbage_contaiiner_,targetType, ret_arg1, ret_arg2,  uTypeOp );
+	return newArithmeticOperation(garbage_contaiiner_, targetType, ret_arg1, ret_arg2,  uTypeOp );
 }
 
 Variable* Body::comparsionOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2)
@@ -150,6 +158,7 @@ Variable* Body::comparsionOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2)
 
 Variable* Body::convolveOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint32_t shift) //necessary to add type maching
 {
+
 	Variable* ret_arg1 = arg1, * ret_arg2 = arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!is_prototype_) {
@@ -157,6 +166,7 @@ Variable* Body::convolveOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
 	}
+	is_opeator_ = true;
 	return newConvolveOperation(garbage_contaiiner_,targetType, ret_arg1, ret_arg2, shift, uTypeOp);
 }
 
@@ -164,12 +174,22 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 {
 	Variable* ret_arg2 = arg2, * ret_arg3 = arg3;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
+	
 	if (!is_prototype_) {
 		targetType = maxTypeVar(arg2, arg3)->getType();
 		ret_arg2   = typeConvOp(targetType, arg2);
 		ret_arg3   = typeConvOp(targetType, arg3);
 	}
-	return newSelectOp(garbage_contaiiner_,targetType, arg1, ret_arg2, ret_arg3);
+
+	bool valid_recursion = false;
+
+	if(is_tail_callable_){
+		valid_recursion = ret_arg2->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall;
+		valid_recursion = valid_recursion || (ret_arg3->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall);
+		
+	}
+
+	return newSelectOp(garbage_contaiiner_,targetType, arg1, ret_arg2, ret_arg3, valid_recursion);
 }
 
 
@@ -260,9 +280,15 @@ void Body::addCall(Body* body){
 	for (int i = body->getArgCount()-1; i >=0  ; i--) {
 		a[i] = pop();
 	}
-	
+
 	auto b =is_prototype_? body : body->genBodyByPrototype(a,is_prototype_);
-	push(garbage_contaiiner_->add(new Call(b,a)));
+
+	is_opeator_ = is_opeator_ || b->is_opeator_;
+
+	if (body->is_tail_callable_)
+		push(garbage_contaiiner_->add(new CallRecursiveFunction(b, a)));
+	else 
+		push(garbage_contaiiner_->add(new Call(b,a)));
 }
 
 void Body::addTailCall() {
@@ -271,17 +297,18 @@ void Body::addTailCall() {
 	for (int i = this->getArgCount() - 1; i >= 0; i--) {
 		a[i] = pop();
 	}
+
 	if (is_tail_callable_)
 		print_error("second recursive call");
-	is_tail_callable_ = true;
 
-	//push(garbage_contaiiner_->add(new Call(b, a)));
+	is_tail_callable_ = true;
+	//new TailCallDirective(a);
+	push(garbage_contaiiner_->add(new TailCallDirective(a)));
 }
 
 
 
-Line* Body::getLastLineFromName(std::string name)
-{
+Line* Body::getLastLineFromName(std::string name){
 
 	if (lines_.size() < 1)
 		return nullptr;
@@ -361,10 +388,10 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 		auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
 
 
-		txtLine     = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
-		txtShifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-		txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), ' ');
-		result     += txtLine + txtSkip + txtShifts + "\n";
+		txtLine = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
+		txtShifts = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
+		txtSkip = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), ' ');
+		result += txtLine + txtSkip + txtShifts + "\n";
 
 	}
 
@@ -381,10 +408,11 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 		return this; //dangerous place
 
 
-	auto arg	= args.begin();
+	auto arg = args.begin();
 
-	auto body	= new Body(name_, isPrototype);
-	auto context= new BodyGenContext(&varStack_, &(body->lines_), isPrototype, body->getGarbageContainer());
+	auto body = new Body(name_, isPrototype);
+	body->is_opeator_ = is_opeator_;
+	auto context = new BodyGenContext(&varStack_, &(body->lines_), isPrototype, body->getGarbageContainer());
 
 	stack<Variable*> visitorStack;
 

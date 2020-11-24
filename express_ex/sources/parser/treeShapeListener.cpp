@@ -55,7 +55,6 @@ void TreeShapeListener::exitAssignParam(EGrammarParser::AssignParamContext* ctx)
             std::string s = stl[i]->getText();
             activ_body_->addParam(id[i]->getText(), s.substr(1, s.length()-2), DataStructTypeEn::largeArr_dsty);
         }
-    
     else
         print_error("there are invalid signature ");
 }
@@ -197,7 +196,8 @@ void TreeShapeListener::exitCallFunc(EGrammarParser::CallFuncContext* ctx) {
                 print_error("there are invalid signature call in function: " + targName + " ");
             
             if (activ_body_->getName() == targName) {
-                print_error("it is recursive call in function: " + targName + " ");
+                activ_body_->addTailCall();
+                //print_error("it is recursive call in function: " + targName + " ");
             }
             else
                 activ_body_->addCall(k);

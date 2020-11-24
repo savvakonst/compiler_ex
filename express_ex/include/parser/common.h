@@ -30,7 +30,7 @@ public:
     T pop() {
         if (std::vector<T> ::size() == 0) {
             std::cout << "Error : stack is empty-\n";
-            return nullptr;
+            return nullptr; 
         }
         T res = std::vector<T> ::back();
         std::vector<T> ::pop_back();

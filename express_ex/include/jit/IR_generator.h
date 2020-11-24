@@ -83,8 +83,8 @@ public:
     void SetBufferUpdateFunction(llvm::Value* bufferUpdateFunction_) { buffer_update_function_=bufferUpdateFunction_; }
     void SetDeclareConvolve(llvm::Type* type, uintptr_t addr);
 
-    void SetCurrentOffsetValue(llvm::Value* currentOffsetValue_) { currentOffsetValue=currentOffsetValue; }
-    void SetCurrentCMPRes(llvm::Value *currentCMPRes_) {currentCMPRes=currentCMPRes_;}
+    void SetCurrentOffsetValue(llvm::Value* currentOffsetValue_) { current_offset_value_=current_offset_value_; }
+    void SetCurrentCMPRes(llvm::Value *currentCMPRes_) {current_CMP_res_=currentCMPRes_;}
 
     void SetOffsetToZero();
 
@@ -108,8 +108,8 @@ public:
     llvm::BasicBlock* getLastBlock(int N) { return bb_List_.back(); }
 
     llvm::Value*    getCurrentOffsetValueAlloca() { return current_offset_value_alloca_; }
-    llvm::Value*    getCurrentOffsetValue() { return currentOffsetValue;}
-    llvm::Value*    getCurrentCMPRes() { return currentCMPRes; }
+    llvm::Value*    getCurrentOffsetValue() { return current_offset_value_;}
+    llvm::Value*    getCurrentCMPRes() { return current_CMP_res_; }
 
     llvm::Type*     getLLVMType(TypeEn targetTy);
     llvm::Function* getCurrentFunction() { return current_Function_; }
@@ -157,8 +157,8 @@ private:
     llvm::Value * convolve_I32_function_=nullptr;
 
     llvm::Value * current_offset_value_alloca_ =nullptr;
-    llvm::Value * currentOffsetValue =nullptr;
-    llvm::Value * currentCMPRes      =nullptr;
+    llvm::Value * current_offset_value_ =nullptr;
+    llvm::Value * current_CMP_res_      =nullptr;
 
 
 

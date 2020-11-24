@@ -27,51 +27,50 @@ public:
 
     virtual void setBuffered();
     
-    void setReturned() { is_returned=true; }
+    void setReturned(){ is_returned=true; }
     void setBufferLength(uint64_t central_length);
     void setBufferLength(uint64_t left, uint64_t right);
-    void setBufferLength(Variable * var);
+    void setBufferLength(Variable* var);
     void setLevel(int64_t var);
 
 
 
 
     template< typename T >
-    T            getConvTypeVal   () { return *((T*)(&binaryValue_)); }
-    int64_t      getBinaryValue   () { return *((int64_t*)(&binaryValue_)); }
-    double       getDoubleValue   ();
-    string       getTextValue     () { return textValue_; }
-    string       getTxtDSType     ();
-    string       getUniqueName    () { return uniqueName_; }
-    int64_t      getUsageCounter  () { return usageCounter_; }
-    int64_t      getLength        () { return length_; }
-    int64_t      getLevel         () { return level_; }
-    int64_t      getDecimation    () { return decimation_; }
-    int64_t      getBufferLen     () { return bufferLength_; }
-    int64_t      getLeftBufferLen () { return leftBufferLength_; }
-    int64_t      getRightBufferLen() { return rightBufferLength_; }
-    NodeTypeEn   getNodeType      () { return NodeTypeEn::terminalLine; }
-    TypeEn       getType          () { return type_; }
-    DataStructTypeEn getDSType    () { return dsType_; }
-    SyncParameter *  getPatameter () { return parameter_; }
+    T            getConvTypeVal   ()const{ return *((T*)(&binary_value_)); }
+    int64_t      getBinaryValue   ()const{ return *((int64_t*)(&binary_value_)); }
+    double       getDoubleValue   ()const;
+    string       getTextValue     ()const{ return text_value_; }
+    string       getTxtDSType     ()const;
+    string       getUniqueName    ()const{ return uniqueName_; }
+    int64_t      getUsageCounter  ()const{ return usage_counter_; }
+    int64_t      getLength        ()const{ return length_; }
+    int64_t      getLevel         ()const{ return level_; }
+    int64_t      getDecimation    ()const{ return decimation_; }
+    int64_t      getBufferLen     ()const{ return buffer_length_; }
+    int64_t      getLeftBufferLen ()const{ return left_buffer_length_; }
+    int64_t      getRightBufferLen()const{ return right_buffer_length_; }
+    TypeEn       getType          ()const{ return type_; }
+    DataStructTypeEn getDSType    ()const{ return dsType_; }
+    SyncParameter*   getPatameter ()const{ return parameter_; }
+
+    llvm::Value* getIRValue(IRGenerator& builder, int64_t parentLevel);
+    llvm::Value* getIRValueBasePtr(IRGenerator& builder, int64_t parentLevel);
+    llvm::Value* getIRValuePtr(IRGenerator& builder, int64_t parentLevel);
+
+    virtual NodeTypeEn getNodeType()const{ return NodeTypeEn::variable; }
+    virtual Variable* getAssignedVal(bool deep = false) { return this; }
 
 
-    virtual Variable * getAssignedVal(bool deep = false) { return this; }
+    bool         isUnused           () { return is_nused_; }
+    bool         isArray            () { return dsType_ != DataStructTypeEn::constant_dsty; }
+    bool         isVisited          () { return is_visited_; }
+    bool         isBuffered         () { return is_buffered; }
+    bool         isReturned         () { return is_returned; }
 
-    llvm::Value * getIRValue       (IRGenerator & builder, int64_t parentLevel);
-    llvm::Value * getIRValueBasePtr    (IRGenerator & builder, int64_t parentLevel);
-    llvm::Value * getIRValuePtr(IRGenerator & builder, int64_t parentLevel);
-
-
-    virtual bool isTermialLargeArray    () { return false; }
-    bool         isUnused               () { return is_nused_; }
-    bool         isArray                () { return dsType_ != DataStructTypeEn::constant_dsty; }
-    bool         isVisited              () { return is_visited_; }
-    bool         isBuffered             () { return is_buffered; }
-    bool         isReturned             () { return is_returned; }
-
+    virtual bool isTermialLargeArray(){ return false; }
     //safe functions .external stack is used
-    void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usageCounter_++; };
+    void         commoMmarkUnusedVisitEnter(stack<Variable*>* visitorStack) { usage_counter_++; };
 
     virtual void visitEnter          (stack<Variable*>* visitorStack) { 
         visitorStack->push(this); 
@@ -86,7 +85,7 @@ public:
     virtual void genBodyVisitExit(BodyGenContext* context) {
         context->push(
             context->getGarbageContainer()->add(
-                new Variable(textValue_, type_)));
+                new Variable(text_value_, type_)));
         is_visited_ = false;
     };
 
@@ -101,10 +100,10 @@ public:
     };
 
     virtual void printVisitExit(stack<string> *Stack) {
-        Stack->push(textValue_); is_visited_ = false;
+        Stack->push(text_value_); is_visited_ = false;
     };
 
-    virtual string printUint() { return uniqueName_+"="+textValue_; }
+    virtual string printUint() { return uniqueName_+"="+text_value_; }
     virtual void   setupIR(IRGenerator & builder);
 
     virtual void   calculate() override;
@@ -135,27 +134,27 @@ protected:
 
 
 
-    string   textValue_ = "" ;
+    string   text_value_ = "" ;
     string   uniqueName_ = "" ;
 
     int64_t  length_     = 1;
     int64_t  decimation_ = 0;
     int64_t  level_      = 0;
 
-    int64_t  leftBufferLength_  = 0;
-    int64_t  rightBufferLength_ = 0;
+    int64_t  left_buffer_length_  = 0;
+    int64_t  right_buffer_length_ = 0;
 
-    int64_t  bufferLength_ = 0;
+    int64_t  buffer_length_ = 0;
 
-    uint64_t binaryValue_  = 0;
-    uint64_t usageCounter_ = 0;
+    uint64_t binary_value_  = 0;
+    uint64_t usage_counter_ = 0;
 
-    uint64_t bufferNum_    = 0; //unused
+    uint64_t buffer_num_    = 0; //unused
 
-    llvm::Value * IRValue_        = nullptr;
-    llvm::Value * IRLoadedBufferValue_ = nullptr;
-    llvm::Value * IRBufferPtr_     = nullptr;
-    llvm::Value * IRBufferBasePtr_ = nullptr;
+    llvm::Value * IR_value_        = nullptr;
+    llvm::Value * IR_loaded_buffer_value_ = nullptr;
+    llvm::Value * IR_buffer_ptr_     = nullptr;
+    llvm::Value * IR_buffer_base_ptr_ = nullptr;
 
     SyncParameter * parameter_= nullptr;
     
@@ -176,10 +175,10 @@ inline bool isSimilar   (Variable* var1, Variable* var2) { return  (var1->getDST
 inline bool isÑompatible(Variable* var1, Variable* var2) { return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
 
 
-inline bool isUnknownTy (Variable* var) { return var->getType() == TypeEn::unknown_jty; }
-inline bool isFloating  (Variable* var) { return var->getType() >= TypeEn::float_jty; }
-inline bool isInteger   (Variable* var) { return var->getType() <= TypeEn::int64_jty; }
-inline bool isUInteger  (Variable* var) { return false; }
+inline bool isUnknownTy (Variable* var){ return isUnknownTy(var->getType()); }
+inline bool isFloating  (Variable* var){ return isFloating(var->getType()); }
+inline bool isInteger   (Variable* var){ return isInteger(var->getType()); }
+inline bool isUInteger  (Variable* var){ return isUInteger(var->getType()); }
 
 
 inline int64_t      maxInt  (int64_t   var1, int64_t   var2) { return (var1 < var2) ? var2 : var1; }

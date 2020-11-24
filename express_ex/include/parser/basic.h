@@ -28,32 +28,31 @@ public:
     }
 
 protected:
-
     std::set<Variable*> variable_set_;
 };
 
 class BodyGenContext {
 public:
     BodyGenContext (stack<Variable*>* varStack, std::vector<Line*>* namespace_ptr, bool isPrototype, GarbageContainer* garbage_container) {
-        varStack_       = varStack;
-        namespace_ptr_  = namespace_ptr;
-        isPrototype_    = isPrototype;
+        var_stack_ = varStack;
+        namespace_ptr_ = namespace_ptr;
+        is_prototype_ = isPrototype;
         garbage_container_ = garbage_container;
     }
     BodyGenContext (Body & body) {}
     ~BodyGenContext() {}
 
 
-    inline void push(Variable* var) { varStack_->push(var); }
-    inline Variable*  pop() { return varStack_->pop(); }
+    inline void push(Variable* var) { var_stack_->push(var); }
+    inline Variable*  pop() { return var_stack_->pop(); }
     inline std::vector< Line*> &getNamespace() { return *namespace_ptr_; }
     inline GarbageContainer* getGarbageContainer() { return garbage_container_; }
-    inline bool isPrototype() { return isPrototype_; }
+    inline bool isPrototype() { return is_prototype_; }
 private:
-    GarbageContainer*   garbage_container_=nullptr;
-    stack<Variable*>*   varStack_=nullptr;
-    std::vector<Line*>* namespace_ptr_=nullptr;
-    bool isPrototype_ = false;
+    GarbageContainer*   garbage_container_ = nullptr;
+    stack<Variable*>*   var_stack_ = nullptr;
+    std::vector<Line*>* namespace_ptr_ = nullptr;
+    bool is_prototype_ = false;
 };
 
 extern PosInText g_pos;
