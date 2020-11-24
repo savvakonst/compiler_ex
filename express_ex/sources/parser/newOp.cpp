@@ -23,7 +23,7 @@ Variable* newTypeConvOp(GarbageContainer* garbage_container, TypeEn target_type,
 	const TypeEn arg_type = arg->getType();
 	Variable * ret_val = nullptr;
 
-
+	 
 #define OP_LV2(T1,T2)   	 *((T1*)(&V)) = (T1 )arg->getConvTypeVal<T2>()
 #define CONV_OP(depend,target) case (depend):  target ;  break
 
