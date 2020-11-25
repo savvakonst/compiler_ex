@@ -78,14 +78,13 @@ void Body::addReturn(const std::string &name, Variable* var)
 	return_stack_.push_back(line);
 }
 
-
-
 //varStack push/pop 
 void Body::push(Variable* line)
 {
 	garbage_contaiiner_->add(line);
 	varStack_.push_back(line);
 }
+
 
 Variable* Body::pop()
 {
@@ -94,13 +93,13 @@ Variable* Body::pop()
 	return varStack_.pop();
 }
 
+
 stack<Variable*> Body::pop(size_t length)
 {
 	//if (var_stack_.size() < length_) 
 	//	print_error("stack is empty");
 	return varStack_.pop(length);
 }
-
 
 //create operation
 Variable* Body::typeConvOp(TypeEn targetType, Variable* arg1)
@@ -455,7 +454,6 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	delete context;
 	return body;
-
 }
 
 void Body::symplyfy(){

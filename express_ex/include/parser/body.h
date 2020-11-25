@@ -3,7 +3,10 @@
 
 #include <iostream>
 #include <vector>
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
 #include "llvm/Support/raw_ostream.h"
+#pragma warning( pop )
 #include "variable.h"
 #include "line.h"
 #include "operations.h"

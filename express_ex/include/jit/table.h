@@ -5,8 +5,11 @@
 #include <vector>
 #include <set>
 #include <map>
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
+#pragma warning( pop )
 #include "common.h"
 #include "ParameterIO.h"
 

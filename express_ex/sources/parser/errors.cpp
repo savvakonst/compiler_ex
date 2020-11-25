@@ -1,7 +1,11 @@
 #include <iostream>
 #include "treeShapeListener.h"
 #include "printer.h"
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
 //#include "llvm/Support/raw_ostream.h"
+#pragma warning( pop )
+
 
 namespace WinNs {
     //#include <windows.h>

@@ -1,6 +1,11 @@
 #ifndef LLVM_HDRS
 #define LLVM_HDRS
 
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
+//#pragma warning( disable : 4100 26439 )
+
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -26,7 +31,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Utils.h"
-
+#pragma warning( pop )
 
 #endif // !LLVM_HDRS
 

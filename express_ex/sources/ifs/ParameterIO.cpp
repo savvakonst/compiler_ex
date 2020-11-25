@@ -2,8 +2,11 @@
 #include <set>
 #include "ParameterIO.h"
 #include "common.h"
-#include "llvm/Support/JSON.h"
 
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
+#include "llvm/Support/JSON.h"
+#pragma warning( pop )
 
 using namespace llvm;
 

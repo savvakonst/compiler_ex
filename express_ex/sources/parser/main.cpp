@@ -9,7 +9,11 @@
 #include "body.h"
 #include "treeShapeListener.h"
 
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
 #include "llvm/Support/CommandLine.h"
+#pragma warning( pop )
+
 #include "express_ex.h"
  
 

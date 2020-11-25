@@ -3,8 +3,13 @@
 
 #include <map>
 #include "ParameterIO.h"
+
+#pragma warning( push )
+#pragma warning( disable : 4100 26439 )
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/JSON.h"
+#pragma warning( pop )
+
 
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const SyncParameter &di, std::string offset="");
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const DataInterval &data_interval, std::string offset="");
