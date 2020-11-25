@@ -469,40 +469,7 @@ void Body::symplyfy(){
     }
 }
 
-// this function doesn't work correctly
-void Body::reduce(){
 
-	stack<Variable*>  visitorStack;
-
-	for (auto& value : lines_) {
-		if (value->isArg() && (!value->isUnused())) {
-			//code
-		}
-		else if (!value->isUnused()) {
-
-			visitorStack.push(value->getAssignedVal());
-			do {
-				auto var = visitorStack.pop();
-				if (var->isVisited())
-					var->reduceLinksVisitExit();
-				else
-					var->visitEnter(&visitorStack);
-			} while (!visitorStack.empty());
-		}
-	}
-
-	for (auto& value : return_stack_) {
-		visitorStack.push(value->getAssignedVal());
-		do {
-			auto var = visitorStack.pop();
-			if (var->isVisited())
-				var->reduceLinksVisitExit();
-			else
-				var->visitEnter(&visitorStack);
-		} while (!visitorStack.empty());
-		//code
-	}
-}
 
 
 void Body::genTable(TableGenContext * context){

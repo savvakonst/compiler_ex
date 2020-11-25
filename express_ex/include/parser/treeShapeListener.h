@@ -6,10 +6,12 @@
 #include <fstream>
 #include <list>
 
+#include "defWarningIgnore.h"
 #include "antlr4-runtime.h"
 #include "EGrammarLexer.h"
 #include "EGrammarParser.h"
 #include "EGrammarBaseListener.h"
+#include "undefWarningIgnore.h"
 
 #include "body.h"
 #include "line.h"

@@ -1,9 +1,9 @@
 #ifndef TYPES_JTS_H
 #define TYPES_JTS_H
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 //#include "llvm/Support/JSON.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 typedef  int64_t  ex_size_t;
 

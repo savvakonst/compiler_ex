@@ -8,10 +8,10 @@
 #include "body.h"
 #include "treeShapeListener.h"
 
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/Support/CommandLine.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 #include "express_ex.h"
 
@@ -83,7 +83,7 @@ bool Express_ex::setParameters(const std::map<std::string ,SyncParameter*> &para
         body_->symplyfy();
 
         body_->getParameterLinkNames(true);
-        body_->reduce(); //atavism
+
 
         table_   = new Table();
         TableGenContext context = TableGenContext(table_);

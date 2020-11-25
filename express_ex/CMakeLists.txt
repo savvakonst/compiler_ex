@@ -69,46 +69,47 @@ if(MSVC)
     endif()  
 
     target_compile_options(express_ex PRIVATE 
-        /wd4141   #(level 1)  'modifier' : used more than once  inline inline void func ()
-        /wd4146   #(level 2)   unary minus operator applied to unsigned type, result still unsigned
-        /wd4244   #(level 2)  'argument' : conversion from 'type1' to 'type2', possible loss of data
-        /wd4267   #(level 3)  'var' : conversion from 'size_t' to 'type', possible loss of data
-        /wd4291   #(level 1)  'declaration' : no matching operator delete found memory will not be freed if initialization throws an exception
-        /wd4345   #(level 2)  behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
-        /wd4351 
-        /wd4456 
-        /wd4457 
-        /wd4458 
-        /wd4459 
-        /wd4503 
-        /wd4624 
-        /wd4722 
-        #/wd4100 
-        /wd4127 
-        /wd4512 
-        /wd4505 
-        /wd4610 
-        /wd4510 
-        /wd4702 
-        /wd4245 
-        /wd4706 
-        /wd4310 
-        /wd4701 
-        /wd4703 
-        /wd4389 
-        /wd4611 
-        /wd4805 
-        /wd4204 
-        /wd4577 
-        /wd4091 
-        /wd4592 
-        /wd4319 
-        /wd4709 
-        /wd4324 
-        /wd4251 
-        /wd4348
+        #/wd4141   #(level 1)  'modifier' : used more than once  inline inline void func ()
+        #/wd4146   #(level 2)   unary minus operator applied to unsigned type, result still unsigned
+        #/wd4244   #(level 2)  'argument' : conversion from 'type1' to 'type2', possible loss of data
+        #/wd4267   #(level 3)  'var' : conversion from 'size_t' to 'type', possible loss of data
+        #/wd4291   #(level 1)  'declaration' : no matching operator delete found memory will not be freed if initialization throws an exception
+        #/wd4345   #(level 2)  behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
+        #/wd4351 
+        #/wd4456 
+        #/wd4457 
+        #/wd4458 
+        #/wd4459 
+        #/wd4503 
+        #/wd4624 
+        #/wd4722 
+        #/wd4100  #ignore unused variables
+        #/wd4127 
+        #/wd4512 
+        #/wd4505 
+        #/wd4610 
+        #/wd4510 
+        #/wd4702 
+        #/wd4245 
+        #/wd4706 
+        #/wd4310 
+        #/wd4701 
+        #/wd4703 
+        #/wd4389 
+        #/wd4611
+        #/wd4204 
+        #/wd4577 
+        #/wd4091 
+        #/wd4592 
+        #/wd4319 
+        #/wd4709 
+        #/wd4324 
+        #/wd4251 
+        #/wd4348
+        #/wd4996
+        #/wd4805 
         /wd4804
-        /wd4996
+        /wd4018
         /wd5208
     )
 

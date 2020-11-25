@@ -72,7 +72,7 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     builder.SetCalcInsertPoint();
 
 
-    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, -left_ength_ );
+    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, - (int64_t)left_ength_ );
     //Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, 0);
     builder.SetStoreInsertPoint();
     Value* next_offset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
@@ -209,7 +209,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
         Value* next_offset =builder.CreateAdd(offset, builder.getInt64(1));
         builder.CreateStore(next_offset, offset_alloc);
 
-        int len=(type == CycleStageEn::midle) ? buffer_length_ : length_ % buffer_length_ ;
+        uint64_t len = (type == CycleStageEn::midle) ? buffer_length_ : length_ % buffer_length_ ;
         builder.SetCurrentCMPRes(
             builder.CreateICmpSLT(
                 next_offset,
@@ -451,8 +451,8 @@ string  Table::print() {
 
 void Table::calculateBufferLength(std::string basicBlockPrefix){
 
-    int maxLength=0;
-    int minLength=column_list_[0]->getLength();
+    int64_t maxLength = 0;
+    int64_t minLength = column_list_[0]->getLength();
 
     typedef struct {
         uint64_t maxLength;
@@ -487,7 +487,7 @@ void Table::calculateBufferLength(std::string basicBlockPrefix){
 
     for (auto &j : groupList) {
 
-        int subMaxBufferLength = min_buffer_length_ * j.maxLength / j.minLength;
+        int64_t subMaxBufferLength = min_buffer_length_ * j.maxLength / j.minLength;
         
         if (subMaxBufferLength > max_buffer_length_) {
             llvm::outs() << "maxBufferLength = subMaxBufferLength;\n";

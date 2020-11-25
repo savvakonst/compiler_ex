@@ -3,10 +3,10 @@
 #include "ParameterIO.h"
 #include "common.h"
 
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/Support/JSON.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 using namespace llvm;
 

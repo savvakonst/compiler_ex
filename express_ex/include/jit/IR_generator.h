@@ -8,10 +8,10 @@
 #include "buffer.h"
 #include "ParameterIO.h"
 
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/IR/IRBuilder.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 
 class Table;

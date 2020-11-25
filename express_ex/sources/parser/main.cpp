@@ -9,10 +9,10 @@
 #include "body.h"
 #include "treeShapeListener.h"
 
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/Support/CommandLine.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 #include "express_ex.h"
  
@@ -113,7 +113,7 @@ int main(int argc, const char* argv[]) {
         if (showBits.isSet(redusedFSR))
             llvm::outs() << delimiter << body->print("", false, true);
 
-        body->reduce(); //atavism
+
 
 
         jit_init();

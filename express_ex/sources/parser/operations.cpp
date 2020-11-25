@@ -142,20 +142,6 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 		context->setParameter(parameter_);
 }
 
-void Operation::reduceLinksVisitExit()
-{
-	//for (size_t i=0; i<operand_.size();i++)
-	//	operand_[i]->getAssignedVal(true);
-	is_visited_ = false;
-}
-
-/*
-void Operation::genBlocksVisitEnter (stack<Variable*>* visitorStack){
-	is_visited = true;
-	visitorStack->push(this);
-	visitEnterStackUpdate(visitorStack);
-}
-*/
 
 void Operation::visitEnter(stack<Variable*>* visitorStack){
 	is_visited_ = true;

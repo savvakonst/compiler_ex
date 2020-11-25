@@ -73,13 +73,13 @@ public:
     int64_t read(char * data_buffer_ptr, int64_t point_number);
 
     PRMTypesEn  getRPMType() { return interval_list_[0].type; }
-    int64_t     getVirtualSize() {return frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_);}
+    int64_t     getVirtualSize() {return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_));}
 
     void setName(const std::string &name) {
         name_=name;
         if (interval_list_.size() == 1)
             interval_list_.front().file_name = name + ".dat";
-
+         
         int64_t index=0;
         for (auto i : interval_list_)
             i.file_name = name+"_"+std::to_string(index++)+".dat";
@@ -142,7 +142,7 @@ protected:
 
     inline void openNewInterval(double di_index) {
         if (ifs_) {
-            current_interval_index_ = di_index;
+            current_interval_index_ = (int64_t)di_index;
             ifs_->close();
             delete ifs_;
             ifs_=nullptr;

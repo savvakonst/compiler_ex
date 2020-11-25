@@ -3,10 +3,10 @@
 
 #include <iostream>
 #include <vector>
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/Support/raw_ostream.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 #include "variable.h"
 #include "line.h"
 #include "operations.h"
@@ -80,7 +80,7 @@ public:
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Variable*> args ,bool isPrototype);
     void  symplyfy();
-    void  reduce();// this function doesn't work correctly
+
     void  genTable(TableGenContext * tableGenContext);
 
 private:

@@ -162,7 +162,7 @@ public:
     virtual void genBodyVisitExit(BodyGenContext * context) override;
     virtual void printVisitExit( stack<std::string>* Stack)	override;
     virtual void genBlocksVisitExit(TableGenContext* context) override;
-    virtual void reduceLinksVisitExit()override;
+
 
 
     virtual Variable* getAssignedVal(bool deep = false)  override { return this; }

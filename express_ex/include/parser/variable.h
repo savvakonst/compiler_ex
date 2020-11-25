@@ -95,9 +95,7 @@ public:
         is_visited_ = false;
     };
 
-    virtual void reduceLinksVisitExit(){
-        is_visited_ = false;
-    };
+
 
     virtual void printVisitExit(stack<string> *Stack) {
         Stack->push(text_value_); is_visited_ = false;

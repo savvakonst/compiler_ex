@@ -9,7 +9,7 @@ public:
 
     virtual void visitEnter(stack<Variable*>* visitorStack) override{
         visitorStack->push(this);
-        for(int i= (args_.size() - 1); i >= 0; i--){
+        for(size_t i= (args_.size() - 1); i >= 0; i--){
             visitorStack->push(args_[i]);
         }
         is_visited_ = true;
@@ -27,9 +27,6 @@ public:
         }
     };
 
-    virtual void reduceLinksVisitExit() override{
-        is_visited_ = false;
-    }
 
 protected:
     Body* body_ = nullptr;

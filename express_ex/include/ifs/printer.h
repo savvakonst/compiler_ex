@@ -4,18 +4,18 @@
 #include <map>
 #include "ParameterIO.h"
 
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/JSON.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const SyncParameter &di, std::string offset="");
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const DataInterval &data_interval, std::string offset="");
 //llvm::raw_ostream &stream(llvm::raw_ostream &OS, const ExtendedInfo &di, std::string offset="");
 
-template<typename T>
+template<typename T> 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const std::vector<T> & arg) {
     for (auto i : arg)
         OS << i << " ";

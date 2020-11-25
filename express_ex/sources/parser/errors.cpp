@@ -1,10 +1,10 @@
 #include <iostream>
 #include "treeShapeListener.h"
 #include "printer.h"
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 //#include "llvm/Support/raw_ostream.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 
 
 namespace WinNs {

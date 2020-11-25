@@ -5,11 +5,11 @@
 #include <vector>
 #include <set>
 #include <map>
-#pragma warning( push )
-#pragma warning( disable : 4100 26439 )
+
+#include "defWarningIgnore.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
-#pragma warning( pop )
+#include "undefWarningIgnore.h"
 #include "common.h"
 #include "ParameterIO.h"
 
@@ -257,9 +257,9 @@ private:
     std::map<OpCodeEn, int> BIF2LLVMmap_;
     std::set<SyncParameter *> parameterSet_;    //external
 
-    int min_buffer_length_;
-    int max_buffer_length_;
-    int iterations_=0;
+    int64_t min_buffer_length_;
+    int64_t max_buffer_length_;
+    int64_t iterations_=0;
 
 
 

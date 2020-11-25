@@ -106,7 +106,7 @@ public:
     virtual void printVisitExit  (stack<std::string>* varStack) override;
     virtual void genBlocksVisitExit  (TableGenContext* context) override;
     virtual void setupIR(IRGenerator & builder) override;
-    virtual void reduceLinksVisitExit() override { is_visited_ = false; }
+
 
     virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
 
