@@ -58,7 +58,7 @@ public:
     llvm::Value* getIRValueBasePtr(IRGenerator& builder, int64_t parentLevel);
     llvm::Value* getIRValuePtr(IRGenerator& builder, int64_t parentLevel);
 
-    virtual NodeTypeEn getNodeType()const{ return NodeTypeEn::variable; }
+    virtual NodeTypeEn getNodeType() const { return NodeTypeEn::variable; }
     virtual Variable* getAssignedVal(bool deep = false) { return this; }
 
 

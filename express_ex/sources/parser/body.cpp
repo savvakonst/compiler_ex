@@ -184,12 +184,13 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 	bool valid_recursion = false;
 
 	if(is_tail_callable_){
-		valid_recursion = ret_arg2->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall;
-		valid_recursion = valid_recursion || (ret_arg3->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall);
+		const NodeTypeEn p =ret_arg3->getAssignedVal(true)->getNodeType();
+		valid_recursion =  (p == NodeTypeEn::tailCall);
+		valid_recursion = valid_recursion || (ret_arg2->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall);
 		
 	}
 
-	return newSelectOp(garbage_contaiiner_,targetType, arg1, ret_arg2, ret_arg3, valid_recursion);
+	return newSelectOp(garbage_contaiiner_, targetType, arg1, ret_arg2, ret_arg3, valid_recursion);
 }
 
 

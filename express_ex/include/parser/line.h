@@ -84,7 +84,7 @@ public:
 
     void assignValue(Variable* var);
     //Variable* getAssignedVal() { return assignedVal; }
-    virtual Variable* getAssignedVal(bool deep = false)  override;
+    virtual Variable* getAssignedVal(bool deep = false) override;
 
 
     bool isArg();
@@ -93,19 +93,19 @@ public:
 
     const std::string getName(bool onlyName = false)      { return onlyName ? name_ :checkBuffer(name_); }
     const std::string getLinkName()  { return link_name_; }
-    //virtual Variable* getAssignedVal() { assignedVal; };
+    //virtual Variable* getAssignedVal() override { assignedVal; };
 
-    virtual NodeTypeEn getNodeType(){ return   NodeTypeEn::line; }
+    virtual NodeTypeEn getNodeType() const override{ return   NodeTypeEn::line; }
 
     //safe functions .external stack is used
-    virtual void visitEnter (stack<Variable*>* visitorStack)                                            override;
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack)                                   override;
-    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack)                                 override;
+    virtual void visitEnter (stack<Variable*>* visitorStack) override;
+    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override;
+    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) override;
 
-    virtual void genBodyVisitExit(BodyGenContext* context)                                              override;
-    virtual void printVisitExit  (stack<std::string>* varStack)                                         override;
-    virtual void genBlocksVisitExit  (TableGenContext* context)                                         override;
-    virtual void setupIR(IRGenerator & builder)                                                         override;
+    virtual void genBodyVisitExit(BodyGenContext* context) override;
+    virtual void printVisitExit  (stack<std::string>* varStack) override;
+    virtual void genBlocksVisitExit  (TableGenContext* context) override;
+    virtual void setupIR(IRGenerator & builder) override;
     virtual void reduceLinksVisitExit() override { is_visited_ = false; }
 
     virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }

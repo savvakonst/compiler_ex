@@ -21,7 +21,6 @@ public:
         CommonSetup(op, var);
         type_ = targetType;
 
-
         if (op == OpCodeEn::shift){
             shift_parameter_=shiftOrDecimation;
             level_ = var->getLevel() + 1;
@@ -49,7 +48,6 @@ public:
             print_error("unknown convolve op");
         }
 
-        
         type_  = largeArr->getType();
         if (dsType_ == DataStructTypeEn::largeArr_dsty)
             length_ = largeArr->getLength();
@@ -71,7 +69,6 @@ public:
 
         level_ = maxLevelVar(var1, var2)->getLevel();
 
-
         operand_.push_back(var1);
         operand_.push_back(var2);
 
@@ -84,20 +81,26 @@ public:
         CommonSetup(op, maxDSVar(var1, var2));
         type_ = targetType;
         level_ = maxLevelVar(maxLevelVar(var1, var2), var3)->getLevel();
+        contain_rec_call_ = rec_call;
 
         operand_.push_back(var1);
+
+        if(rec_call && !isUnknownTy(type_))// it is a dirty hack
+            if(var1->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall)
+                type_ = var2->getType();
+            else
+                type_ = var1->getType();
+            
+
         operand_.push_back(var2);
         operand_.push_back(var3);
 
-        contain_rec_call_ = rec_call;
-
-        if(rec_call)
-            print_error("contain_rec_call_");
-
+        
         for (auto i : operand_)
             if (i->getLevel() < level_) i->getAssignedVal(true)->setBuffered();
     }
 
+    // constructor of small array definition
     Operation(OpCodeEn op, stack<Variable*> &args, TypeEn targetType) :Variable() {
 
         size_t argsSize=args.size();
@@ -127,7 +130,6 @@ public:
 
             if (argsSize > 3)print_error("range( .. ) -invalid signature");
         }
-
     }
 
     void CommonSetup(OpCodeEn op, Variable* var) {
@@ -147,7 +149,7 @@ public:
     }
 
 
-    virtual NodeTypeEn getNodeType(){ return  contain_rec_call_ ? NodeTypeEn::tailCallSelect :  NodeTypeEn::operation; }
+    virtual NodeTypeEn getNodeType()const override { return  contain_rec_call_ ? NodeTypeEn::tailCallSelect :  NodeTypeEn::operation; }
 
     //safe functions .external stack is used
     void         visitEnterSetupBuffer(stack<Variable*>* visitorStack);
@@ -165,7 +167,7 @@ public:
 
     virtual Variable* getAssignedVal(bool deep = false)  override { return this; }
 
-    virtual string printUint();
+    virtual string printUint() override;
     virtual void setupIR(IRGenerator & builder) override;
 
 
