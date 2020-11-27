@@ -27,7 +27,6 @@ public:
         }
     };
 
-
 protected:
     Body* body_ = nullptr;
     stack<Variable*>  args_;
@@ -43,7 +42,6 @@ public:
     }
 
     ~TailCallDirective(){
-
     }
 
     virtual void genBodyVisitExit(BodyGenContext* context) override{

@@ -34,28 +34,15 @@ public:
         is_arg = true;
     }
 
-
     Line(std::string name, std::string linkName, DataStructTypeEn dsty) :Variable() {
-        //llvm::outs() <<"isLargeArr(dsty):"<< (DataStructTypeEn::largeArr_dsty==dsty)<<"\n";
+
         names_.push_back(name);
         name_=name;
         link_name_=linkName;
         dsType_ = dsty;
         is_arg = true;
     }
-    /*
-    Line(std::string name, ParameterInfo parameterInfo) {
-        names_.push_back(name);
-        name_       = name;
-        link_name_   = parameterInfo.parameter_name;
-        type_       = parameterInfo.extended_info->jit_type;
-        length_     = parameterInfo.extended_info->virtual_size;
-        dsType_     = DataStructTypeEn::largeArr_dsty;
-        is_arg      = true;
-         
-        parameter_     = new SyncParameter(parameterInfo);
-    } //to remove
-    */
+
     Line(std::string name, SyncParameter * parameter) :Variable() {
         names_.push_back(name);
         name_       = name;
@@ -67,9 +54,6 @@ public:
         
         parameter_  = new SyncParameter(*parameter);
     }
-
-
-
 
     Line(std::string name) :Variable() {
         names_.push_back(name);
@@ -83,9 +67,7 @@ public:
 
 
     void assignValue(Variable* var);
-    //Variable* getAssignedVal() { return assignedVal; }
     virtual Variable* getAssignedVal(bool deep = false) override;
-
 
     bool isArg();
     bool haveTargetName(std::string);
@@ -93,25 +75,36 @@ public:
 
     const std::string getName(bool onlyName = false)      { return onlyName ? name_ :checkBuffer(name_); }
     const std::string getLinkName()  { return link_name_; }
-    //virtual Variable* getAssignedVal() override { assignedVal; };
 
     virtual NodeTypeEn getNodeType() const override{ return   NodeTypeEn::line; }
 
     //safe functions .external stack is used
     virtual void visitEnter (stack<Variable*>* visitorStack) override;
     virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override;
-    //virtual void genBlocksVisitEnter (stack<Variable*>* visitorStack) override;
 
     virtual void genBodyVisitExit(BodyGenContext* context) override;
     virtual void printVisitExit  (stack<std::string>* varStack) override;
     virtual void genBlocksVisitExit  (TableGenContext* context) override;
     virtual void setupIR(IRGenerator & builder) override;
 
+private:
+    uint32_t reference_; //atavism
+public:
+
+    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+
+    }
+
+    void setTempType(TypeEn type){ 
+        temp_type_ = type; 
+    }
+
+    void setReference(ConstRecursiveGenContext* context){ 
+        reference_ = context->getReference(); 
+        context->instructions_list_.push(nullptr);
+    }
 
     virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
-
-    
-
 
 private:
     bool        is_arg       = false;

@@ -71,7 +71,7 @@ void Line::genBodyVisitExit(BodyGenContext * context) {
 	std::string name = getName(true);
 	if (namespace_.size() < 1)
 		return;
-	for (int i = namespace_.size() - 1; i >= 0; i--) {
+	for (size_t i = namespace_.size() - 1; i >= 0; i--) {
 		if (namespace_[i]->haveTargetName(name)) {
 			context->push(namespace_[i]);  return;
 		}

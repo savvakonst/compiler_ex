@@ -11,9 +11,9 @@
 using namespace llvm;
 
 
-SubBlock::SubBlock(Variable * var)
-{
-    left_ength_=var->getLeftBufferLen();
+SubBlock::SubBlock(Variable * var){
+
+    left_length_=var->getLeftBufferLen();
     right_length_=var->getRightBufferLen();
     length_=var->getLength();
     setUint(var);
@@ -21,7 +21,7 @@ SubBlock::SubBlock(Variable * var)
 
 void SubBlock::setUint(Variable * var)
 {
-    left_ength_=maxInt(left_ength_, var->getLeftBufferLen());
+    left_length_=maxInt(left_length_, var->getLeftBufferLen());
     right_length_=maxInt(right_length_, var->getRightBufferLen());
     uint_list_.push(var);
 }
@@ -29,7 +29,7 @@ void SubBlock::setUint(Variable * var)
 string SubBlock::print()
 {
     const size_t max_line_length=90;
-    string out=std::string(4, ' ')+"L,R: " + std::to_string(left_ength_) + "," + std::to_string(right_length_) + "\n";
+    string out=std::string(4, ' ')+"L,R: " + std::to_string(left_length_) + "," + std::to_string(right_length_) + "\n";
     for (auto i : uint_list_) {
         std::string txt       = i->printUint() + ";" + (i->isBuffered() ? " store" : "");
         std::string txtShifts = std::to_string(i->getLeftBufferLen()) + " : " + std::to_string(i->getRightBufferLen());
@@ -72,7 +72,7 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     builder.SetCalcInsertPoint();
 
 
-    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, - (int64_t)left_ength_ );
+    Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, - (int64_t)left_length_ );
     //Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, 0);
     builder.SetStoreInsertPoint();
     Value* next_offset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
@@ -542,7 +542,6 @@ bool Table::llvmInit() {
 
 Function* CreateConvolveFunction(Module* M, TypeEn type) {
     LLVMContext & context = M->getContext();
-
 
     IRGenerator builder(context, nullptr);
     auto  currentType= builder.getLLVMType(type);

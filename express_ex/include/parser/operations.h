@@ -49,7 +49,7 @@ public:
         }
 
         type_  = largeArr->getType();
-        if (dsType_ == DataStructTypeEn::largeArr_dsty)
+        if(dsType_ == DataStructTypeEn::largeArr_dsty)
             length_ = largeArr->getLength();
         else
             length_ = maxInt(largeArr->getLength(), smallArr->getLength());
@@ -160,9 +160,9 @@ public:
 
 
     virtual void genBodyVisitExit(BodyGenContext * context) override;
+    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context)override;
     virtual void printVisitExit( stack<std::string>* Stack)	override;
     virtual void genBlocksVisitExit(TableGenContext* context) override;
-
 
 
     virtual Variable* getAssignedVal(bool deep = false)  override { return this; }
@@ -215,7 +215,7 @@ Variable* newInvOperation(GarbageContainer* garbageContainer, Variable* arg1);
 Variable* newBuiltInFuncOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, OpCodeEn uTypeOp);
 Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
 Variable* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
-Variable* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, uint32_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
+Variable* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, int64_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
 Variable* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1);
 Variable* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3, bool rec_call = false);
 Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);

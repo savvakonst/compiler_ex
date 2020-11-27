@@ -16,8 +16,8 @@ Body::~Body()
 {
 	delete garbage_contaiiner_; 
 	/*
-	for (auto& value : lines_) {
-		delete value;
+	for (auto& line : lines_) {
+		delete line;
 	}
 	*/
 }
@@ -82,23 +82,21 @@ void Body::addReturn(const std::string &name, Variable* var)
 void Body::push(Variable* line)
 {
 	garbage_contaiiner_->add(line);
-	varStack_.push_back(line);
+	var_stack_.push_back(line);
 }
-
 
 Variable* Body::pop()
 {
-	if (varStack_.size() == 0) 
+	if (var_stack_.size() == 0) 
 		print_error("stack is empty");
-	return varStack_.pop();
+	return var_stack_.pop();
 }
-
 
 stack<Variable*> Body::pop(size_t length)
 {
 	//if (var_stack_.size() < length_) 
 	//	print_error("stack is empty");
-	return varStack_.pop(length);
+	return var_stack_.pop(length);
 }
 
 //create operation
@@ -312,7 +310,7 @@ Line* Body::getLastLineFromName(std::string name){
 
 	if (lines_.size() < 1)
 		return nullptr;
-	for (int i = lines_.size() - 1; i >= 0; i--) {
+	for (size_t i = lines_.size() - 1; i >= 0; i--) {
 		if (lines_[i]->haveTargetName(name))
 			return (lines_[i]);
 	}
@@ -341,16 +339,16 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 	const size_t max_line_length=90;
 	
 	std::string result = " " + getName() + "\n";
-	std::string txtLine, txtSkip, txtShifts, txtUsaaage;
+	std::string txt_line, txt_skip, txt_shifts;
 
 	for (auto& value : lines_) {
 		if (value->isArg()) {
-			//std::string postfix = (!hideUnusedLines || !value->isUnused()) ? "" : " \t\t#unused";
+			//std::string postfix = (!hideUnusedLines || !line->isUnused()) ? "" : " \t\t#unused";
 			if (!hideUnusedLines || !value->isUnused()) {
-				txtLine     = value->getName() + "=arg()" ;
-				txtShifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), ' ');
-				result     += txtLine + txtSkip + txtShifts + "\n";
+				txt_line     = value->getName() + "=arg()" ;
+				txt_shifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
+				txt_skip     = std::string(max_line_length - ((txt_line.length() > max_line_length) ? 0 : txt_line.length()), ' ');
+				result     += txt_line + txt_skip + txt_shifts + "\n";
 			}
 		}
 		else {
@@ -364,13 +362,12 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 			} while (!visitorStack.empty());
 
 			auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
-			//std::cout << tab << value->getName()+"."+ value->getTxtDSType()<< "=" << stringStack.pop()  << "\n";
+			//std::cout << tab << line->getName()+"."+ line->getTxtDSType()<< "=" << stringStack.pop()  << "\n";
 			if (!hideUnusedLines || !value->isUnused()){
-				txtLine     = tab + value->getName() + DST_postfix + "=" + stringStack.pop() ;
-				txtShifts   = std::to_string(value->getLeftBufferLen())+" : "+ std::to_string(value->getRightBufferLen()) + " : " + std::to_string(value->getLength());
-				txtUsaaage  = std::to_string(value->getUsageCounter());
-				txtSkip     = std::string(max_line_length - ((txtLine.length() > max_line_length) ? max_line_length-2 : txtLine.length()), ' ');
-				result     += txtLine + txtSkip + txtShifts + "\n";
+				txt_line     = tab + value->getName() + DST_postfix + "=" + stringStack.pop() ;
+				txt_shifts   = std::to_string(value->getLeftBufferLen())+" : "+ std::to_string(value->getRightBufferLen()) + " : " + std::to_string(value->getLength());
+				txt_skip     = std::string(max_line_length - ((txt_line.length() > max_line_length) ? max_line_length-2 : txt_line.length()), ' ');
+				result     += txt_line + txt_skip + txt_shifts + "\n";
 			}
 		}
 	}
@@ -388,12 +385,15 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 		auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
 
 
-		txtLine = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
-		txtShifts = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-		txtSkip = std::string(max_line_length - ((txtLine.length() > max_line_length) ? 0 : txtLine.length()), ' ');
-		result += txtLine + txtSkip + txtShifts + "\n";
+		txt_line = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
+		txt_shifts = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
+		txt_skip = std::string(max_line_length - ((txt_line.length() > max_line_length) ? 0 : txt_line.length()), ' ');
+		result += txt_line + txt_skip + txt_shifts + "\n";
 
 	}
+
+
+
 
 	return   result ;
 }
@@ -402,8 +402,9 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
-	//std::cout << "debug args.size() " << args[0]->Print() << "\n";
-	
+	// try replacing the "var_stack_" member with the "var_stack" local variable
+	// it might be worth moving this variable to BodyGenContext
+
 	if (is_prototype_ == false)
 		return this; //dangerous place
 
@@ -412,9 +413,9 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 	auto body = new Body(name_, isPrototype);
 	body->is_opeator_ = is_opeator_;
-	auto context = new BodyGenContext(&varStack_, &(body->lines_), isPrototype, body->getGarbageContainer());
+	auto context = new BodyGenContext( &(body->lines_), isPrototype, body->getGarbageContainer());
 
-	stack<Variable*> visitorStack;
+	stack<Variable*> visitor_stack;
 
 
 	for (auto& value : lines_) {
@@ -429,32 +430,93 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 			}
 		}
 		else{
-			visitorStack.push(value->getAssignedVal());
+			visitor_stack.push(value->getAssignedVal());
 			do {
-				auto var = visitorStack.pop();
+				auto var = visitor_stack.pop();
 				if (var->isVisited())
 					var->genBodyVisitExit(context);
 				else
-					var->visitEnter(&visitorStack);
-			} while (!visitorStack.empty());
-			body->addLine(value->getName(), varStack_.pop());
+					var->visitEnter(&visitor_stack);
+			} while (!visitor_stack.empty());
+			body->addLine(value->getName(), context->pop());
 		}
 	}
 	for (auto& value : return_stack_) {
-		visitorStack.push(value->getAssignedVal());
+		visitor_stack.push(value->getAssignedVal());
 		do {
-			auto var = visitorStack.pop();
+			auto var = visitor_stack.pop();
 			if (var->isVisited())
 				var->genBodyVisitExit(context);
 			else
-				var->visitEnter(&visitorStack);
-		} while (!visitorStack.empty());
-		body->addReturn(return_stack_[0]->getName(), varStack_.pop());
+				var->visitEnter(&visitor_stack);
+		} while (!visitor_stack.empty());
+		body->addReturn(return_stack_[0]->getName(), context->pop()); 
 	}
 
 	delete context;
 	return body;
 }
+
+
+
+
+Body* Body::genConstRecusiveByPrototype(stack<Variable*> args){
+
+	stack<Variable*> visitor_stack;
+	stack<std::string> stringStack;
+
+	
+	auto context =new ConstRecursiveGenContext();
+
+	std::vector<Variable*> instructions_list;
+
+	for(auto& line : lines_){
+		if(line->isArg()){
+
+		}
+		else{
+			visitor_stack.push(line->getAssignedVal());
+			do{
+				auto var = visitor_stack.pop();
+				if(var->isVisited())
+					var->genConstRecursiveVisitExit(context);
+				else
+					var->visitEnter(&visitor_stack);
+			} while(!visitor_stack.empty());
+
+			line->setReference(context);
+		}
+	}
+
+	for(auto& value : return_stack_){
+		visitor_stack.push(value->getAssignedVal());
+		do{
+			auto var = visitor_stack.pop();
+			if(var->isVisited())
+				var->genConstRecursiveVisitExit(context);
+			else
+				var->visitEnter(&visitor_stack);
+		} while(!visitor_stack.empty());
+	}
+
+	delete context;
+
+
+	int32_t iteration_cnt = 0;
+
+	for(bool loop_ena = true, int index = 0 ; loop_ena; iteration_cnt++ ){
+		
+		context->instructions_list_[index]->calculate();
+
+		if(iteration_cnt == -1)
+			print_error("recursion too deep");
+	}
+
+	return nullptr;
+}
+
+
+
 
 void Body::symplyfy(){
 
@@ -470,11 +532,9 @@ void Body::symplyfy(){
 }
 
 
-
-
 void Body::genTable(TableGenContext * context){
 
-	stack<Variable*>  visitorStack;
+	stack<Variable*>  visitor_stack;
 
 	if (name_ == "main")
 		for (auto& value : return_stack_) 
@@ -486,32 +546,32 @@ void Body::genTable(TableGenContext * context){
 		}
 		else if (!value->isUnused()) {
 
-			visitorStack.push(value->getAssignedVal());
+			visitor_stack.push(value->getAssignedVal());
 			do {
-				auto var = visitorStack.pop();
+				auto var = visitor_stack.pop();
 				if (var->isVisited())
 					var->genBlocksVisitExit(context);
 				else
-					var->visitEnter(&visitorStack);
-			} while (!visitorStack.empty());
-			//context_->setUint(value);
+					var->visitEnter(&visitor_stack);
+			} while (!visitor_stack.empty());
+			//context_->setUint(line);
 		}
 	}
 	int64_t maxBufferLength = 0;
 	for (auto& value : return_stack_) {
 
-		visitorStack.push(value->getAssignedVal());
+		visitor_stack.push(value->getAssignedVal());
 
 		//if (name_ == "main")
-		//	value->getAssignedVal(true)->setReturned();
+		//	line->getAssignedVal(true)->setReturned();
 
 		do {
-			auto var = visitorStack.pop();
+			auto var = visitor_stack.pop();
 			if (var->isVisited())
 				var->genBlocksVisitExit(context);
 			else
-				var->visitEnter(&visitorStack);
-		} while (!visitorStack.empty());
+				var->visitEnter(&visitor_stack);
+		} while (!visitor_stack.empty());
 		//code
 
 		auto temp= value->getLength();
@@ -521,7 +581,6 @@ void Body::genTable(TableGenContext * context){
 
 	if (name_ == "main")
 		context->setMaxBufferLength(maxBufferLength);
-
 }
 
 

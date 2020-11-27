@@ -51,10 +51,10 @@ public:
 
 
 
- bool operator==  (Variable*        var1, DataStructTypeEn var2); 
- bool operator==  (DataStructTypeEn var1, Variable*        var2);
- bool operator<   (TypeEn    var1, Variable* var2);
- bool operator<   (Variable* var1, TypeEn    var2);
+ bool operator==(Variable*        var1, DataStructTypeEn var2); 
+ bool operator==(DataStructTypeEn var1, Variable*        var2);
+ bool operator<(TypeEn    var1, Variable* var2);
+ bool operator<(Variable* var1, TypeEn    var2);
 
  bool isConst     (Variable* var1);
  bool isSmallArr  (Variable* var1);
@@ -72,12 +72,15 @@ public:
  bool isInteger   (Variable* var);
  bool isUInteger  (Variable* var);
 
- int64_t      maxInt  (int64_t   var1, int64_t   var2);
- int64_t      minInt  (int64_t   var1, int64_t   var2);
- Variable*    maxTypeVar     (Variable* var1, Variable* var2);
- Variable*    maxDSVar   (Variable* var1, Variable* var2);
- Variable*    maxLevelVar(Variable* var1, Variable* var2);
- Variable*    minLevelVar(Variable* var1, Variable* var2);
+ template<typename Int_T_>
+ inline Int_T_ maxInt  (Int_T_ var1, Int_T_ var2){ return (var1 < var2) ? var2 : var1; }
+ template<typename Int_T_>
+ inline Int_T_ minInt  (Int_T_ var1, Int_T_ var2){ return (var1 < var2) ? var2 : var2; }
+
+ Variable* maxTypeVar(Variable* var1, Variable* var2);
+ Variable* maxDSVar(Variable* var1, Variable* var2);
+ Variable* maxLevelVar(Variable* var1, Variable* var2);
+ Variable* minLevelVar(Variable* var1, Variable* var2);
 
 
  inline std::string getTxtType(TypeEn type) {
@@ -165,12 +168,12 @@ public:
 
 #define BI_SWITCH_OP(OP,LOOP,RET,ARG_A)   \
     switch (OP){\
-    SWITCH_UINT(OpCodeEn::log, LOOP, RET=log(ARG_A) ; ) break ;\
-    SWITCH_UINT(OpCodeEn::log2, LOOP, RET=log2(ARG_A) ;) break ;\
-    SWITCH_UINT(OpCodeEn::log10, LOOP, RET=log10(ARG_A) ;) break ;\
-    SWITCH_UINT(OpCodeEn::cos, LOOP, RET=cos(ARG_A) ;) break ;\
-    SWITCH_UINT(OpCodeEn::sin, LOOP, RET=sin(ARG_A);) break ;\
-    SWITCH_UINT(OpCodeEn::exp, LOOP,  RET=exp(ARG_A);) break ;\
+    SWITCH_UINT(OpCodeEn::log, LOOP, RET=(T)log(ARG_A) ; ) break ;\
+    SWITCH_UINT(OpCodeEn::log2, LOOP, RET=(T)log2(ARG_A) ;) break ;\
+    SWITCH_UINT(OpCodeEn::log10, LOOP, RET=(T)log10(ARG_A) ;) break ;\
+    SWITCH_UINT(OpCodeEn::cos, LOOP, RET=(T)cos(ARG_A) ;) break ;\
+    SWITCH_UINT(OpCodeEn::sin, LOOP, RET=(T)sin(ARG_A);) break ;\
+    SWITCH_UINT(OpCodeEn::exp, LOOP,  RET=(T)exp(ARG_A);) break ;\
     default: break;\
     }
 

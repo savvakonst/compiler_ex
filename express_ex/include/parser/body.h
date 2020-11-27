@@ -79,6 +79,7 @@ public:
     // tree walker methods
     std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Variable*> args ,bool isPrototype);
+    Body* genConstRecusiveByPrototype(stack<Variable*> args);
     void  symplyfy();
 
     void  genTable(TableGenContext * tableGenContext);
@@ -91,14 +92,13 @@ private:
     bool is_tail_callable_ = false;
     bool is_prototype_ = false;
 
-    std::string name_="main";
+    std::string name_ = "main";
     std::vector<Line*> lines_;
 
-    stack<Variable*> varStack_;
+    stack<Variable*> var_stack_;
 
     stack<Line*> arg_stack_;
     stack<Line*> return_stack_;
-
 
     int arg_count_ = 0;
     Body* gen_body_ = nullptr;

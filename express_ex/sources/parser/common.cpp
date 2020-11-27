@@ -163,7 +163,7 @@ char *  typeConvSmallArray(TypeEn retType, TypeEn argType, char * ret, char* arg
 
 char * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand) {
 
-	char * ret=calcSmallArrayAlloc(targetType, operand.size());
+	char * ret=calcSmallArrayAlloc(targetType,(int)operand.size());
 
 #define OP(T)	{	\
 	T* ptr=(T*)ret;	\

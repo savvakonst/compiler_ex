@@ -259,9 +259,69 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 		print_error("visitExit unknown command . In line : " +std::to_string(context->getNamespace().size() ) );
 	}
 	context->push(ret);
-
 }
 
+/*
+void Operation::genConstRecursiveVisitExit(ConstRecursiveGenContext* context){
+	context->setUint(this);
+
+	#define OP(i)     (operand_[(i)] )
+
+	if(isArithetic(op_code_)){
+		temp_type_ = maxTypeVar(OP(0), OP(1))->getType();
+	}
+	else if(isComparsion(op_code_)){
+		temp_type_ = TypeEn::int1_jty;
+	}
+	else if(isInv(op_code_)){
+		temp_type_ = OP(0)->getType();;
+	}
+	else if(isTypeConv(op_code_)){
+		temp_type_ = OP(0)->getType();
+	}
+	else if(isBuiltInFunc(op_code_)){
+		IR_value_ =builder.CreateBuiltInFunc(OP(0), op_code_, getUniqueName());
+	}
+	else if(isSelect(op_code_)){
+		IR_value_ =builder.CreateSelect(OP(0), OP(1), OP(2), getUniqueName());
+	}
+	else if(isConvolve(op_code_)){
+		//outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
+		auto second_op=operand_[1]->getAssignedVal(true);
+		auto length = second_op->getLength();
+		auto f = OP(0);
+		IR_value_ =builder.CreateConvolve(OP_PTR(0), second_op->getBufferPtr(), length, -(length / 2 + shift_parameter_), type_, getUniqueName());
+	}
+	else if(isSlice(op_code_)){
+
+	}
+	else if(isStoreToBuffer(op_code_)){
+		print_IR_error("visitExitTxt StoreToBuffer unknown command .");
+	}
+	else{
+		print_IR_error("visitExitTxt unknown command .");
+	}
+
+
+	if(isBuffered() | isReturned()){
+		if(!is_initialized){
+			BufferTypeEn bufferType=isReturned() ? BufferTypeEn::output : BufferTypeEn::internal;
+			if(isReturned()){
+				builder.AddBufferAlloca(new OutputBuffer(this));
+			}
+			else
+				builder.AddBufferAlloca(new Buffer(this));
+
+			IR_buffer_base_ptr_=builder.CreateBufferInit(type_, "internal_");
+			is_initialized=true;
+		}
+		builder.SetStoreInsertPoint();
+		IR_buffer_ptr_ = builder.CreateInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
+		builder.CreatePositionalStore(IR_value_, IR_buffer_ptr_);
+	}
+};
+
+*/
 
 void Operation::printVisitExit(stack<std::string>* Stack) {
 	is_visited_ = false;
@@ -361,64 +421,66 @@ string Operation::printUint() {
 void Operation::calculate(){
 
 #define OP(i) (operand_[(i)]->getAssignedVal(true) )
-
+	int length = (int)length_;
 	if (isArithetic(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 
 		if (aOperand->isArray() && bOperand->isArray())
-			bufferPtr_=calcAritheticSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
+			buffer_ptr_=calcAritheticSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length);
 		else if (aOperand->isArray())
-			bufferPtr_=calcAritheticSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
+			buffer_ptr_=calcAritheticSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length);
 		else
-			bufferPtr_=calcAritheticSmallArray(op_code_, type_, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
+			buffer_ptr_=calcAritheticSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length);
 	}
 	if (isComparsion(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 		auto localType=aOperand->getType();
 		if (aOperand->isArray() && bOperand->isArray())
-			bufferPtr_=calcComparsionSmallArray(op_code_, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length_);
+			buffer_ptr_=calcComparsionSmallArray(op_code_, localType, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length);
 		else if (aOperand->isArray())
-			bufferPtr_=calcComparsionSmallArray(op_code_, localType, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length_);
+			buffer_ptr_=calcComparsionSmallArray(op_code_, localType, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length);
 		else
-			bufferPtr_=calcComparsionSmallArray(op_code_, localType, bufferPtr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length_);
+			buffer_ptr_=calcComparsionSmallArray(op_code_, localType, buffer_ptr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length);
 	}
 	else if (isInv(op_code_))
-		bufferPtr_=invAritheticSmallArray(type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
+		buffer_ptr_=invAritheticSmallArray(type_, buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isTypeConv(op_code_))
-		bufferPtr_=typeConvSmallArray(type_, OP(0)->getType(), bufferPtr_, OP(0)->getBufferPtr(), length_);
+		buffer_ptr_=typeConvSmallArray(type_, OP(0)->getType(), buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isBuiltInFunc(op_code_))
-		bufferPtr_=builtInFuncSmallArray(op_code_, type_, bufferPtr_, OP(0)->getBufferPtr(), length_);
+		buffer_ptr_=builtInFuncSmallArray(op_code_, type_, buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isSelect(op_code_)){
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
 		auto cOperand = OP(2);
 		if (bOperand->isArray() && cOperand->isArray())
-			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length_);
+			buffer_ptr_=calcSelectSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBufferPtr(), length);
 		else if (bOperand->isArray())
-			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length_);
+			buffer_ptr_=calcSelectSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), cOperand->getBinaryValue(), length);
 		else if (cOperand->isArray())
-			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length_);
+			buffer_ptr_=calcSelectSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBufferPtr(), length);
 		else 
-			bufferPtr_=calcSelectSmallArray(op_code_, type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length_);
+			buffer_ptr_=calcSelectSmallArray(op_code_, type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), cOperand->getBinaryValue(), length);
 	}
 	else if (isConvolve(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
-		bufferPtr_=calcConvolveSmallArray(type_, bufferPtr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), aOperand->getLength(), bOperand->getLength());
+		buffer_ptr_=calcConvolveSmallArray(type_, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), (int)aOperand->getLength(), (int)bOperand->getLength());
 	}
 	else if (isSlice(op_code_))         return;
 	else if (isStoreToBuffer(op_code_)) return;
 	else if (isSmallArrayDef(op_code_)) {
 		if (op_code_ == OpCodeEn::smallArrayDef)
-			bufferPtr_=calcSmallArrayDef(type_, operand_);
+			buffer_ptr_=calcSmallArrayDef(type_, operand_);
 		else
 			smallArrayGen();
 	}
 #undef OP
 
 }
+
+
 
 
 
@@ -437,10 +499,10 @@ void Operation::smallArrayGen(){
 		delta = (stop_ - start_) / length_;
 	}
 
-	bufferPtr_=calcSmallArrayAlloc(type_, length_);
+	buffer_ptr_=calcSmallArrayAlloc(type_, (int) length_);
 
 #define OP(T) {\
-    T* point=(T*)bufferPtr_;\
+    T* point=(T*)buffer_ptr_;\
     for (uint64_t i=0; i < length_; i++)  \
         *point++ =(T)(start_ + delta * i);}
 
@@ -480,7 +542,7 @@ void Operation::smallArray(Variable* arg1, Variable* arg2) {
 void Operation::smallArray(Variable* arg1) {
 	if (isConst(arg1) && isInteger(arg1)) {
 		start_     = 0;
-		stop_      = arg1->getBinaryValue();
+		stop_      = (double) arg1->getBinaryValue();
 		type_      = TypeEn::int64_jty;
 		length_    = (uint64_t)stop_;
 	}

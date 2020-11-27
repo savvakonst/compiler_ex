@@ -250,7 +250,7 @@ void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * pt
 
 Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
 {
-    int numberOfBuffer = buffers_List_.size();
+    int numberOfBuffer = (int) buffers_List_.size();
     std::string numberOfBufferTxt=std::to_string(numberOfBuffer);
 
     SetInitInsertPoint();

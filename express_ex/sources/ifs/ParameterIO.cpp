@@ -255,7 +255,7 @@ bool SyncParameter::seek(int64_t point_umber) {
     current_interval_index_ = getDataIntervalIndex(current_time);
 
     if (current_interval_index_ != -1) {
-        openNewInterval(current_interval_index_);
+        openNewInterval((double)current_interval_index_);
         int64_t local_start_pos =    (int)((current_time - getTimeInterval(current_interval_index_).bgn) * frequency_);
         ifs_->seekg(local_start_pos * sizeof_data_type_);
     }
@@ -306,7 +306,7 @@ int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
 
             bool is_new_interval = (di_index != current_interval_index_) || (ifs_ == nullptr);
             if (is_new_interval ) {
-                openNewInterval(di_index);
+                openNewInterval((double)di_index);
                 //ifs_->seekg(local_start_pos * sizeof_data_type_);
             }
 
@@ -370,7 +370,7 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
             local_points_to_read =  (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
 
             if (di_index != current_interval_index_ || (ifs_ == nullptr)) {
-                openNewInterval(di_index);
+                openNewInterval((double)di_index);
                 ifs_->seekp(local_start_pos * sizeof_data_type_);
             }
 

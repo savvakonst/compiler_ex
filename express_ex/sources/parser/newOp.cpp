@@ -52,30 +52,29 @@ Variable* newTypeConvOp(GarbageContainer* garbage_container, TypeEn target_type,
 #undef CONV_OP
 #undef OP
 
-    if ( (target_type == arg_type) || isUnknownTy(arg_type) ) {
-        return arg; 
+    if((target_type == arg_type) || isUnknownTy(arg_type)){
+        return arg;
     }
-    else if (isFloating(target_type) && isFloating(arg_type)) {
-        if (target_type < arg_type)
+    else if(isFloating(target_type) && isFloating(arg_type)){
+        if(target_type < arg_type)
             ret_val= new Operation(OpCodeEn::fptrunc, arg, target_type);
         else
             ret_val= new Operation(OpCodeEn::fpext, arg, target_type);
     }
-    else if (isFloating(target_type) && isInteger(arg_type)) {
+    else if(isFloating(target_type) && isInteger(arg_type)){
         ret_val= new Operation(OpCodeEn::sitofp, arg, target_type);;
     }
-    else if (isInteger(target_type) && isFloating(arg_type)) {
+    else if(isInteger(target_type) && isFloating(arg_type)){
         ret_val= new Operation(OpCodeEn::fptosi, arg, target_type);
     }
-    else if (isInteger(target_type) && isInteger(arg_type))
-    {
-        if (target_type < arg_type)
+    else if(isInteger(target_type) && isInteger(arg_type)){
+        if(target_type < arg_type)
             ret_val= new Operation(OpCodeEn::trunc, arg, target_type);
         else
             ret_val= new Operation(OpCodeEn::sext, arg, target_type);
     }
-    else { 
-        print_error("newTypeConvOp"); 
+    else{
+        print_error("newTypeConvOp");
     }
 
     return garbage_container->add(ret_val);
@@ -205,7 +204,7 @@ Variable* newComparsionOperation(GarbageContainer* garbage_container, TypeEn tar
 }
 
 
-Variable* newConvolveOperation(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg_a, Variable* arg_b, uint32_t shift, OpCodeEn type_op) {
+Variable* newConvolveOperation(GarbageContainer* garbage_container, TypeEn target_type, Variable* arg_a, Variable* arg_b, int64_t shift, OpCodeEn type_op) {
 
     if (type_op != OpCodeEn::convolve)
         print_error("convolve_f operation is not supported yet");
@@ -291,4 +290,3 @@ Variable* newSmallArrayDefOp(GarbageContainer* garbage_container, stack<Variable
 
     return garbage_container->add(new Operation(OpCodeEn::smallArrayDef, typedArgs, targertType));
 }
-

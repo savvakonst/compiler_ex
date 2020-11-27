@@ -55,7 +55,7 @@ public:
     void     setBufferLength(uint64_t buffer_length) { buffer_length_=buffer_length; }
     uint64_t getLevel () { return 0; };
     uint64_t getLength() { return length_; };
-    uint64_t getLeftLength() { return left_ength_; };
+    uint64_t getLeftLength() { return left_length_; };
     uint64_t getRightLength() { return right_length_; };
 
     string   print();
@@ -66,7 +66,7 @@ public:
 private:
     stack<Variable*> uint_list_;
 
-    uint64_t left_ength_;
+    uint64_t left_length_;
     uint64_t right_length_;
     uint64_t length_;
     uint64_t buffer_length_=1 << 20;
@@ -226,33 +226,34 @@ public:
     friend class TableGenContext;
 private:
     void declareFunctions();
-    llvm::Module* M_=nullptr;                //external 
-    llvm::LLVMContext * context_=nullptr;    //external 
+
+    //what means external
+    llvm::Module* M_=nullptr;               //external 
+    llvm::LLVMContext * context_=nullptr;   //external 
 
     std::unique_ptr<llvm::Module> module_U_ptr_;    
     std::unique_ptr<llvm::legacy::FunctionPassManager> the_FPM_;
 
-    llvm::Function* mainFunction_ = nullptr;    //external 
+    llvm::Function* mainFunction_ = nullptr;            //external 
 
     std::map<TypeEn, llvm::Function*> convolve_map_;    //external 
 
-    IRGenerator* builder_=nullptr;         //internal 
+    IRGenerator* builder_=nullptr;          //internal 
 
-    BuiltInFuncMap float_BI_func_map_;     //external 
-    BuiltInFuncMap double_BI_func_map_;    //external 
+    BuiltInFuncMap float_BI_func_map_;      //external 
+    BuiltInFuncMap double_BI_func_map_;     //external 
 
 
-     
-    llvm::Type * fTy_ = nullptr;         //external 
-    llvm::Type * dTy_ = nullptr;         //external
+    llvm::Type * fTy_ = nullptr;            //external 
+    llvm::Type * dTy_ = nullptr;            //external
 
-    stack<Variable *> const_list_;           //external 
-    stack<Variable *> small_array_list_;     //external 
+    stack<Variable *> const_list_;         //external 
+    stack<Variable *> small_array_list_;   //external 
 
-    uint64_t *max_column_depth_=0;           
-    stack<TableColumn *> column_list_;       //internal
+    uint64_t *max_column_depth_ = 0;           
+    stack<TableColumn *> column_list_;     //internal
 
-    int64_t topLevel=0;
+    int64_t topLevel = 0;
 
     std::map<OpCodeEn, int> BIF2LLVMmap_;
     std::set<SyncParameter *> parameterSet_;    //external
@@ -260,8 +261,6 @@ private:
     int64_t min_buffer_length_;
     int64_t max_buffer_length_;
     int64_t iterations_=0;
-
-
 
     std::string error_info_    = "";
 };

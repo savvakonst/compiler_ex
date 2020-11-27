@@ -52,8 +52,8 @@ Variable::Variable(Variable* arg1, Variable* arg2) :SmallArr() {
         dsType_    = DataStructTypeEn::smallArr_dsty;
         type_      = TypeEn::int64_jty;
         text_value_ = "range(" + std::to_string(arg1->getBinaryValue()) + "," + std::to_string(arg2->getBinaryValue()) + ")";
-        start_ = arg1->getBinaryValue(); 
-        stop_  = arg2->getBinaryValue();
+        start_ = (double)arg1->getBinaryValue();
+        stop_  = (double)arg2->getBinaryValue();
     }
     else {
         print_error("range(start_num,stop_num) - arg must be integer consant");
@@ -66,8 +66,8 @@ Variable::Variable(Variable* arg1) :SmallArr() {
         dsType_    = DataStructTypeEn::smallArr_dsty;
         type_      = TypeEn::int64_jty;
         text_value_ = "range(" + std::to_string(arg1->getBinaryValue()) + ")";
-        start_     = 0;
-        stop_      = length_ ;
+        start_     = 0.0;
+        stop_      = (double)length_ ;
     }
     else {
         print_error("range(len) - arg must be integer consant");
@@ -115,8 +115,7 @@ string Variable::getTxtDSType()const{
 #undef ENUM2STR
 }
 
-double Variable::getDoubleValue()const
-{
+double Variable::getDoubleValue()const {
     double ret=0.0;
 #define OP(T) ret = (double)(*((T*)(&binary_value_)))
     SWITCH_TYPE_OP(type_, print_error("getDoubleValue error");)
@@ -131,10 +130,10 @@ void Variable::calculate()
         delta = (stop_ - start_) / length_;
     }
 
-    bufferPtr_=calcSmallArrayAlloc(type_, length_);
+    buffer_ptr_=calcSmallArrayAlloc(type_, (int)length_);
 
 #define OP(T) {\
-    T* point=(T*)bufferPtr_;\
+    T* point=(T*)buffer_ptr_;\
     for (uint64_t i=0; i < length_; i++)  \
         *point++ =(T)(start_ + delta * i);}
     
@@ -149,7 +148,7 @@ std::string Variable::printSmallArray()
         return ret;
 
 #define OP(T) {\
-    T* point=(T*)bufferPtr_;\
+    T* point=(T*)buffer_ptr_;\
     ret+=std::to_string( point[0]);\
     for (uint64_t i=1; i < length_; i++)  \
         ret+=","+std::to_string( point[i]);}
