@@ -24,7 +24,7 @@ Body::~Body()
 
 
 
-void Body::addLine(const std::string &name, Variable* var)
+void Body::addLine(const std::string &name, Value* var)
 {
 	auto line = new Line(name,var);
 	garbage_contaiiner_->add(line);
@@ -62,7 +62,7 @@ void Body::addParam(const std::string &name, const std::string &linkName,DataStr
 	lines_.push_back(line);
 }
 
-void Body::addReturn(const std::string &name, Variable* var)
+void Body::addReturn(const std::string &name, Value* var)
 {
 	auto line = new Line(name, var);
 
@@ -79,20 +79,20 @@ void Body::addReturn(const std::string &name, Variable* var)
 }
 
 //varStack push/pop 
-void Body::push(Variable* line)
+void Body::push(Value* line)
 {
 	garbage_contaiiner_->add(line);
 	var_stack_.push_back(line);
 }
 
-Variable* Body::pop()
+Value* Body::pop()
 {
 	if (var_stack_.size() == 0) 
 		print_error("stack is empty");
 	return var_stack_.pop();
 }
 
-stack<Variable*> Body::pop(size_t length)
+stack<Value*> Body::pop(size_t length)
 {
 	//if (var_stack_.size() < length_) 
 	//	print_error("stack is empty");
@@ -100,14 +100,14 @@ stack<Variable*> Body::pop(size_t length)
 }
 
 //create operation
-Variable* Body::typeConvOp(TypeEn targetType, Variable* arg1)
+Value* Body::typeConvOp(TypeEn targetType, Value* arg1)
 {	
 	return newTypeConvOp(garbage_contaiiner_, targetType,  arg1);
 }
 
 // maybe this code segment is excess/glut 
 /*
-void Body::typeConvOp(Variable* arg1, Variable* arg2, Variable* ret_arg1, Variable* ret_arg2)
+void Body::typeConvOp(Value* arg1, Value* arg2, Value* ret_arg1, Value* ret_arg2)
 {
 	TypeEn targetType= maxTypeVar(arg1, arg2)->type;
 	ret_arg1 = typeConvOp(targetType, arg1);
@@ -115,9 +115,9 @@ void Body::typeConvOp(Variable* arg1, Variable* arg2, Variable* ret_arg1, Variab
 }
 */
 
-Variable* Body::builtInFuncOp(OpCodeEn uTypeOp, Variable* arg1 ){
+Value* Body::builtInFuncOp(OpCodeEn uTypeOp, Value* arg1 ){
 
-	Variable* ret_arg1 = arg1;
+	Value* ret_arg1 = arg1;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 
 	if (!is_prototype_) {
@@ -128,9 +128,9 @@ Variable* Body::builtInFuncOp(OpCodeEn uTypeOp, Variable* arg1 ){
 	return newBuiltInFuncOperation(garbage_contaiiner_,targetType, ret_arg1, uTypeOp);
 }
 
-Variable* Body::arithmeticOp(OpCodeEn uTypeOp,Variable* arg1, Variable* arg2)
+Value* Body::arithmeticOp(OpCodeEn uTypeOp,Value* arg1, Value* arg2)
 {
-	Variable * ret_arg1= arg1, * ret_arg2= arg2;
+	Value * ret_arg1= arg1, * ret_arg2= arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!is_prototype_) {
 		targetType = maxTypeVar(arg1, arg2)->getType();
@@ -140,9 +140,9 @@ Variable* Body::arithmeticOp(OpCodeEn uTypeOp,Variable* arg1, Variable* arg2)
 	return newArithmeticOperation(garbage_contaiiner_, targetType, ret_arg1, ret_arg2,  uTypeOp );
 }
 
-Variable* Body::comparsionOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2)
+Value* Body::comparsionOp(OpCodeEn uTypeOp, Value* arg1, Value* arg2)
 {
-	Variable * ret_arg1= arg1, * ret_arg2= arg2;
+	Value * ret_arg1= arg1, * ret_arg2= arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!is_prototype_) {
 		targetType = maxTypeVar(arg1, arg2)->getType();
@@ -153,23 +153,23 @@ Variable* Body::comparsionOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2)
 }
 
 
-Variable* Body::convolveOp(OpCodeEn uTypeOp, Variable* arg1, Variable* arg2,uint32_t shift) //necessary to add type maching
+Value* Body::convolveOp(OpCodeEn uTypeOp, Value* arg1, Value* arg2,uint32_t shift) //necessary to add type maching
 {
 
-	Variable* ret_arg1 = arg1, * ret_arg2 = arg2;
+	Value* ret_arg1 = arg1, * ret_arg2 = arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	if (!is_prototype_) {
 		targetType = maxTypeVar(arg1, arg2)->getType();
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
 	}
-	is_opeator_ = true;
+	is_operator_ = true;
 	return newConvolveOperation(garbage_contaiiner_,targetType, ret_arg1, ret_arg2, shift, uTypeOp);
 }
 
-Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
+Value* Body::selectOp( Value* arg1, Value* arg2, Value* arg3)
 {
-	Variable* ret_arg2 = arg2, * ret_arg3 = arg3;
+	Value* ret_arg2 = arg2, * ret_arg3 = arg3;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	
 	if (!is_prototype_) {
@@ -195,48 +195,48 @@ Variable* Body::selectOp( Variable* arg1, Variable* arg2, Variable* arg3)
 //create operation and push to varStack
 void Body::addTypeConvOp(TypeEn targetType){
 
-	Variable* arg1 = pop();
+	Value* arg1 = pop();
 	push(typeConvOp(targetType, arg1));
 }
 
 void Body::addBuiltInFuncOp(OpCodeEn uTypeOp){
-	Variable* arg1 = pop();
+	Value* arg1 = pop();
 	push(builtInFuncOp(uTypeOp, arg1));
 }
 
 void Body::addInvOp() {
-	Variable* arg = pop();
-	Variable* zero = garbage_contaiiner_->add(new  Variable("0", TypeEn::int32_jty ));
+	Value* arg = pop();
+	Value* zero = garbage_contaiiner_->add(new  Value("0", TypeEn::int32_jty ));
 	push(arithmeticOp( OpCodeEn::sub , zero, arg) );
 }
 
 void Body::addArithmeticOp(OpCodeEn uTypeOp){
 
-	Variable* arg2 = pop();
-	Variable* arg1 = pop();
+	Value* arg2 = pop();
+	Value* arg1 = pop();
 	push(arithmeticOp(uTypeOp,arg1, arg2));
 }
 
 void Body::addComarsionOp(OpCodeEn uTypeOp) {
 
-	Variable* arg2 = pop();
-	Variable* arg1 = pop();
+	Value* arg2 = pop();
+	Value* arg1 = pop();
 	push(comparsionOp(uTypeOp, arg1, arg2));
 }
 
 
 void Body::addConvolveOp(OpCodeEn uTypeOp,uint32_t shift){
 
-	Variable* arg2 = pop();
-	Variable* arg1 = pop();
+	Value* arg2 = pop();
+	Value* arg1 = pop();
 	push(convolveOp(uTypeOp, arg1, arg2,shift));
 }
 
 void Body::addSelectOp(){
 
-	Variable* arg3 = pop();
-	Variable* arg2 = pop();
-	Variable* arg1 = pop();
+	Value* arg3 = pop();
+	Value* arg2 = pop();
+	Value* arg1 = pop();
 	push(selectOp(arg1, arg2, arg3));
 } 
  
@@ -244,28 +244,28 @@ void Body::addRangeOp(size_t argCount){
 	if((argCount < 1)||(argCount>3))
 		print_error("invalid signature of range(..) function");
 
-	stack<Variable*> v=pop(argCount);
+	stack<Value*> v=pop(argCount);
 	push(newSmallArrayDefOp(garbage_contaiiner_,v,OpCodeEn::smallArrayRange));
 
 }
 
 void Body::addShiftOp()
 {
-	Variable* arg2 = pop();
-	Variable* arg1 = pop();
+	Value* arg2 = pop();
+	Value* arg1 = pop();
 	push(newSliceOp(garbage_contaiiner_,arg1, arg2, OpCodeEn::shift));
 }
 
 void Body::addDecimationOp(){
 
-	Variable* arg2 = pop();
-	Variable* arg1 = pop();
+	Value* arg2 = pop();
+	Value* arg1 = pop();
 	push(newSliceOp(garbage_contaiiner_,arg1, arg2,OpCodeEn::decimation));
 }
 
 void Body::addSmallArrayDefinitionOp(size_t size) {
-	stack<Variable* > op;
-
+	stack<Value* > op;
+	is_operator_ = true;
 	for (size_t i = 0; i < size; i++)
 		op.push(pop());
 	std::reverse(op.begin(), op.end());
@@ -273,7 +273,7 @@ void Body::addSmallArrayDefinitionOp(size_t size) {
 }
 
 void Body::addCall(Body* body){
-	stack<Variable*> a;
+	stack<Value*> a;
 	a.resize(body->getArgCount());
 	for (int i = body->getArgCount()-1; i >=0  ; i--) {
 		a[i] = pop();
@@ -281,7 +281,7 @@ void Body::addCall(Body* body){
 
 	auto b =is_prototype_? body : body->genBodyByPrototype(a,is_prototype_);
 
-	is_opeator_ = is_opeator_ || b->is_opeator_;
+	is_operator_ = is_operator_ || b->is_operator_;
 
 	if (body->is_tail_callable_)
 		push(garbage_contaiiner_->add(new CallRecursiveFunction(b, a)));
@@ -290,7 +290,7 @@ void Body::addCall(Body* body){
 }
 
 void Body::addTailCall() {
-	stack<Variable*> a;
+	stack<Value*> a;
 	a.resize(this->getArgCount());
 	for (int i = this->getArgCount() - 1; i >= 0; i--) {
 		a[i] = pop();
@@ -333,7 +333,7 @@ const stack<ParameterIfs*> Body::getOutputParameterList()
 std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 	//hideUnusedLines =true;
-	stack<Variable*> visitorStack;
+	stack<Value*> visitorStack;
 	stack<std::string> stringStack;
 
 	const size_t max_line_length=90;
@@ -400,10 +400,10 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 
 
-Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
+Body* Body::genBodyByPrototype(stack<Value*> args, bool isPrototype){
 
-	// try replacing the "var_stack_" member with the "var_stack" local variable
-	// it might be worth moving this variable to BodyGenContext
+	// try replacing the "var_stack_" member with the "var_stack" local value
+	// it might be worth moving this value to BodyGenContext
 
 	if (is_prototype_ == false)
 		return this; //dangerous place
@@ -412,10 +412,10 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 	auto arg = args.begin();
 
 	auto body = new Body(name_, isPrototype);
-	body->is_opeator_ = is_opeator_;
+	body->is_operator_ = is_operator_;
 	auto context = new BodyGenContext( &(body->lines_), isPrototype, body->getGarbageContainer());
 
-	stack<Variable*> visitor_stack;
+	stack<Value*> visitor_stack;
 
 
 	for (auto& value : lines_) {
@@ -460,19 +460,22 @@ Body* Body::genBodyByPrototype(stack<Variable*> args, bool isPrototype){
 
 
 
-Body* Body::genConstRecusiveByPrototype(stack<Variable*> args){
+untyped_t Body::genConstRecusiveByPrototype( stack<Value*> &args){
 
-	stack<Variable*> visitor_stack;
+	stack<Value*> visitor_stack;
 	stack<std::string> stringStack;
 
 	
 	auto context =new ConstRecursiveGenContext();
 
-	std::vector<Variable*> instructions_list;
+	std::vector<Value*> instructions_list;
+	auto arg = args.begin();
 
 	for(auto& line : lines_){
 		if(line->isArg()){
-
+			line->setTempTypeAndBinaryValue(*arg++);
+			context->addArg(line->getBinaryValuePtr());
+			
 		}
 		else{
 			visitor_stack.push(line->getAssignedVal());
@@ -483,8 +486,7 @@ Body* Body::genConstRecusiveByPrototype(stack<Variable*> args){
 				else
 					var->visitEnter(&visitor_stack);
 			} while(!visitor_stack.empty());
-
-			line->setReference(context);
+			line->genConstRecursiveVisitExit(context);
 		}
 	}
 
@@ -496,23 +498,24 @@ Body* Body::genConstRecusiveByPrototype(stack<Variable*> args){
 				var->genConstRecursiveVisitExit(context);
 			else
 				var->visitEnter(&visitor_stack);
+			value->genConstRecursiveVisitExit(context);
 		} while(!visitor_stack.empty());
 	}
 
-	delete context;
-
-
 	int32_t iteration_cnt = 0;
 
-	for(bool loop_ena = true, int index = 0 ; loop_ena; iteration_cnt++ ){
-		
-		context->instructions_list_[index]->calculate();
+	for( int32_t index = 0; context->exitFromLoop(); iteration_cnt++){
+		for(auto& instruction : context->instructions_list_)
+			instruction->calculateConstRecursive(context);
 
 		if(iteration_cnt == -1)
 			print_error("recursion too deep");
 	}
 
-	return nullptr;
+	// maybe it is not necessary
+	untyped_t return_val = context->instructions_list_.back()->getBinaryValue();
+	delete context;
+	return return_val;
 }
 
 
@@ -520,7 +523,7 @@ Body* Body::genConstRecusiveByPrototype(stack<Variable*> args){
 
 void Body::symplyfy(){
 
-    stack<Variable*> visitorStack;
+    stack<Value*> visitorStack;
     for (auto& value : return_stack_) {
         visitorStack.push(value->getAssignedVal());
         do {
@@ -534,7 +537,7 @@ void Body::symplyfy(){
 
 void Body::genTable(TableGenContext * context){
 
-	stack<Variable*>  visitor_stack;
+	stack<Value*>  visitor_stack;
 
 	if (name_ == "main")
 		for (auto& value : return_stack_) 
@@ -585,6 +588,6 @@ void Body::genTable(TableGenContext * context){
 
 
 GarbageContainer::~GarbageContainer() {
-	for (auto i : variable_set_)
+	for (auto i : value_set_)
 		delete i;
 }

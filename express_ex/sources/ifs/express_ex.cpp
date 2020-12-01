@@ -16,7 +16,7 @@
 #include "express_ex.h"
 
 
-using namespace llvm;
+//using namespace llvm;
 extern bool  g_ansiEscapeCodes;
 
 #define REMOVE_MEMBER(X)    if (X != nullptr) {\
@@ -65,7 +65,7 @@ bool Express_ex::setParameters(const std::map<std::string ,SyncParameter*> &para
     bool status=false;
 
 
-    stack<Variable*> args;
+    stack<Value*> args;
     for (auto p : parameters_map)
         if (p.second != nullptr)
             args.push(new Line(p.first, p.second));

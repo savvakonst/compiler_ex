@@ -3,10 +3,10 @@
 #include "IR_generator.h"
 #include "table.h"
 
-using namespace llvm;
+//using namespace llvm;
 
 
-IRGenerator::IRGenerator(LLVMContext & context,Table * table_):IRBuilder<>(context){
+IRGenerator::IRGenerator(llvm::LLVMContext & context,Table * table_):IRBuilder<>(context){
     table=table_;
 }
 
@@ -15,7 +15,7 @@ IRGenerator::~IRGenerator(){
         delete i;
 }
 
-Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::string &name) {
+llvm::Value * IRGenerator::CreateFPow(llvm::Value *aOperand, llvm::Value *bOperand, const std::string &name) {
     if (table == nullptr) 
         return nullptr;
 
@@ -25,8 +25,8 @@ Value * IRGenerator::CreateFPow(Value *aOperand, Value *bOperand, const std::str
         return CreateCall(table->getDoubleBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
 }
 
-Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, const std::string &name) {
-    Value * ret = nullptr;
+llvm::Value * IRGenerator::CreateConst(int64_t &binaryValue, TypeEn targetTy, const std::string &name) {
+    llvm::Value * ret = nullptr;
 
     auto &context = getContext();
     switch (targetTy)
@@ -36,8 +36,8 @@ Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, const s
     case TypeEn::int16_jty:  ret = getInt16(*((int16_t*)(&binaryValue)));   break;
     case TypeEn::int32_jty:  ret = getInt32(*((int32_t*)(&binaryValue)));   break;
     case TypeEn::int64_jty:  ret = getInt64(*((int64_t*)(&binaryValue)));   break;
-    case TypeEn::float_jty:  ret = ConstantFP::get(Type::getFloatTy(context), *((float  *)(&binaryValue)));  break;
-    case TypeEn::double_jty: ret = ConstantFP::get(Type::getDoubleTy(context), *((double *)(&binaryValue))); break;
+    case TypeEn::float_jty:  ret = llvm::ConstantFP::get(llvm::Type::getFloatTy(context), *((float  *)(&binaryValue)));  break;
+    case TypeEn::double_jty: ret = llvm::ConstantFP::get(llvm::Type::getDoubleTy(context), *((double *)(&binaryValue))); break;
     case TypeEn::unknown_jty:ret = nullptr;                                    break;
     default:                 ret = nullptr;                                    break;
     }
@@ -45,8 +45,8 @@ Value * IRGenerator::CreateConst(uint64_t &binaryValue, TypeEn targetTy, const s
     return ret;
 }
 
-Value * IRGenerator::CreateArithmetic(Value *aOperand, Value *bOperand, OpCodeEn opCode, const std::string &name) {
-    Value * ret = nullptr;
+llvm::Value * IRGenerator::CreateArithmetic(llvm::Value *aOperand, llvm::Value *bOperand, OpCodeEn opCode, const std::string &name) {
+    llvm::Value * ret = nullptr;
     switch (opCode)
     {
     case OpCodeEn::add:  ret = CreateAdd(aOperand, bOperand, name);  break;
@@ -72,9 +72,9 @@ slt,//  signed less than
 sle,//  signed less or equal
 */
 
-llvm::Value * IRGenerator::CreateComparsion(Value *aOperand, Value *bOperand, OpCodeEn opCode, const std::string & name)
+llvm::Value * IRGenerator::CreateComparsion(llvm::Value *aOperand, llvm::Value *bOperand, OpCodeEn opCode, const std::string & name)
 {
-    Value * ret = nullptr;
+    llvm::Value * ret = nullptr;
     switch (opCode)
     {
     case OpCodeEn::eq:  ret = CreateICmpEQ(aOperand, bOperand, name);  break;
@@ -96,8 +96,8 @@ llvm::Value * IRGenerator::CreateComparsion(Value *aOperand, Value *bOperand, Op
 
 
     //builder.CreateCall(UpdateBufferF, ConstVars[0]);
-Value * IRGenerator::CreateInv(Value *aOperand, OpCodeEn opCode, const std::string &name) {
-    Value * ret = nullptr;
+llvm::Value * IRGenerator::CreateInv(llvm::Value *aOperand, OpCodeEn opCode, const std::string &name) {
+    llvm::Value * ret = nullptr;
 
     if (opCode == OpCodeEn::neg)
         return CreateNeg(aOperand, name);
@@ -105,11 +105,11 @@ Value * IRGenerator::CreateInv(Value *aOperand, OpCodeEn opCode, const std::stri
         return CreateFNeg(aOperand,name);
 }
 
-Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCode, TypeEn targetTy, const std::string &name)
+llvm::Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCode, TypeEn targetTy, const std::string &name)
 {
-    Type* destTy = getLLVMType(targetTy);
+    llvm::Type* destTy = getLLVMType(targetTy);
 
-    Value * ret=nullptr;
+    llvm::Value * ret=nullptr;
     switch (opCode)
     {
     case OpCodeEn::trunc:   ret = CreateTrunc(aOperand, destTy, name);    break;
@@ -136,29 +136,29 @@ llvm::Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, OpCodeEn op
     }
 }
 
-Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,int64_t length, int64_t shift, TypeEn type, const std::string &name)
+llvm::Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,int64_t length, int64_t shift, TypeEn type, const std::string &name)
 {
     auto function = table->getConvolveFunc(type);
     auto bOperand = CreateIntToPtr(
-        ConstantInt::get(getInt64Ty(), uintptr_t(ptr)),
-        PointerType::getUnqual(getLLVMType(type)));
+        llvm::ConstantInt::get(getInt64Ty(), uintptr_t(ptr)),
+        llvm::PointerType::getUnqual(getLLVMType(type)));
 
     return CreateCall(function, { aOperand, bOperand, getInt64(length) ,getInt64(shift) }, name);
 }
 
 
-Value *IRGenerator::CreateCall_(Value *Callee, ArrayRef<Value *> Args ,const std::string & Name ) {
-    MDNode *FPMathTag = nullptr;
+llvm::Value *IRGenerator::CreateCall_(llvm::Value *Callee, llvm::ArrayRef<llvm::Value *> Args ,const std::string & Name ) {
+    llvm::MDNode *FPMathTag = nullptr;
 
     return CreateCall(
-        cast<FunctionType>(Callee->getType()->getPointerElementType()), Callee,
+        llvm::cast<llvm::FunctionType>(Callee->getType()->getPointerElementType()), Callee,
         Args, Name, FPMathTag);
 }
 
-Value * IRGenerator::CreateConvolve(Value * aOperand, Value * bOperand, const std::string &name)
+llvm::Value * IRGenerator::CreateConvolve(llvm::Value * aOperand, llvm::Value * bOperand, const std::string &name)
 {
-    Value * ret =nullptr, * convolveFunction=nullptr;
-    Type * type=aOperand->getType()->getPointerElementType();
+    llvm::Value * ret =nullptr, * convolveFunction=nullptr;
+    llvm::Type * type=aOperand->getType()->getPointerElementType();
 
     if (type == getDoubleTy())
         convolveFunction=convolve_double_function_;
@@ -183,17 +183,17 @@ llvm::Value * IRGenerator::CreateGPUConvolve(llvm::Value * aOperand, char * ptr,
     return nullptr;
 }
 
-Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty, int64_t i, const std::string &name)
+llvm::Value * IRGenerator::CreatePositionalAlloca(llvm::Type * ty, int64_t i, const std::string &name)
 {
     SetInitInsertPoint();
-    Value* ret = CreateAlloca(ty, 0, name);
+    llvm::Value* ret = CreateAlloca(ty, 0, name);
     SetCalcInsertPoint();
     return ret;
 }
 
-Value * IRGenerator::CreatePositionalOffset( std::string name,int64_t startValue)
+llvm::Value * IRGenerator::CreatePositionalOffset( std::string name,int64_t startValue)
 {
-    Value* ret=CreatePositionalOffsetAlloca("", startValue);
+    llvm::Value* ret=CreatePositionalOffsetAlloca("", startValue);
     SetLoadInsertPoint();
     current_offset_value_=CreateLoad(ret, "offset" );
     SetCalcInsertPoint();
@@ -201,11 +201,11 @@ Value * IRGenerator::CreatePositionalOffset( std::string name,int64_t startValue
 }
 
 
-Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, int64_t startValue)
+llvm::Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, int64_t startValue)
 {
     auto ty=getInt64Ty();
     SetInitInsertPoint();
-    Value* ret = CreateAlloca(ty, 0, "offset_alloca_");
+    llvm::Value* ret = CreateAlloca(ty, 0, "offset_alloca_");
     current_offset_value_alloca_=ret;
     CreateStore(getInt64(startValue), ret);
     return ret;
@@ -214,23 +214,23 @@ Value * IRGenerator::CreatePositionalOffsetAlloca(std::string name, int64_t star
 llvm::Value * IRGenerator::CreatePositionalInBoundsGEP(llvm::Value * Ptr, llvm::ArrayRef<llvm::Value*> IdxList, const std::string & name)
 {
     SetLoadInsertPoint();
-    Value* ret = CreateInBoundsGEP(Ptr, IdxList, name);
+    llvm::Value* ret = CreateInBoundsGEP(Ptr, IdxList, name);
     SetCalcInsertPoint();
     return ret;
 }
 
-Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, const std::string &name)
+llvm::Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, const std::string &name)
 {
     SetLoadInsertPoint();
-    Value* ret = CreateLoad(aOperand, name);
+    llvm::Value* ret = CreateLoad(aOperand, name);
     SetCalcInsertPoint();
     return ret;
 }
 
-Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, bool isVolatile, const std::string &name)
+llvm::Value * IRGenerator::CreatePositionalLoad(llvm::Value * aOperand, bool isVolatile, const std::string &name)
 {
     SetLoadInsertPoint();
-    Value* ret = CreateLoad(aOperand, isVolatile, name);
+    llvm::Value* ret = CreateLoad(aOperand, isVolatile, name);
     SetCalcInsertPoint();
     return ret;
 }
@@ -248,27 +248,27 @@ void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * pt
     SetCalcInsertPoint();
 }
 
-Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
+llvm::Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
 {
     int numberOfBuffer = (int) buffers_List_.size();
     std::string numberOfBufferTxt=std::to_string(numberOfBuffer);
 
     SetInitInsertPoint();
-    Value* arg              = current_Function_->getArg(0);
+    llvm::Value* arg              = current_Function_->getArg(0);
 
-    Value* untypedBufferPtr =CreateInBoundsGEP(
+    llvm::Value* untypedBufferPtr =CreateInBoundsGEP(
         getInt64Ty()->getPointerTo(),
         arg,
         getInt32(numberOfBuffer),
         name + "untyped_buffer_ptr_"+ numberOfBufferTxt);
 
-    Value* untypedBuffer    = CreateLoad(
+    llvm::Value* untypedBuffer    = CreateLoad(
         untypedBufferPtr,
         true,
         name+"untyped_buffer_"+ numberOfBufferTxt);
 
 
-    Value* buffer           = CreateBitCast(
+    llvm::Value* buffer           = CreateBitCast(
         untypedBuffer,
         getLLVMType(targetTy)->getPointerTo(),
         name + "buffer_"+ numberOfBufferTxt);
@@ -305,13 +305,13 @@ void * IRGenerator::AddBufferAlloca(Buffer *s)
 
 void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr) //atavism
 {
-    typedef Value * (*lambla_ty)(llvm::Type * type, uintptr_t addr);
+    typedef llvm::Value * (*lambla_ty)(llvm::Type * type, uintptr_t addr);
 
     auto  lambda =[this](llvm::Type * type, uintptr_t addr) {
         return CreateIntToPtr(
-            ConstantInt::get(getInt64Ty(), uintptr_t(addr)),
-            PointerType::getUnqual(
-                FunctionType::get(type,
+            llvm::ConstantInt::get(getInt64Ty(), uintptr_t(addr)),
+            llvm::PointerType::getUnqual(
+                llvm::FunctionType::get(type,
                     { type->getPointerTo(), type->getPointerTo() },
                     false)));
     };
@@ -329,18 +329,18 @@ void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr) //atavis
 
 void IRGenerator::SetOffsetToZero()
 {   
-    BasicBlock*  tmp=BB;
+    llvm::BasicBlock* tmp=BB;
     CreateStore(getInt64(0), current_offset_value_alloca_);
 }
 
 void IRGenerator::SetOffsetTo(int64_t val)
 {
-    BasicBlock*  tmp=BB;
+    llvm::BasicBlock* tmp=BB;
     CreateStore(getInt64(val), current_offset_value_alloca_);
 }
 
 llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
-    Type * ret = nullptr;
+    llvm::Type * ret = nullptr;
     //this->SetInsertPoint
     switch (targetTy)
     {

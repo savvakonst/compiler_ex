@@ -81,7 +81,7 @@ int main(int argc, const char* argv[]) {
         if(showBits.isSet(nameList))
             llvm::outs()<< delimiter <<"names list: \n  "<< parameterNameList <<" \n";
 
-        stack<Variable*> args;
+        stack<Value*> args;
         for (auto i : parameterNameList) {
             auto p =parameterDB[i.second];
             if (p != nullptr) {

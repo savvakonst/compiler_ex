@@ -29,7 +29,7 @@ enum class BufferTypeEn {
 class Buffer {
 public:
 
-	Buffer(Variable * var) {
+	Buffer(Value * var) {
 		length_           = var->getBufferLen();
 		left_offset_	  = var->getLeftBufferLen();
 		right_offset_	  = var->getRightBufferLen();
@@ -112,7 +112,7 @@ protected:
 class InputBuffer: public Buffer {
 
 public:
-	InputBuffer( Variable * var):Buffer(var) {
+	InputBuffer( Value * var):Buffer(var) {
 		parameter_ = var->getPatameter();
 	}
 	~InputBuffer(){ }
@@ -152,7 +152,7 @@ protected:
 class OutputBuffer : public Buffer {
 
 public:
-	OutputBuffer(Variable * var) :Buffer(var) {
+	OutputBuffer(Value * var) :Buffer(var) {
 		parameter_ = var->getPatameter();
 	}
 

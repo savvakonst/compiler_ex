@@ -8,12 +8,12 @@
 #include "llvm/Support/JSON.h"
 #include "undefWarningIgnore.h"
 
-using namespace llvm;
+//using namespace llvm;
 
 
 
-bool         fromJSON(const json::Value &data_fragment, DataInterval &data_interval);
-DataInterval getDataInterval(json::Value &data_fragment, json::Array &data_files_list);
+bool         fromJSON(const llvm::json::Value &data_fragment, DataInterval &data_interval);
+DataInterval getDataInterval(llvm::json::Value &data_fragment, llvm::json::Array &data_files_list);
 
 calcMinMaxTy g_calcMinMax_select(PRMTypesEn arg) {
     int sub_type = ( ((int)arg) >> 4);
@@ -104,9 +104,9 @@ std::string toString(PRMTypesEn arg) {
 
 
 
-bool fromJSON(const json::Value &DataFragment, DataInterval & dataInterval) {
-    json::Path::Root root("bare");
-    json::ObjectMapper O(DataFragment, root);
+bool fromJSON(const llvm::json::Value &DataFragment, DataInterval & dataInterval) {
+    llvm::json::Path::Root root("bare");
+    llvm::json::ObjectMapper O(DataFragment, root);
     bool ret= true;
 
     ret&=O.map("Frequency", dataInterval.frequency);
@@ -121,19 +121,19 @@ bool fromJSON(const json::Value &DataFragment, DataInterval & dataInterval) {
 }
 
 
-DataInterval getDataInterval(json::Value &DataFragment, json::Array &DataFilesList) {
+DataInterval getDataInterval(llvm::json::Value &DataFragment, llvm::json::Array &DataFilesList) {
 
     DataInterval dataInterval;
     fromJSON(DataFragment, dataInterval);
 
     int64_t dataIndex;
-    json::Path::Root root("bare");
-    json::ObjectMapper O(DataFragment, root);
+    llvm::json::Path::Root root("bare");
+    llvm::json::ObjectMapper O(DataFragment, root);
     O.map("Index", dataIndex);
 
     for (auto i : DataFilesList) {
-        json::Path::Root root("bare");
-        json::ObjectMapper O(i, root);
+        llvm::json::Path::Root root("bare");
+        llvm::json::ObjectMapper O(i, root);
         int64_t fileDataIndex;
         O.map("Index", fileDataIndex);
 
@@ -157,26 +157,26 @@ bool readParametersList(std::string databaseFName, std::vector<SyncParameter*>& 
         (std::istreambuf_iterator<char>())
     );
 
-    auto e =json::parse(content);
-    json::Value &jValue=e.get();
+    auto e =llvm::json::parse(content);
+    llvm::json::Value &jValue=e.get();
 
-    json::Object* jObject          =   jValue.getAsObject();
-    json::Array*  parametersList   = (*jObject)["Parameters.List"].getAsArray();
+    llvm::json::Object* jObject          =   jValue.getAsObject();
+    llvm::json::Array*  parametersList   = (*jObject)["Parameters.List"].getAsArray();
 
-    json::Object* parameter        = (*parametersList)[0].getAsObject();
+    llvm::json::Object* parameter        = (*parametersList)[0].getAsObject();
 
     for (auto i : *parametersList) {
-        json::Object   pObject=*i.getAsObject();
+        llvm::json::Object   pObject=*i.getAsObject();
 
-        json::Array & DataFilesList     = *(pObject["Data.Files.List"].getAsArray());
-        json::Array & DataFragmentsList = *(pObject["Data.Fragments.List"].getAsArray());
+        llvm::json::Array & DataFilesList     = *(pObject["Data.Files.List"].getAsArray());
+        llvm::json::Array & DataFragmentsList = *(pObject["Data.Fragments.List"].getAsArray());
 
         std::vector<DataInterval> interval_list;
         for (auto k : DataFragmentsList)
             interval_list.push_back(getDataInterval(k, DataFilesList));
 
-        json::Path::Root root("bare");
-        json::ObjectMapper O(i, root);
+        llvm::json::Path::Root root("bare");
+        llvm::json::ObjectMapper O(i, root);
 
         std::string  name;
         TimeInterval time_interval;

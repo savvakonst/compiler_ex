@@ -11,7 +11,7 @@
 //	rightBufferLength=right;
 //}
 //
-//void Operation::setBufferLength(Variable * var) {
+//void Operation::setBufferLength(Value * var) {
 //	if (isLargeArr(this)) {
 //		leftBufferLength =var->getLeftShift();
 //		rightBufferLength =var->getRightShift();
@@ -19,7 +19,7 @@
 //}
 
 
-void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
+void Operation::visitEnterSetupBuffer(stack<Value*>* visitorStack){
 	if (isConvolve(op_code_)) {
 		auto smallArray = operand_[1];
 		auto shift = shift_parameter_;
@@ -58,7 +58,7 @@ void Operation::visitEnterSetupBuffer(stack<Variable*>* visitorStack){
 }
 
 
-void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
+void Operation::visitEnterStackUpdate( stack<Value*>* visitorStack ){
 	if (isArithetic(op_code_)) {
 		visitorStack->push(operand_[1]);
 		visitorStack->push(operand_[0]);
@@ -98,11 +98,11 @@ void Operation::visitEnterStackUpdate( stack<Variable*>* visitorStack ){
 }
 
 
-void Operation::markUnusedVisitEnter(stack<Variable*>* visitorStack){
+void Operation::markUnusedVisitEnter(stack<Value*>* visitorStack){
 	commoMmarkUnusedVisitEnter(visitorStack);
 	visitEnterSetupBuffer(visitorStack);
 	visitEnterStackUpdate(visitorStack);
-	is_nused_ = false;
+	is_unused_ = false;
 }
 
 void Operation::genBlocksVisitExit(TableGenContext * context)
@@ -142,8 +142,13 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 		context->setParameter(parameter_);
 }
 
+void Operation::genConstRecursiveVisitExit(ConstRecursiveGenContext* context){
+	context->setUint(this);
+	is_visited_ = false;
+}
 
-void Operation::visitEnter(stack<Variable*>* visitorStack){
+
+void Operation::visitEnter(stack<Value*>* visitorStack){
 	is_visited_ = true;
 	visitorStack->push(this);
 	visitEnterStackUpdate(visitorStack);
@@ -155,7 +160,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 	g_pos = pos;
 
 	is_visited_ = false;
-	Variable* ret = nullptr;
+	Value* ret = nullptr;
 	if (isArithetic(op_code_)) {
 		auto op2 = context->pop();
 		auto op1 = context->pop();
@@ -249,7 +254,7 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 	}
 	else if (isSmallArrayDef(op_code_)) {
 		size_t size = operand_.size();
-		stack<Variable*> op;
+		stack<Value*> op;
 		for (size_t i = 0; i < size; i++)
 			op.push(context->pop());
 		std::reverse(op.begin(), op.end());
@@ -261,67 +266,72 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 	context->push(ret);
 }
 
-/*
-void Operation::genConstRecursiveVisitExit(ConstRecursiveGenContext* context){
+
+void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 	context->setUint(this);
 
-	#define OP(i)     (operand_[(i)] )
+#define OP(i)     (operand_[(i)] )
 
 	if(isArithetic(op_code_)){
-		temp_type_ = maxTypeVar(OP(0), OP(1))->getType();
+		temp_type_ = maxTempTypeVar(OP(0), OP(1))->getTempType();
+		auto arg_a = calcTypeConvConst(temp_type_, OP(0)->getTempType(), OP(0)->getBinaryValue());
+		auto arg_b = calcTypeConvConst(temp_type_, OP(1)->getTempType(), OP(1)->getBinaryValue());
+		binary_value_ = calcAritheticConst(op_code_, temp_type_, arg_a, arg_b);
 	}
 	else if(isComparsion(op_code_)){
+		auto local_type_ = maxTempTypeVar(OP(0), OP(1))->getTempType();
+		auto arg_a = calcTypeConvConst(local_type_, OP(0)->getTempType(), OP(0)->getBinaryValue());
+		auto arg_b = calcTypeConvConst(local_type_, OP(1)->getTempType(), OP(1)->getBinaryValue());
+		binary_value_ = calcComparsionConst(op_code_, local_type_, arg_a, arg_b);
+
 		temp_type_ = TypeEn::int1_jty;
 	}
 	else if(isInv(op_code_)){
-		temp_type_ = OP(0)->getType();;
+		temp_type_ = OP(0)->getTempType();
+		binary_value_ = invAritheticConst(OP(0)->getTempType(), OP(0)->getBinaryValue());
 	}
 	else if(isTypeConv(op_code_)){
-		temp_type_ = OP(0)->getType();
+		temp_type_ = type_;
+		auto arg_b = calcTypeConvConst(temp_type_, OP(1)->getTempType(), OP(1)->getBinaryValue());
 	}
 	else if(isBuiltInFunc(op_code_)){
-		IR_value_ =builder.CreateBuiltInFunc(OP(0), op_code_, getUniqueName());
+		untyped_t temp_var = 0;
+		TypeEn temp_type_ = OP(0)->getTempType();
+		if(TypeEn::float_jty > temp_type_){
+			temp_var = calcTypeConvConst(TypeEn::float_jty, OP(0)->getTempType(), OP(0)->getBinaryValue());
+			temp_type_ = TypeEn::float_jty;
+		}
+		binary_value_ = builtInFuncConst(op_code_, temp_type_, OP(0)->getBinaryValue());
 	}
 	else if(isSelect(op_code_)){
-		IR_value_ =builder.CreateSelect(OP(0), OP(1), OP(2), getUniqueName());
+		auto arg_a = calcTypeConvConst(TypeEn::int1_jty, OP(0)->getTempType(), OP(0)->getBinaryValue());
+		if(contain_rec_call_){
+			bool cond = (*((bool*)&arg_a));
+			context->exit_from_loop_ = cond != (OP(1)->getNodeType() == NodeTypeEn::tailCall);
+			binary_value_ = (OP(1)->getNodeType() != NodeTypeEn::tailCall) ? OP(1)->getBinaryValue() : OP(2)->getBinaryValue();
+		}
+		else{
+			temp_type_ = maxTempTypeVar(OP(1), OP(2))->getTempType();
+			auto arg_b = calcTypeConvConst(temp_type_, OP(1)->getTempType(), OP(1)->getBinaryValue());
+			auto arg_c = calcTypeConvConst(temp_type_, OP(2)->getTempType(), OP(2)->getBinaryValue());
+			binary_value_ = calcSelectConst(op_code_, temp_type_, arg_a, arg_b, arg_c);
+		}
 	}
 	else if(isConvolve(op_code_)){
-		//outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
-		auto second_op=operand_[1]->getAssignedVal(true);
-		auto length = second_op->getLength();
-		auto f = OP(0);
-		IR_value_ =builder.CreateConvolve(OP_PTR(0), second_op->getBufferPtr(), length, -(length / 2 + shift_parameter_), type_, getUniqueName());
+		print_IR_error("calculateConstRecursive isConvolve invalid command .");
 	}
 	else if(isSlice(op_code_)){
-
+		print_IR_error("calculateConstRecursive isSlice invalid command .");
 	}
 	else if(isStoreToBuffer(op_code_)){
-		print_IR_error("visitExitTxt StoreToBuffer unknown command .");
+		print_IR_error("calculateConstRecursive isStoreToBuffer invalid command .");
 	}
 	else{
-		print_IR_error("visitExitTxt unknown command .");
+		print_IR_error("calculateConstRecursive unknown command .");
 	}
-
-
-	if(isBuffered() | isReturned()){
-		if(!is_initialized){
-			BufferTypeEn bufferType=isReturned() ? BufferTypeEn::output : BufferTypeEn::internal;
-			if(isReturned()){
-				builder.AddBufferAlloca(new OutputBuffer(this));
-			}
-			else
-				builder.AddBufferAlloca(new Buffer(this));
-
-			IR_buffer_base_ptr_=builder.CreateBufferInit(type_, "internal_");
-			is_initialized=true;
-		}
-		builder.SetStoreInsertPoint();
-		IR_buffer_ptr_ = builder.CreateInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
-		builder.CreatePositionalStore(IR_value_, IR_buffer_ptr_);
-	}
+#undef OP
 };
 
-*/
 
 void Operation::printVisitExit(stack<std::string>* Stack) {
 	is_visited_ = false;
@@ -436,18 +446,18 @@ void Operation::calculate(){
 	if (isComparsion(op_code_)) {
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
-		auto localType=aOperand->getType();
+		auto local_type=aOperand->getType();
 		if (aOperand->isArray() && bOperand->isArray())
-			buffer_ptr_=calcComparsionSmallArray(op_code_, localType, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length);
+			buffer_ptr_=calcComparsionSmallArray(op_code_, local_type, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBufferPtr(), length);
 		else if (aOperand->isArray())
-			buffer_ptr_=calcComparsionSmallArray(op_code_, localType, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length);
+			buffer_ptr_=calcComparsionSmallArray(op_code_, local_type, buffer_ptr_, aOperand->getBufferPtr(), bOperand->getBinaryValue(), length);
 		else
-			buffer_ptr_=calcComparsionSmallArray(op_code_, localType, buffer_ptr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length);
+			buffer_ptr_=calcComparsionSmallArray(op_code_, local_type, buffer_ptr_, aOperand->getBinaryValue(), bOperand->getBufferPtr(), length);
 	}
 	else if (isInv(op_code_))
 		buffer_ptr_=invAritheticSmallArray(type_, buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isTypeConv(op_code_))
-		buffer_ptr_=typeConvSmallArray(type_, OP(0)->getType(), buffer_ptr_, OP(0)->getBufferPtr(), length);
+		buffer_ptr_=calcTypeConvSmallArray(type_, OP(0)->getType(), buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isBuiltInFunc(op_code_))
 		buffer_ptr_=builtInFuncSmallArray(op_code_, type_, buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isSelect(op_code_)){
@@ -512,7 +522,7 @@ SWITCH_TYPE_OP(type_, print_SA_error("samallarray range ");)
 
 
 
-void Operation::smallArray(Variable* arg1, Variable* arg2, Variable* arg3) {
+void Operation::smallArray(Value* arg1, Value* arg2, Value* arg3) {
 	if ((isConst(arg1) && isConst(arg2) && isConst(arg3) && isInteger(arg3))) {
 		start_     = arg1->getDoubleValue();
 		stop_      = arg2->getDoubleValue();
@@ -526,7 +536,7 @@ void Operation::smallArray(Variable* arg1, Variable* arg2, Variable* arg3) {
 	}
 };
 
-void Operation::smallArray(Variable* arg1, Variable* arg2) {
+void Operation::smallArray(Value* arg1, Value* arg2) {
 	if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2)) {
 		start_     = arg1->getDoubleValue();
 		stop_      = arg2->getDoubleValue();
@@ -539,7 +549,7 @@ void Operation::smallArray(Variable* arg1, Variable* arg2) {
 	}
 };
 
-void Operation::smallArray(Variable* arg1) {
+void Operation::smallArray(Value* arg1) {
 	if (isConst(arg1) && isInteger(arg1)) {
 		start_     = 0;
 		stop_      = (double) arg1->getBinaryValue();

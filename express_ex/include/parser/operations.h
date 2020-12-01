@@ -9,15 +9,15 @@
 //extern bool g_gpu_acceleration_enable;
 
 
-class Operation :public Variable
+class Operation :public Value
 {
 public:
-    Operation():Variable() {
+    Operation():Value() {
         op_code_ = OpCodeEn::none_op; 
     }
 
     // constructor of type conversion operation or shift and decimation 
-    Operation(OpCodeEn op, Variable* var, TypeEn targetType, int64_t shiftOrDecimation=0):Variable() {
+    Operation(OpCodeEn op, Value* var, TypeEn targetType, int64_t shiftOrDecimation=0):Value() {
         CommonSetup(op, var);
         type_ = targetType;
 
@@ -38,7 +38,7 @@ public:
 
 
     // constructor of convolve operation
-    Operation(OpCodeEn op, Variable* largeArr, Variable* smallArr, int64_t shift):Variable(){ 
+    Operation(OpCodeEn op, Value* largeArr, Value* smallArr, int64_t shift):Value(){ 
         CommonSetup(op, maxDSVar(largeArr, smallArr));
       
         if (op == OpCodeEn::convolve) {
@@ -61,7 +61,7 @@ public:
     }
 
     // constructor of arithetic, logic or comparsion operation 
-    Operation(OpCodeEn op, Variable* var1, Variable* var2) :Variable() {
+    Operation(OpCodeEn op, Value* var1, Value* var2) :Value() {
         CommonSetup(op, maxDSVar(var1, var2));
 
         type_  = maxTypeVar(var1, var2)->getType();
@@ -77,7 +77,7 @@ public:
     }
 
     // constructor of trenary operation 
-    Operation(OpCodeEn op, Variable* var1, Variable* var2, Variable* var3, TypeEn targetType, bool rec_call = false) :Variable() {
+    Operation(OpCodeEn op, Value* var1, Value* var2, Value* var3, TypeEn targetType, bool rec_call = false) :Value() {
         CommonSetup(op, maxDSVar(var1, var2));
         type_ = targetType;
         level_ = maxLevelVar(maxLevelVar(var1, var2), var3)->getLevel();
@@ -101,7 +101,7 @@ public:
     }
 
     // constructor of small array definition
-    Operation(OpCodeEn op, stack<Variable*> &args, TypeEn targetType) :Variable() {
+    Operation(OpCodeEn op, stack<Value*> &args, TypeEn targetType) :Value() {
 
         size_t argsSize=args.size();
         op_code_ = op;
@@ -132,7 +132,7 @@ public:
         }
     }
 
-    void CommonSetup(OpCodeEn op, Variable* var) {
+    void CommonSetup(OpCodeEn op, Value* var) {
         op_code_ = op;
         dsType_ = var->getDSType();
         length_ = var->getLength();
@@ -152,20 +152,22 @@ public:
     virtual NodeTypeEn getNodeType()const override { return  contain_rec_call_ ? NodeTypeEn::tailCallSelect :  NodeTypeEn::operation; }
 
     //safe functions .external stack is used
-    void         visitEnterSetupBuffer(stack<Variable*>* visitorStack);
-    void         visitEnterStackUpdate(stack<Variable*>* visitorStack);
+    void         visitEnterSetupBuffer(stack<Value*>* visitorStack);
+    void         visitEnterStackUpdate(stack<Value*>* visitorStack);
 
-    virtual void visitEnter(stack<Variable*>* visitorStack) override;
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override;
+    virtual void visitEnter(stack<Value*>* visitorStack) override;
+    virtual void markUnusedVisitEnter(stack<Value*>* visitorStack) override;
 
 
     virtual void genBodyVisitExit(BodyGenContext * context) override;
-    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context)override;
+    virtual void calculateConstRecursive(ConstRecursiveGenContext* context)override;
     virtual void printVisitExit( stack<std::string>* Stack)	override;
     virtual void genBlocksVisitExit(TableGenContext* context) override;
 
+    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override;
 
-    virtual Variable* getAssignedVal(bool deep = false)  override { return this; }
+
+    virtual Value* getAssignedVal(bool deep = false)  override { return this; }
 
     virtual string printUint() override;
     virtual void setupIR(IRGenerator & builder) override;
@@ -176,13 +178,13 @@ public:
 private:
     void smallArrayGen();
     void smallArray();
-    void smallArray(Variable* arg1, Variable* arg2, Variable* arg3);
-    void smallArray(Variable* arg1, Variable* arg2);
-    void smallArray(Variable* arg1);
+    void smallArray(Value* arg1, Value* arg2, Value* arg3);
+    void smallArray(Value* arg1, Value* arg2);
+    void smallArray(Value* arg1);
 
 
-    std::vector<Variable*> operand_;
-    std::vector<Variable*> simplified_operand_;
+    std::vector<Value*> operand_;
+    std::vector<Value*> simplified_operand_;
 
     OpCodeEn op_code_ = OpCodeEn::none_op;
 
@@ -211,15 +213,15 @@ private:
 
 
 
-Variable* newInvOperation(GarbageContainer* garbageContainer, Variable* arg1);
-Variable* newBuiltInFuncOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, OpCodeEn uTypeOp);
-Variable* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
-Variable* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
-Variable* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, int64_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
-Variable* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1);
-Variable* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Variable* arg1, Variable* arg2, Variable* arg3, bool rec_call = false);
-Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, Variable* arg2, OpCodeEn uTypeOp);
-Variable* newSliceOp(GarbageContainer* garbageContainer, Variable* arg1, int64_t intVal, OpCodeEn uTypeOp);
-Variable* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Variable*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool isPrototype = false);
+Value* newInvOperation(GarbageContainer* garbageContainer, Value* arg1);
+Value* newBuiltInFuncOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, OpCodeEn uTypeOp);
+Value* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
+Value* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
+Value* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, int64_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
+Value* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1);
+Value* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, Value* arg3, bool rec_call = false);
+Value* newSliceOp(GarbageContainer* garbageContainer, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
+Value* newSliceOp(GarbageContainer* garbageContainer, Value* arg1, int64_t intVal, OpCodeEn uTypeOp);
+Value* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Value*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool isPrototype = false);
 
 #endif

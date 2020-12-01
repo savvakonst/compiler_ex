@@ -2,12 +2,12 @@
 #define CALL_H_
 
 
-class CallI_ifs: public Variable{
+class CallI_ifs: public Value{
 public:
-    CallI_ifs ():Variable(){
+    CallI_ifs ():Value(){
     }
 
-    virtual void visitEnter(stack<Variable*>* visitorStack) override{
+    virtual void visitEnter(stack<Value*>* visitorStack) override{
         visitorStack->push(this);
         for(size_t i= (args_.size() - 1); i >= 0; i--){
             visitorStack->push(args_[i]);
@@ -27,43 +27,32 @@ public:
         }
     };
 
-protected:
-    Body* body_ = nullptr;
-    stack<Variable*>  args_;
-};
+    virtual Value* getAssignedVal(bool deep = false) override{
+        if(body_ == nullptr)
+            return nullptr;
 
+        if(is_buffered & deep){
+            body_->getRet()[0]->getAssignedVal(true)->setBuffered();
+        }
 
-
-class TailCallDirective: public CallI_ifs{
-public:
-    TailCallDirective(stack<Variable*> args):CallI_ifs(){
-        args_ = args;
-        type_ = TypeEn::unknown_jty;
+        return body_->getRet()[0]->getAssignedVal(deep);
     }
 
-    ~TailCallDirective(){
-    }
-
-    virtual void genBodyVisitExit(BodyGenContext* context) override{
-
-        stack<Variable*> a;
-        for(auto& i : args_) a.push(context->pop());
-
-        context->push(
-            context->getGarbageContainer()->add(
-                new TailCallDirective(a)));
+    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override {
+        context->setUint(this);
         is_visited_ = false;
     }
 
-    virtual NodeTypeEn getNodeType() const override { return   NodeTypeEn::tailCall; }
+protected:
+    Body* body_ = nullptr;
+    stack<Value*>  args_;
 };
-
 
 
 class CallRecursiveFunction: public CallI_ifs{
 public:
 
-    CallRecursiveFunction(Body* body,const stack<Variable*> &args ={}):CallI_ifs(){
+    CallRecursiveFunction(Body* body,const stack<Value*> &args ={}):CallI_ifs(){
         body_ = body;
         args_ = args;
 
@@ -86,30 +75,92 @@ public:
 
     virtual void genBodyVisitExit(BodyGenContext* context) override{
 
-        stack<Variable*> a;
-        for(auto& i : args_)
-            a.push(context->pop());
+        stack<Value*> a;
+        bool large_array = false, small_array = false;
+
+        for(auto i : args_){
+            Value* var = context->pop();
+            large_array |= isLargeArr(var);
+            small_array |= isSmallArr(var);
+            a.push(var);
+        }
+
 
         Body* b = body_;
+        if(large_array && small_array){
+            print_error("invalid signature for recursive call method");
+        }
+        else if(large_array || small_array){
+            if(!context->isPrototype())
+                b = body_->genBodyByPrototype(a, false);
 
-        if(!context->isPrototype())
-            b = body_->genBodyByPrototype(a, false);
-
-        auto call = new CallRecursiveFunction(b, a);
-        context->getGarbageContainer()->add(call);
-        context->push(call);
+            context->push(
+                context->getGarbageContainer()->add(
+                    new CallRecursiveFunction(b, a)
+                ));
+            print_error("invalid signature for recursive call method");
+        }
+        else{
+            binary_value_ = b->genConstRecusiveByPrototype(a);
+            context->push(
+                context->getGarbageContainer()->add(
+                    new Value(binary_value_, b->getRet().front()->getType())
+                ));
+        }
+        
         is_visited_ = false;
     }
+
+    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+        binary_value_ = body_->genConstRecusiveByPrototype(args_); //it might be worth changing the order
+        type_ = body_->getRet().front()->getType();
+        is_visited_ = false;
+    };
+
 
     virtual NodeTypeEn getNodeType()const override{ return   NodeTypeEn::call; }
 
 };
 
 
+class TailCallDirective: public CallI_ifs{
+public:
+    TailCallDirective(stack<Value*> args):CallI_ifs(){
+        args_ = args;
+        type_ = TypeEn::unknown_jty;
+    }
+
+    ~TailCallDirective(){}
+
+    virtual void genBodyVisitExit(BodyGenContext* context) override{
+
+        stack<Value*> a;
+        for(auto& i : args_) a.push(context->pop());
+
+        context->push(
+            context->getGarbageContainer()->add(
+                new TailCallDirective(a)));
+        is_visited_ = false;
+    }
+
+
+    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+        size_t size = context->args_reference_.size();
+        for(size_t i = 0; i < size; i++)
+            args_[i]->binary_value_ = *(context->args_reference_[i]);
+    }
+
+
+
+    virtual NodeTypeEn getNodeType() const override{
+        return   NodeTypeEn::tailCall;
+    }
+};
+
 class Call: public CallI_ifs{
 public:
 
-    Call(Body* body, const stack<Variable*>& args ={}): CallI_ifs(){
+    Call(Body* body, const stack<Value*>& args ={}): CallI_ifs(){
         body_ = body;
         args_ = args;
 
@@ -131,7 +182,7 @@ public:
     ~Call(){}
 
     // safe functions .external stack is used
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override{
+    virtual void markUnusedVisitEnter(stack<Value*>* visitorStack) override{
         commoMmarkUnusedVisitEnter(visitorStack);
 
         if(body_->getRet().empty())
@@ -142,7 +193,7 @@ public:
         visitorStack->push(ret);
         ret->setBufferLength(this);
 
-        is_nused_ = false;
+        is_unused_ = false;
     }
 
     virtual void genBlocksVisitExit(TableGenContext* context) override{
@@ -156,7 +207,7 @@ public:
 
     virtual void genBodyVisitExit(BodyGenContext* context) override{
 
-        stack<Variable*> a;
+        stack<Value*> a;
         for(auto& i : args_)
             a.push(context->pop());
 
@@ -165,28 +216,24 @@ public:
         if(!context->isPrototype())
             b = body_->genBodyByPrototype(a, false);
 
-        auto call = new Call(b, a);
-        context->getGarbageContainer()->add(call);
-        context->push(call);
+        context->push(
+            context->getGarbageContainer()->add(new Call(b, a)));
+
         is_visited_ = false;
     }
 
-    virtual string printUint() override {
- 
-            return uniqueName_ + " = assignCall(" +
+    virtual string printUint() override{
+        return uniqueName_ + " = assignCall(" +
             body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")";
     }
 
     virtual void setupIR(IRGenerator& builder) override;
 
-    virtual Variable* getAssignedVal(bool deep = false) override{
-
-        if(is_buffered & deep){
-            body_->getRet()[0]->getAssignedVal(true)->setBuffered();
-        }
-
-        return body_->getRet()[0]->getAssignedVal(deep);
-    }
+    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+        binary_value_ = body_->genConstRecusiveByPrototype(args_); //it might be worth changing the order
+        type_ = body_->getRet().front()->getType();
+        is_visited_ = false;
+    };
 
     virtual NodeTypeEn getNodeType()const override{ return   NodeTypeEn::call; }
 

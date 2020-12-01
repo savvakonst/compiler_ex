@@ -13,7 +13,7 @@ bool Line::isArg() {
 	return is_arg;
 }
 
-void Line::assignValue(Variable* var) {
+void Line::assignValue(Value* var) {
 	assigned_val_ = var;
 	type_ = var->getType();
 }
@@ -29,7 +29,7 @@ bool Line::haveTargetName(std::string name){
 	
 }
 
-Variable * Line::getAssignedVal(bool deep)
+Value * Line::getAssignedVal(bool deep)
 {
 	if (is_arg)
 		return this;
@@ -43,13 +43,13 @@ Variable * Line::getAssignedVal(bool deep)
 
 //safe functions .external stack is used
 
-void Line::markUnusedVisitEnter(stack<Variable*>* visitorStack){
+void Line::markUnusedVisitEnter(stack<Value*>* visitorStack){
 	commoMmarkUnusedVisitEnter(visitorStack);
 	if (!is_arg) {
 		visitorStack->push(assigned_val_);
 		assigned_val_->setBufferLength(this);
 	}
-	is_nused_ = false;
+	is_unused_ = false;
 }
 
 void Line::genBlocksVisitExit(TableGenContext * context)
@@ -59,7 +59,7 @@ void Line::genBlocksVisitExit(TableGenContext * context)
 	is_visited_ = false;
 }
 
-void Line::visitEnter(stack<Variable*>* visitorStack){
+void Line::visitEnter(stack<Value*>* visitorStack){
 	visitorStack->push(this);
 	is_visited_ = true;
 }

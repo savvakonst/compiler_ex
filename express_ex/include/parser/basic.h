@@ -8,7 +8,7 @@
 #include "types_jty.h"
 
 
-class Variable;
+class Value;
 class Body;
 
 class GarbageContainer
@@ -17,18 +17,18 @@ public:
     ~GarbageContainer();
     /*
     ~GarbageContainer() {
-        for (auto i : variable_set_)
+        for (auto i : value_set_)
             delete i;
     }
     */
-    Variable* add(Variable* var) {
+    Value* add(Value* var) {
         if (var != nullptr)
-            variable_set_.insert(var);
+            value_set_.insert(var);
         return var;
     }
 
 protected:
-    std::set<Variable*> variable_set_;
+    std::set<Value*> value_set_;
 };
 
 // body generation context from prototype
@@ -43,8 +43,8 @@ public:
     ~BodyGenContext(){}
 
 
-    inline void push(Variable* var){ var_stack_.push(var); }
-    inline Variable* pop(){ return var_stack_.pop(); }
+    inline void push(Value* var){ var_stack_.push(var); }
+    inline Value* pop(){ return var_stack_.pop(); }
     inline std::vector< Line*>& getNamespace(){ return *namespace_ptr_; }
     inline GarbageContainer* getGarbageContainer(){ return garbage_container_; }
     inline bool isPrototype(){ return is_prototype_; }
@@ -52,7 +52,7 @@ private:
 
 
     GarbageContainer* garbage_container_ = nullptr;
-    stack<Variable*>   var_stack_;
+    stack<Value*>   var_stack_;
     std::vector<Line*>* namespace_ptr_ = nullptr;
     bool is_prototype_ = false;
 };
@@ -60,20 +60,27 @@ private:
 // constant value recursive clculation context 
 class ConstRecursiveGenContext{
 public:
-    ConstRecursiveGenContext(){}
+    ConstRecursiveGenContext(bool is_recursive = true){
+        
+        exit_from_loop_ = !is_recursive; 
+    }
     ~ConstRecursiveGenContext(){}
     
-    inline void setUint(Variable* var){ instructions_list_.push(var); }
+    inline void setUint(Value* var){ instructions_list_.push(var); }
     inline uint32_t getReference(){ return reference_cnt_++; }
-
-    stack<Variable*> instructions_list_;
+    void addArg(untyped_t* arg){ args_reference_.push(arg); }
+    bool exitFromLoop(){ return exit_from_loop_; }
+    stack<Value*> instructions_list_;
 
 private:
+    bool exit_from_loop_ = false;
     uint32_t reference_cnt_ = 0;
     
-    stack<int64_t>   binary_value_list_;
-    stack<int64_t>   binary_value_stack_;
-    //std::map<std::string, Variable> namespace_ptr_ ;
+    stack<untyped_t*> args_reference_;
+
+    friend class TailCallDirective;
+    friend class Operation;
+    //std::map<std::string, Value> namespace_ptr_ ;
 };
 
 

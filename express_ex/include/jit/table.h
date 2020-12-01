@@ -14,7 +14,7 @@
 #include "ParameterIO.h"
 
 using std::string;
-class Variable;
+class Value;
 
 enum class CycleStageEn
 {
@@ -47,11 +47,11 @@ class SubBlock
 {
 public:
 
-    SubBlock (Variable* var);
+    SubBlock (Value* var);
 
     ~SubBlock() {}
 
-    void     setUint(Variable * var);
+    void     setUint(Value * var);
     void     setBufferLength(uint64_t buffer_length) { buffer_length_=buffer_length; }
     uint64_t getLevel () { return 0; };
     uint64_t getLength() { return length_; };
@@ -64,7 +64,7 @@ public:
         std::string basicBlockPrefix="", std::string basicBlockPostfix="");
 
 private:
-    stack<Variable*> uint_list_;
+    stack<Value*> uint_list_;
 
     uint64_t left_length_;
     uint64_t right_length_;
@@ -77,14 +77,14 @@ class Block
 public:
 
     //Block (uint64_t l) {level =l; }
-    Block (Variable* var);
+    Block (Value* var);
 
     ~Block() {
         for (auto i : sub_block_list_)
             delete i;
     }
 
-    void     setUint(Variable * var);
+    void     setUint(Value * var);
     void     setBufferLength(uint64_t bufferLength);
     uint64_t getLevel () { return level_;  };
     uint64_t getLength() { return length_; };
@@ -95,9 +95,9 @@ public:
 
 
 private:
-    void setUintToSubtable(Variable * var);
+    void setUintToSubtable(Value * var);
 
-    stack<Variable*> uint_list_;
+    stack<Value*> uint_list_;
     stack<SubBlock*> sub_block_list_;
 
     uint64_t left_ength_;
@@ -113,14 +113,14 @@ class TableColumn
 {
 public:
     TableColumn (uint64_t len) { length_ =len; }
-    TableColumn (Variable* var);
+    TableColumn (Value* var);
 
     ~TableColumn() {
         for (auto i : blockList_)
             delete i;
     }
 
-    void   setUint(Variable * var);
+    void   setUint(Value * var);
     void   setBufferLength(uint64_t bufferLength_) { 
         for (auto i : blockList_)
             i->setBufferLength(bufferLength_);
@@ -178,7 +178,7 @@ public:
         return false;
     }
 
-    void setUint(Variable * var);
+    void setUint(Value * var);
 
 
     void recalcLeftRightBufferLengths() {
@@ -247,8 +247,8 @@ private:
     llvm::Type * fTy_ = nullptr;            //external 
     llvm::Type * dTy_ = nullptr;            //external
 
-    stack<Variable *> const_list_;         //external 
-    stack<Variable *> small_array_list_;   //external 
+    stack<Value *> const_list_;         //external 
+    stack<Value *> small_array_list_;   //external 
 
     uint64_t *max_column_depth_ = 0;           
     stack<TableColumn *> column_list_;     //internal
@@ -273,7 +273,7 @@ public:
     ~TableGenContext() {}
     
     uint64_t          getUniqueIndex () { unique_name_counter_++; return (unique_name_counter_ -3); }
-    void              setUint(Variable * var) { table_->setUint(var);};
+    void              setUint(Value * var) { table_->setUint(var);};
     void              setParameter(SyncParameter * var) { table_->parameterSet_.insert(var); };
     void              setMaxBufferLength(int64_t length) { 
         int64_t temp = (int64_t)1 << (int8_t)(floor(log2(length)) - 1);

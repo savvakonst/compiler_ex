@@ -15,7 +15,7 @@
 
 
 class Table;
-class Variable;
+class Value;
 
 
 
@@ -36,16 +36,16 @@ public:
 
      
     bool CheckExistence(llvm::Value *var) { 
-        for (auto &i : initialized_variables_list_)
+        for (auto &i : initialized_value_list_)
             if (i == var) return true;
         return false;
     }
-    void AddInitializedVariable(llvm::Value *var) { initialized_variables_list_.push_back(var); }
-    void ClearInitializedVariablesList() { initialized_variables_list_.clear(); }
+    void AddInitializedValue(llvm::Value *var) { initialized_value_list_.push_back(var); }
+    void ClearInitializedValueList() { initialized_value_list_.clear(); }
 
 
     llvm::Value * CreateFPow(llvm::Value *AOperand, llvm::Value *BOperand, const std::string & name="");
-    llvm::Value * CreateConst(uint64_t & binaryValue, TypeEn targetTy, const std::string & name="");
+    llvm::Value * CreateConst(int64_t & binaryValue, TypeEn targetTy, const std::string & name="");
     llvm::Value * CreateArithmetic(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreateComparsion(llvm::Value *AOperand, llvm::Value *BOperand, OpCodeEn opCode, const std::string &name="");
     llvm::Value * CreateInv(llvm::Value * AOperand, OpCodeEn opCode, const std::string & name="");
@@ -149,9 +149,9 @@ private:
 
     std::vector <llvm::BasicBlock*> bb_List_;
 
-    //  list of variables that are alrady loaded in current loop block,
+    //  list of values that are alrady loaded in current loop block,
     //  this list should be cleared every time in the transition to a next block.
-    std::vector <llvm::Value*>  initialized_variables_list_; 
+    std::vector <llvm::Value*>  initialized_value_list_; 
 
     llvm::Value * convolve_double_function_=nullptr;
     llvm::Value * convolve_float_function_=nullptr;

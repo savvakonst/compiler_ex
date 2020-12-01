@@ -1,6 +1,6 @@
 #include "variable.h"
 
-Variable::Variable(string text, TypeEn type) :SmallArr() {
+Value::Value(string text, TypeEn type) :SmallArr() {
     text_value_ = text;
     type_ = type;
 
@@ -20,10 +20,9 @@ Variable::Variable(string text, TypeEn type) :SmallArr() {
     }
 };
 
+Value::Value(untyped_t binary_value, TypeEn type) :SmallArr() {
 
-Variable::Variable(int64_t value, TypeEn type) :SmallArr() {
-
-    binary_value_ = value;
+    binary_value_ = binary_value;
     type_ = type;
 #define OP(T) text_value_ = std::to_string(*((T   *)(&binary_value_)))
     SWITCH_TYPE_OP(type, ;);
@@ -31,7 +30,7 @@ Variable::Variable(int64_t value, TypeEn type) :SmallArr() {
 };
 
 
-Variable::Variable(Variable* arg1, Variable* arg2, Variable* arg3) :SmallArr() {
+Value::Value(Value* arg1, Value* arg2, Value* arg3) :SmallArr() {
     if (!(isConst(arg1) && isConst(arg2) && isConst(arg3) && isInteger(arg3))) {
         print_error("range args must be a constant");
         return;
@@ -46,7 +45,7 @@ Variable::Variable(Variable* arg1, Variable* arg2, Variable* arg3) :SmallArr() {
     }
 };
 
-Variable::Variable(Variable* arg1, Variable* arg2) :SmallArr() {
+Value::Value(Value* arg1, Value* arg2) :SmallArr() {
     if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2)) {
         length_    = arg2->getBinaryValue() - arg1->getBinaryValue();
         dsType_    = DataStructTypeEn::smallArr_dsty;
@@ -60,7 +59,7 @@ Variable::Variable(Variable* arg1, Variable* arg2) :SmallArr() {
     }
 };
 
-Variable::Variable(Variable* arg1) :SmallArr() {
+Value::Value(Value* arg1) :SmallArr() {
     if (isConst(arg1) && isInteger(arg1)) {
         length_    = arg1->getBinaryValue();
         dsType_    = DataStructTypeEn::smallArr_dsty;
@@ -74,35 +73,35 @@ Variable::Variable(Variable* arg1) :SmallArr() {
     }
 };
 
-void Variable::setBuffered() {
+void Value::setBuffered() {
     if (isLargeArr(this)) {
         is_buffered=true;
     }
 }
 
-void Variable::setBufferLength(uint64_t central_length) {
+void Value::setBufferLength(uint64_t central_length) {
     buffer_length_ = central_length;
 }
 
-void Variable::setBufferLength(uint64_t left, uint64_t right) {
+void Value::setBufferLength(uint64_t left, uint64_t right) {
     if (isLargeArr(this)) {
         left_buffer_length_=maxInt(left_buffer_length_, left);
         right_buffer_length_=maxInt(right_buffer_length_, right);
     }
 }
 
-void Variable::setBufferLength(Variable * var) {
+void Value::setBufferLength(Value * var) {
     if (isLargeArr(this)) {
         left_buffer_length_ =maxInt(left_buffer_length_, var->getLeftBufferLen());
         right_buffer_length_ =maxInt(right_buffer_length_, var->getRightBufferLen());
     }
 }
 
-void Variable::setLevel(int64_t var) {
+void Value::setLevel(int64_t var) {
     level_=maxInt(level_, var);
 }
 
-string Variable::getTxtDSType()const{
+string Value::getTxtDSType()const{
     string t = "pass";
 #define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
     switch (dsType_)
@@ -115,7 +114,7 @@ string Variable::getTxtDSType()const{
 #undef ENUM2STR
 }
 
-double Variable::getDoubleValue()const {
+double Value::getDoubleValue()const {
     double ret=0.0;
 #define OP(T) ret = (double)(*((T*)(&binary_value_)))
     SWITCH_TYPE_OP(type_, print_error("getDoubleValue error");)
@@ -123,7 +122,7 @@ double Variable::getDoubleValue()const {
     return ret;
 }
 
-void Variable::calculate()
+void Value::calculate()
 {
     double delta=0.0;
     if (isInteger(type_)) {
@@ -141,7 +140,7 @@ void Variable::calculate()
 #undef OP
 }
 
-std::string Variable::printSmallArray()
+std::string Value::printSmallArray()
 {
     std::string ret = "array=[";
     if (length_ < 1)

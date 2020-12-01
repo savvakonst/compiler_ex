@@ -83,7 +83,7 @@ void TreeShapeListener::exitConst(EGrammarParser::ConstContext* ctx)  {
         CONV_TY(EGrammarParser::INT, TypeEn::int32_jty);
         CONV_TY(EGrammarParser::INT64, TypeEn::int64_jty);
     }
-    activ_body_->push(new Variable(ctx->getText(), targetType));
+    activ_body_->push(new Value(ctx->getText(), targetType));
 #undef CONV_TY
 }
 
@@ -206,7 +206,7 @@ void TreeShapeListener::exitCallFunc(EGrammarParser::CallFuncContext* ctx) {
     }
     if (b){
         print_error("there are no functin with same name");
-        activ_body_->push(new Variable(ctx->getText(), TypeEn::float_jty));
+        activ_body_->push(new Value(ctx->getText(), TypeEn::float_jty));
     }
 }
 

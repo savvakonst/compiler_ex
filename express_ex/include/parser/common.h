@@ -7,13 +7,16 @@
 #include "types_jty.h"
 #include "ParameterIfs.h"
 
+
+
+
 void print_error(const std::string &content);
 void print_IR_error(const std::string &content);
 void print_SA_error(const std::string &content);
 
 
 class Line;
-class Variable;
+class Value;
 
 typedef struct {
     int64_t start_line=-1;
@@ -51,36 +54,36 @@ public:
 
 
 
- bool operator==(Variable*        var1, DataStructTypeEn var2); 
- bool operator==(DataStructTypeEn var1, Variable*        var2);
- bool operator<(TypeEn    var1, Variable* var2);
- bool operator<(Variable* var1, TypeEn    var2);
+ bool operator==(Value*        var1, DataStructTypeEn var2); 
+ bool operator==(DataStructTypeEn var1, Value*        var2);
+ bool operator<(TypeEn    var1, Value* var2);
+ bool operator<(Value* var1, TypeEn    var2);
 
- bool isConst     (Variable* var1);
- bool isSmallArr  (Variable* var1);
- bool isLargeArr  (Variable* var1);
- bool isSimilar   (Variable* var1, Variable* var2);
- bool isÑompatible(Variable* var1, Variable* var2);
+ bool isConst     (Value* var1);
+ bool isSmallArr  (Value* var1);
+ bool isLargeArr  (Value* var1);
+ bool isSimilar   (Value* var1, Value* var2);
+ bool isÑompatible(Value* var1, Value* var2);
 
  bool isUnknownTy (TypeEn type);
  bool isFloating  (TypeEn type);
  bool isInteger   (TypeEn type);
  bool isUInteger  (TypeEn type);
 
- bool isUnknownTy (Variable* var);
- bool isFloating  (Variable* var);
- bool isInteger   (Variable* var);
- bool isUInteger  (Variable* var);
+ bool isUnknownTy (Value* var);
+ bool isFloating  (Value* var);
+ bool isInteger   (Value* var);
+ bool isUInteger  (Value* var);
 
  template<typename Int_T_>
  inline Int_T_ maxInt  (Int_T_ var1, Int_T_ var2){ return (var1 < var2) ? var2 : var1; }
  template<typename Int_T_>
  inline Int_T_ minInt  (Int_T_ var1, Int_T_ var2){ return (var1 < var2) ? var2 : var2; }
 
- Variable* maxTypeVar(Variable* var1, Variable* var2);
- Variable* maxDSVar(Variable* var1, Variable* var2);
- Variable* maxLevelVar(Variable* var1, Variable* var2);
- Variable* minLevelVar(Variable* var1, Variable* var2);
+ Value* maxTypeVar(Value* var1, Value* var2);
+ Value* maxDSVar(Value* var1, Value* var2);
+ Value* maxLevelVar(Value* var1, Value* var2);
+ Value* minLevelVar(Value* var1, Value* var2);
 
 
  inline std::string getTxtType(TypeEn type) {
@@ -101,15 +104,16 @@ public:
  }
 
 
-#define CONV_TYPE_OP(depend,target) case (depend):  target ;  break
-#define  SWITCH_TYPE_OP(TYPE,DEFAULT) switch(TYPE){\
-    CONV_TYPE_OP(TypeEn::double_jty, OP(double));\
-    CONV_TYPE_OP(TypeEn::float_jty, OP(float));\
-    CONV_TYPE_OP(TypeEn::int64_jty, OP(int64_t));\
-    CONV_TYPE_OP(TypeEn::int32_jty, OP(int32_t));\
-    CONV_TYPE_OP(TypeEn::int16_jty, OP(int16_t));\
-    CONV_TYPE_OP(TypeEn::int8_jty, OP(int8_t));\
-    CONV_TYPE_OP(TypeEn::int1_jty, OP(bool) );\
+#define CASE_OP_GLOBAL(depend,target) case (depend):  target ;  break
+
+#define SWITCH_TYPE_OP(TYPE,DEFAULT) switch(TYPE){\
+    CASE_OP_GLOBAL(TypeEn::double_jty, OP(double));\
+    CASE_OP_GLOBAL(TypeEn::float_jty, OP(float));\
+    CASE_OP_GLOBAL(TypeEn::int64_jty, OP(int64_t));\
+    CASE_OP_GLOBAL(TypeEn::int32_jty, OP(int32_t));\
+    CASE_OP_GLOBAL(TypeEn::int16_jty, OP(int16_t));\
+    CASE_OP_GLOBAL(TypeEn::int8_jty, OP(int8_t));\
+    CASE_OP_GLOBAL(TypeEn::int1_jty, OP(bool) );\
     default: DEFAULT ; break;\
     }
 
@@ -176,6 +180,44 @@ public:
     SWITCH_UINT(OpCodeEn::exp, LOOP,  RET=(T)exp(ARG_A);) break ;\
     default: break;\
     }
+
+
+
+
+
+
+
+
+#define OP_LV1(T,ARG_TYPE)   		switch (ARG_TYPE)  \
+	{   \
+		CASE_OP_GLOBAL(TypeEn::double_jty, OP_LV2(T,double)   ); \
+		CASE_OP_GLOBAL(TypeEn::float_jty,  OP_LV2(T,float)    ); \
+		CASE_OP_GLOBAL(TypeEn::int64_jty,  OP_LV2(T,int64_t)  ); \
+		CASE_OP_GLOBAL(TypeEn::int32_jty,  OP_LV2(T,int32_t)  ); \
+		CASE_OP_GLOBAL(TypeEn::int16_jty,  OP_LV2(T,int16_t)  ); \
+		CASE_OP_GLOBAL(TypeEn::int8_jty,   OP_LV2(T,int8_t)   ); \
+		CASE_OP_GLOBAL(TypeEn::int1_jty,   OP_LV2(T,bool)     ); \
+	} 
+
+
+ 
+#define CONV_TYPE_OP(ARG_TYPE, RET_TYPE)   \
+ if(!isUnknownTy(ARG_TYPE)){    \
+     uint64_t V = 0;            \
+     switch(RET_TYPE){          \
+         CASE_OP_GLOBAL(TypeEn::double_jty, OP_LV1(double, ARG_TYPE)); \
+         CASE_OP_GLOBAL(TypeEn::float_jty, OP_LV1(float, ARG_TYPE)); \
+         CASE_OP_GLOBAL(TypeEn::int64_jty, OP_LV1(int64_t, ARG_TYPE)); \
+         CASE_OP_GLOBAL(TypeEn::int32_jty, OP_LV1(int32_t, ARG_TYPE)); \
+         CASE_OP_GLOBAL(TypeEn::int16_jty, OP_LV1(int16_t, ARG_TYPE)); \
+         CASE_OP_GLOBAL(TypeEn::int8_jty, OP_LV1(int8_t, ARG_TYPE)); \
+         CASE_OP_GLOBAL(TypeEn::int1_jty, OP_LV1(bool, ARG_TYPE)); \
+     } \
+ } \
+ else{\
+ } \
+
+
 
 
 
@@ -339,27 +381,32 @@ public:
 char * calcSmallArrayAlloc(TypeEn targetType, int N, char * ptr=nullptr);
 
 char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int n);
+untyped_t calcAritheticConst(OpCodeEn op, TypeEn targetType, untyped_t a, untyped_t b);
 char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, int64_t  a, char *  b, int n);
 char * calcAritheticSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, int n);
 
 char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int n);
+untyped_t calcComparsionConst(OpCodeEn op, TypeEn targetType, untyped_t a, untyped_t b);
 char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, int64_t  a, char *  b, int n);
 char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, int n);
 
 
 char * invAritheticSmallArray(TypeEn targetType, char * ret, char * a, int n);
+untyped_t invAritheticConst( TypeEn targetType, untyped_t a);
 
 char * builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int n);
+untyped_t builtInFuncConst(OpCodeEn op, TypeEn targetType, untyped_t a);
 
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, char * c, int n);
+untyped_t calcSelectConst(OpCodeEn op, TypeEn targetType, untyped_t a, untyped_t b, untyped_t c);
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, int64_t c, int n);
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t  b, char * c, int n);
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int64_t b, int64_t c, int n);
 char * calcConvolveSmallArray( TypeEn targetType, char * ret, char * a, char * b, int aN,int bN);
 
-char * typeConvSmallArray(TypeEn retType, TypeEn argType, char * ret, char* arg, int n);
-
-char * calcSmallArrayDef(TypeEn targetType, std::vector<Variable*> &operand);
+char * calcTypeConvSmallArray(TypeEn retType, TypeEn argType, char * ret, char* arg, int n);
+untyped_t calcTypeConvConst(TypeEn retType, TypeEn argType, untyped_t arg_int);
+char * calcSmallArrayDef(TypeEn targetType, std::vector<Value*> &operand);
 
 inline size_t tEnSizeof(TypeEn type) {
     size_t size=0;

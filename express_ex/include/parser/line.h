@@ -6,11 +6,11 @@
 #include "variable.h"
 
 
-class Line : public Variable
+class Line : public Value
 {
 public:
 
-    Line(std::string name, Variable* var) :Variable() {
+    Line(std::string name, Value* var) :Value() {
         names_.push_back(name);
         name_=name;
         if (isConst(var)) {
@@ -25,7 +25,7 @@ public:
     }
 
 
-    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) :Variable() {
+    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) :Value() {
         names_.push_back(name);
         name_   = name;
         dsType_ = dsty;
@@ -34,7 +34,7 @@ public:
         is_arg = true;
     }
 
-    Line(std::string name, std::string linkName, DataStructTypeEn dsty) :Variable() {
+    Line(std::string name, std::string linkName, DataStructTypeEn dsty) :Value() {
 
         names_.push_back(name);
         name_=name;
@@ -43,7 +43,7 @@ public:
         is_arg = true;
     }
 
-    Line(std::string name, SyncParameter * parameter) :Variable() {
+    Line(std::string name, SyncParameter * parameter) :Value() {
         names_.push_back(name);
         name_       = name;
         link_name_   = parameter->getName();
@@ -55,7 +55,7 @@ public:
         parameter_  = new SyncParameter(*parameter);
     }
 
-    Line(std::string name) :Variable() {
+    Line(std::string name) :Value() {
         names_.push_back(name);
         name_=name;
         type_ = TypeEn::unknown_jty;
@@ -66,50 +66,54 @@ public:
     }
 
 
-    void assignValue(Variable* var);
-    virtual Variable* getAssignedVal(bool deep = false) override;
+    void assignValue(Value* var);
+    virtual Value* getAssignedVal(bool deep = false) override;
 
     bool isArg();
     bool haveTargetName(std::string);
     bool isTermialLargeArray() { return isArg(); }
 
-    const std::string getName(bool onlyName = false)      { return onlyName ? name_ :checkBuffer(name_); }
-    const std::string getLinkName()  { return link_name_; }
-
+    const std::string getName(bool onlyName = false) const { return onlyName ? name_ :checkBuffer(name_); }
+    const std::string getLinkName() const{ return link_name_; }
     virtual NodeTypeEn getNodeType() const override{ return   NodeTypeEn::line; }
+    untyped_t* getBinaryValuePtr(){ return &binary_value_; }
+
 
     //safe functions .external stack is used
-    virtual void visitEnter (stack<Variable*>* visitorStack) override;
-    virtual void markUnusedVisitEnter(stack<Variable*>* visitorStack) override;
+    virtual void visitEnter (stack<Value*>* visitorStack) override;
+    virtual void markUnusedVisitEnter(stack<Value*>* visitorStack) override;
 
     virtual void genBodyVisitExit(BodyGenContext* context) override;
     virtual void printVisitExit  (stack<std::string>* varStack) override;
     virtual void genBlocksVisitExit  (TableGenContext* context) override;
     virtual void setupIR(IRGenerator & builder) override;
 
+
+    virtual void setTempTypeAndBinaryValue(Value* var){
+        temp_type_ = var->getType();
+        binary_value_ = var->getBinaryValue();
+    }
+
+
 private:
     uint32_t reference_; //atavism
 public:
+    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override{
+        context->setUint(this); 
+        is_visited_ = false;
+    };
 
     virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
-
+        binary_value_ = assigned_val_->getBinaryValue();
     }
 
-    void setTempType(TypeEn type){ 
-        temp_type_ = type; 
-    }
-
-    void setReference(ConstRecursiveGenContext* context){ 
-        reference_ = context->getReference(); 
-        context->instructions_list_.push(nullptr);
-    }
 
     virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
 
 private:
     bool        is_arg       = false;
 
-    Variable    *assigned_val_ = nullptr;
+    Value    *assigned_val_ = nullptr;
 
     std::vector<std::string> names_;
 

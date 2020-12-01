@@ -5,6 +5,8 @@
 //#include "llvm/Support/JSON.h"
 #include "undefWarningIgnore.h"
 
+
+typedef  int64_t  untyped_t;
 typedef  int64_t  ex_size_t;
 
 typedef int32_t (*jit_simple)();
@@ -163,7 +165,7 @@ enum class TypeOpCodeEn {
 };
 
 enum class NodeTypeEn {
-    variable,
+    value,
     operation,
     line,
     call,

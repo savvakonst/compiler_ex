@@ -21,17 +21,17 @@ public:
     bool isRetStackFull (){ return (name_ != "main") ? 0 < return_stack_.size() : false; }
     bool isRetStackEmpty(){ return 0 == return_stack_.size(); }
 
-    void addLine(const std::string &name, Variable* var);
+    void addLine(const std::string &name, Value* var);
     void addArg(const std::string &name); //is necessary to add returned status_ value with line ,pos end error code and string;
     void addParam(Line * line);
     void addParam(const std::string &name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
     void addParam(const std::string &name, const std::string & linkName, DataStructTypeEn dsty=DataStructTypeEn::constant_dsty);
-    void addReturn(const std::string &name, Variable* var); //is necessary to add returned status_ value with line ,pos end error code and string;
+    void addReturn(const std::string &name, Value* var); //is necessary to add returned status_ value with line ,pos end error code and string;
 
     //varStack push/pop 
-    void push(Variable*);
-    Variable* pop();
-    stack<Variable*> pop(size_t length);
+    void push(Value*);
+    Value* pop();
+    stack<Value*> pop(size_t length);
 
     std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames(bool hideUnused = false) {
         std::map<std::string, std::string > ret;
@@ -44,12 +44,12 @@ public:
 
 private:
     //create operation
-    Variable* typeConvOp(TypeEn   targetType, Variable* arg1);
-    Variable* builtInFuncOp(OpCodeEn    uTypeOp, Variable* arg1);
-    Variable* arithmeticOp(OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2);
-    Variable* comparsionOp(OpCodeEn uTypeOp, Variable * arg1, Variable * arg2);
-    Variable* selectOp(Variable*      arg1, Variable* arg2, Variable* arg3);
-    Variable* convolveOp(OpCodeEn    uTypeOp, Variable* arg1, Variable* arg2, uint32_t shift=0);
+    Value* typeConvOp(TypeEn   targetType, Value* arg1);
+    Value* builtInFuncOp(OpCodeEn    uTypeOp, Value* arg1);
+    Value* arithmeticOp(OpCodeEn    uTypeOp, Value* arg1, Value* arg2);
+    Value* comparsionOp(OpCodeEn uTypeOp, Value * arg1, Value * arg2);
+    Value* selectOp(Value*      arg1, Value* arg2, Value* arg3);
+    Value* convolveOp(OpCodeEn    uTypeOp, Value* arg1, Value* arg2, uint32_t shift=0);
 
 public:
     //create operation and push to varStack
@@ -77,9 +77,9 @@ public:
     GarbageContainer* getGarbageContainer(){ return garbage_contaiiner_; }
 
     // tree walker methods
-    std::string  print(std::string tab="", bool DSTEna = false, bool hideUnusedLines = false);
-    Body* genBodyByPrototype(stack<Variable*> args ,bool isPrototype);
-    Body* genConstRecusiveByPrototype(stack<Variable*> args);
+    std::string  print( std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false);
+    Body* genBodyByPrototype(stack<Value*> args ,bool isPrototype);
+    untyped_t genConstRecusiveByPrototype(stack<Value*>& args);
     void  symplyfy();
 
     void  genTable(TableGenContext * tableGenContext);
@@ -88,14 +88,14 @@ private:
 
     GarbageContainer * garbage_contaiiner_;
 
-    bool is_opeator_ = false;
+    bool is_operator_ = false;
     bool is_tail_callable_ = false;
     bool is_prototype_ = false;
 
     std::string name_ = "main";
     std::vector<Line*> lines_;
 
-    stack<Variable*> var_stack_;
+    stack<Value*> var_stack_;
 
     stack<Line*> arg_stack_;
     stack<Line*> return_stack_;
