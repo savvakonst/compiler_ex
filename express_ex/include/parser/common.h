@@ -394,8 +394,8 @@ char * calcComparsionSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char
 char * invAritheticSmallArray(TypeEn targetType, char * ret, char * a, int n);
 untyped_t invAritheticConst( TypeEn targetType, untyped_t a);
 
-char * builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int n);
-untyped_t builtInFuncConst(OpCodeEn op, TypeEn targetType, untyped_t a);
+char * calcBuiltInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int n);
+untyped_t calcBuiltInFuncConst(OpCodeEn op, TypeEn targetType, untyped_t a);
 
 char * calcSelectSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, char * b, char * c, int n);
 untyped_t calcSelectConst(OpCodeEn op, TypeEn targetType, untyped_t a, untyped_t b, untyped_t c);

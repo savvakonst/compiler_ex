@@ -194,7 +194,6 @@ Value* Body::selectOp( Value* arg1, Value* arg2, Value* arg3)
 
 //create operation and push to varStack
 void Body::addTypeConvOp(TypeEn targetType){
-
 	Value* arg1 = pop();
 	push(typeConvOp(targetType, arg1));
 }

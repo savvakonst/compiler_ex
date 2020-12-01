@@ -94,15 +94,15 @@ untyped_t invAritheticConst( TypeEn targetType, untyped_t a){
 	return ret;
 }
 
-
-char *  builtInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int n) {
+char *  calcBuiltInFuncSmallArray(OpCodeEn op, TypeEn targetType, char * ret, char * a, int n) {
 	ret=calcSmallArrayAlloc(targetType, n, ret);
 #define OP(T)   builtInFuncTemplate<T>(op,(T*)ret,(T*)a , n)
 	SWITCH_TYPE_OP(targetType, ;);
 #undef OP
 	return ret;
 }
-untyped_t builtInFuncConst(OpCodeEn op, TypeEn targetType, untyped_t a){
+
+untyped_t calcBuiltInFuncConst(OpCodeEn op, TypeEn targetType, untyped_t a){
 	untyped_t ret = 0;
 #define OP(T)   builtInFuncTemplate<T>(op,(T*)&ret,(T*)&a , 1)
 	SWITCH_TYPE_OP(targetType, ;);

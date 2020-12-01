@@ -181,11 +181,11 @@ inline bool isSimilar   (Value* var1, Value* var2) { return  (var1->getDSType() 
 inline bool isÑompatible(Value* var1, Value* var2) { return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
 
 
-inline bool isUnknownTy (Value* var){ return isUnknownTy(var->getType()); }
-inline bool isFloating  (Value* var){ return isFloating(var->getType()); }
-inline bool isInteger   (Value* var){ return isInteger(var->getType()); }
-inline bool isUInteger  (Value* var){ return isUInteger(var->getType()); }
-
+inline bool isUnknownTy (Value* var) { return isUnknownTy(var->getType()); }
+inline bool isFloating  (Value* var) { return isFloating(var->getType()); }
+inline bool isInteger   (Value* var) { return isInteger(var->getType()); }
+inline bool isUInteger  (Value* var) { return isUInteger(var->getType()); }
+inline bool isBool      (Value* var) { return isBool(var->getType()); }
 
 
 

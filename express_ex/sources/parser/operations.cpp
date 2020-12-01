@@ -301,7 +301,7 @@ void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 			temp_var = calcTypeConvConst(TypeEn::float_jty, OP(0)->getTempType(), OP(0)->getBinaryValue());
 			temp_type_ = TypeEn::float_jty;
 		}
-		binary_value_ = builtInFuncConst(op_code_, temp_type_, OP(0)->getBinaryValue());
+		binary_value_ = calcBuiltInFuncConst(op_code_, temp_type_, OP(0)->getBinaryValue());
 	}
 	else if(isSelect(op_code_)){
 		auto arg_a = calcTypeConvConst(TypeEn::int1_jty, OP(0)->getTempType(), OP(0)->getBinaryValue());
@@ -459,7 +459,7 @@ void Operation::calculate(){
 	else if (isTypeConv(op_code_))
 		buffer_ptr_=calcTypeConvSmallArray(type_, OP(0)->getType(), buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isBuiltInFunc(op_code_))
-		buffer_ptr_=builtInFuncSmallArray(op_code_, type_, buffer_ptr_, OP(0)->getBufferPtr(), length);
+		buffer_ptr_=calcBuiltInFuncSmallArray(op_code_, type_, buffer_ptr_, OP(0)->getBufferPtr(), length);
 	else if (isSelect(op_code_)){
 		auto aOperand = OP(0);
 		auto bOperand = OP(1);
