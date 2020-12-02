@@ -31,12 +31,11 @@ void Operation::visitEnterSetupBuffer(stack<Value*>* visitorStack){
 		auto left   =this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) + le;
 		auto right  =this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) + ri;
 
-
 		operand_[0]->getAssignedVal(true)->setBuffered();
 		operand_[0]->setBufferLength(left, right);
 	}
 	else if (isShift(op_code_)) {
-		auto shift  = shift_parameter_;
+		auto shift  = shift_parameter_ ;
 
 		auto left   = this->getLeftBufferLen() + ((shift < 0) ? 0 : shift) ;
 		auto right  = this->getRightBufferLen() + ((shift > 0) ? 0 : -shift) ;
@@ -107,7 +106,7 @@ void Operation::markUnusedVisitEnter(stack<Value*>* visitorStack){
 
 void Operation::genBlocksVisitExit(TableGenContext * context)
 {
-	uniqueName_ =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
+	unique_name_ =(isLargeArr(this)?"vb" :"vs") + std::to_string(context->getUniqueIndex());
 	context->setUint(this);
 	is_visited_ = false;
 

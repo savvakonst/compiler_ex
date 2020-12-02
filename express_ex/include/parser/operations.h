@@ -49,7 +49,7 @@ public:
         }
 
         type_  = largeArr->getType();
-        if(dsType_ == DataStructTypeEn::largeArr_dsty)
+        if(ds_type_ == DataStructTypeEn::largeArr_dsty)
             length_ = largeArr->getLength();
         else
             length_ = maxInt(largeArr->getLength(), smallArr->getLength());
@@ -113,7 +113,7 @@ public:
                 operand_.push_back(i);
 
             type_ = targetType;
-            dsType_ = DataStructTypeEn::smallArr_dsty;
+            ds_type_ = DataStructTypeEn::smallArr_dsty;
             length_ = argsSize;
 
             level_ = 0; 
@@ -125,7 +125,7 @@ public:
             if (isUnknownTy(targetType))
                 return;
 
-            dsType_ = DataStructTypeEn::smallArr_dsty;
+            ds_type_ = DataStructTypeEn::smallArr_dsty;
             smallArray();
 
             if (argsSize > 3)print_error("range( .. ) -invalid signature");
@@ -134,7 +134,7 @@ public:
 
     void CommonSetup(OpCodeEn op, Value* var) {
         op_code_ = op;
-        dsType_ = var->getDSType();
+        ds_type_ = var->getDSType();
         length_ = var->getLength();
     }
 

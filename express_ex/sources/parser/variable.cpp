@@ -48,7 +48,7 @@ Value::Value(Value* arg1, Value* arg2, Value* arg3) :SmallArr() {
 Value::Value(Value* arg1, Value* arg2) :SmallArr() {
     if (isConst(arg1) && isConst(arg2) && isInteger(arg1) && isInteger(arg2)) {
         length_    = arg2->getBinaryValue() - arg1->getBinaryValue();
-        dsType_    = DataStructTypeEn::smallArr_dsty;
+        ds_type_    = DataStructTypeEn::smallArr_dsty;
         type_      = TypeEn::int64_jty;
         text_value_ = "range(" + std::to_string(arg1->getBinaryValue()) + "," + std::to_string(arg2->getBinaryValue()) + ")";
         start_ = (double)arg1->getBinaryValue();
@@ -62,7 +62,7 @@ Value::Value(Value* arg1, Value* arg2) :SmallArr() {
 Value::Value(Value* arg1) :SmallArr() {
     if (isConst(arg1) && isInteger(arg1)) {
         length_    = arg1->getBinaryValue();
-        dsType_    = DataStructTypeEn::smallArr_dsty;
+        ds_type_    = DataStructTypeEn::smallArr_dsty;
         type_      = TypeEn::int64_jty;
         text_value_ = "range(" + std::to_string(arg1->getBinaryValue()) + ")";
         start_     = 0.0;
@@ -104,7 +104,7 @@ void Value::setLevel(int64_t var) {
 string Value::getTxtDSType()const{
     string t = "pass";
 #define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
-    switch (dsType_)
+    switch (ds_type_)
     {
         ENUM2STR(constant_dsty);
         ENUM2STR(smallArr_dsty);

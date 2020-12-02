@@ -20,7 +20,7 @@ public:
         assigned_val_ = var;
         level_       = var->getLevel();
         type_        = var->getType();
-        dsType_      = var->getDSType();
+        ds_type_      = var->getDSType();
         length_      = var->getLength();
     }
 
@@ -28,7 +28,7 @@ public:
     Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) :Value() {
         names_.push_back(name);
         name_   = name;
-        dsType_ = dsty;
+        ds_type_ = dsty;
         type_   = ty;
         length_ = len;
         is_arg = true;
@@ -39,7 +39,7 @@ public:
         names_.push_back(name);
         name_=name;
         link_name_=linkName;
-        dsType_ = dsty;
+        ds_type_ = dsty;
         is_arg = true;
     }
 
@@ -49,7 +49,7 @@ public:
         link_name_   = parameter->getName();
         type_       = PRMType2JITType(parameter->getRPMType());
         length_     = parameter->getVirtualSize();
-        dsType_     = DataStructTypeEn::largeArr_dsty;
+        ds_type_     = DataStructTypeEn::largeArr_dsty;
         is_arg      = true;
         
         parameter_  = new SyncParameter(*parameter);
@@ -108,7 +108,7 @@ public:
     }
 
 
-    virtual string printUint() { return uniqueName_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
+    virtual string printUint() { return unique_name_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
 
 private:
     bool        is_arg       = false;

@@ -35,37 +35,37 @@ public:
 
 
     template< typename T >
-    T            getConvTypeVal   ()const{ return *((T*)(&binary_value_)); }
-    untyped_t    getBinaryValue   ()const{ return *((untyped_t*)(&binary_value_)); }
-    double       getDoubleValue   ()const;
-    string       getTextValue     ()const{ return text_value_; }
-    string       getTxtDSType     ()const;
-    string       getUniqueName    ()const{ return uniqueName_; }
-    int64_t      getUsageCounter  ()const{ return usage_counter_; }
-    int64_t      getLength        ()const{ return length_; }
-    int64_t      getLevel         ()const{ return level_; }
-    int64_t      getDecimation    ()const{ return decimation_; }
-    int64_t      getBufferLen     ()const{ return buffer_length_; }
-    uint64_t     getLeftBufferLen ()const{ return left_buffer_length_; }
-    uint64_t     getRightBufferLen()const{ return right_buffer_length_; }
-    TypeEn       getType          ()const{ return type_; }
-    TypeEn       getTempType      ()const{ return isUnknownTy(type_)? temp_type_: type_; }
-    DataStructTypeEn getDSType    ()const{ return dsType_; }
-    SyncParameter*   getPatameter ()const{ return parameter_; }
+    T getConvTypeVal()const{ return *((T*)(&binary_value_)); }
+    untyped_t getBinaryValue()const{ return *((untyped_t*)(&binary_value_)); }
+    double getDoubleValue()const;
+    string getTextValue()const{ return text_value_; }
+    string getTxtDSType()const;
+    string getUniqueName()const{ return unique_name_; }
+    int64_t getUsageCounter()const{ return usage_counter_; }
+    int64_t getLength()const{ return length_; }
+    int64_t getLevel()const{ return level_; }
+    int64_t getDecimation()const{ return decimation_; }
+    int64_t getBufferLen()const{ return buffer_length_; }
+    uint64_t getLeftBufferLen()const{ return left_buffer_length_; }
+    uint64_t getRightBufferLen()const{ return right_buffer_length_; }
+    TypeEn getType()const{ return type_; }
+    TypeEn getTempType()const{ return isUnknownTy(type_) ? temp_type_ : type_; }
+    DataStructTypeEn getDSType()const{ return ds_type_; }
+    SyncParameter* getPatameter()const{ return parameter_; }
 
-    llvm::Value* getIRValue(IRGenerator& builder, int64_t parentLevel);
-    llvm::Value* getIRValueBasePtr(IRGenerator& builder, int64_t parentLevel);
-    llvm::Value* getIRValuePtr(IRGenerator& builder, int64_t parentLevel);
+    llvm::Value* getIRValue(IRGenerator& builder, int64_t parent_level);
+    llvm::Value* getIRValueBasePtr(IRGenerator& builder, int64_t parent_level);
+    llvm::Value* getIRValuePtr(IRGenerator& builder, int64_t parent_level);
 
     virtual NodeTypeEn getNodeType() const { return NodeTypeEn::value; }
     virtual Value* getAssignedVal(bool deep = false) { return this; }
 
 
-    bool         isUnused           (){ return is_unused_; }
-    bool         isArray            (){ return dsType_ != DataStructTypeEn::constant_dsty; }
-    bool         isVisited          (){ return is_visited_; }
-    bool         isBuffered         (){ return is_buffered; }
-    bool         isReturned         (){ return is_returned; }
+    bool isUnused(){ return is_unused_; }
+    bool isArray(){ return ds_type_ != DataStructTypeEn::constant_dsty; }
+    bool isVisited(){ return is_visited_; }
+    bool isBuffered(){ return is_buffered; }
+    bool isReturned(){ return is_returned; }
 
     virtual bool isTermialLargeArray(){ return false; }
     //safe functions .external stack is used
@@ -89,7 +89,7 @@ public:
     };
 
     virtual void genBlocksVisitExit(TableGenContext*  context) {
-        uniqueName_ ="c" + std::to_string(context->getUniqueIndex());
+        unique_name_ ="c" + std::to_string(context->getUniqueIndex());
         context->setUint(this);
         is_visited_ = false;
     };
@@ -109,7 +109,7 @@ public:
 
 
 
-    virtual string printUint() { return uniqueName_+"="+text_value_; }
+    virtual string printUint() { return unique_name_+"="+text_value_; }
     virtual void   setupIR(IRGenerator & builder);
 
     virtual void   calculate() override;
@@ -135,13 +135,13 @@ protected:
     bool is_returned    = false;
     bool is_initialized = false;
 
-    DataStructTypeEn    dsType_ = DataStructTypeEn::constant_dsty;
+    DataStructTypeEn    ds_type_ = DataStructTypeEn::constant_dsty;
     TypeEn              type_   = TypeEn::DEFAULT_JTY;
     TypeEn              temp_type_   = TypeEn::DEFAULT_JTY;
 
 
     string   text_value_ = "" ;
-    string   uniqueName_ = "" ;
+    string   unique_name_ = "" ;
 
     int64_t  length_     = 1;
     int64_t  decimation_ = 0;
@@ -168,24 +168,24 @@ protected:
 
 
 
-inline bool operator==  (Value*        var1, DataStructTypeEn var2) { return  var1->getDSType() == var2; }
-inline bool operator==  (DataStructTypeEn var1, Value*        var2) { return  var1 == var2->getDSType(); }
-inline bool operator<   (TypeEn    var1, Value* var2) { return  var1 < var2->getType(); }
-inline bool operator<   (Value* var1, TypeEn    var2) { return  var1->getType() < var2; }
+inline bool operator==  (Value* var1, DataStructTypeEn var2){ return  var1->getDSType() == var2; }
+inline bool operator==  (DataStructTypeEn var1, Value* var2){ return  var1 == var2->getDSType(); }
+inline bool operator<   (TypeEn    var1, Value* var2){ return  var1 < var2->getType(); }
+inline bool operator<   (Value* var1, TypeEn    var2){ return  var1->getType() < var2; }
 
 
-inline bool isConst     (Value* var1) { return var1 == DataStructTypeEn::constant_dsty; }
-inline bool isSmallArr  (Value* var1) { return var1 == DataStructTypeEn::smallArr_dsty; }
-inline bool isLargeArr  (Value* var1) { return var1 == DataStructTypeEn::largeArr_dsty; }
-inline bool isSimilar   (Value* var1, Value* var2) { return  (var1->getDSType() == var2->getDSType() && (var1->getLength() == var2->getLength())); }
-inline bool isÑompatible(Value* var1, Value* var2) { return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
+inline bool isConst(Value* var1){ return var1 == DataStructTypeEn::constant_dsty; }
+inline bool isSmallArr(Value* var1){ return var1 == DataStructTypeEn::smallArr_dsty; }
+inline bool isLargeArr(Value* var1){ return var1 == DataStructTypeEn::largeArr_dsty; }
+inline bool isSimilar(Value* var1, Value* var2){ return  (var1->getDSType() == var2->getDSType() && (var1->getLength() == var2->getLength())); }
+inline bool isÑompatible(Value* var1, Value* var2){ return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
 
 
-inline bool isUnknownTy (Value* var) { return isUnknownTy(var->getType()); }
-inline bool isFloating  (Value* var) { return isFloating(var->getType()); }
-inline bool isInteger   (Value* var) { return isInteger(var->getType()); }
-inline bool isUInteger  (Value* var) { return isUInteger(var->getType()); }
-inline bool isBool      (Value* var) { return isBool(var->getType()); }
+inline bool isUnknownTy(Value* var){ return isUnknownTy(var->getType()); }
+inline bool isFloating(Value* var){ return isFloating(var->getType()); }
+inline bool isInteger(Value* var){ return isInteger(var->getType()); }
+inline bool isUInteger(Value* var){ return isUInteger(var->getType()); }
+inline bool isBool(Value* var){ return isBool(var->getType()); }
 
 
 
@@ -199,8 +199,8 @@ inline Value* maxTypeVar(std::vector<Value*> args){
     return var;
 } //unsafe function .zero size array check missing
 
-inline Value*    maxDSVar   (Value* var1, Value* var2) { return var1->getDSType() < var2->getDSType() ? var2 : var1; }
-inline Value*    maxLevelVar(Value* var1, Value* var2) { return var1->getLevel () < var2->getLevel () ? var2 : var1; }
-inline Value*    minLevelVar(Value* var1, Value* var2) { return var1->getLevel () < var2->getLevel () ? var1 : var2; }
+inline Value* maxDSVar(Value* var1, Value* var2){ return var1->getDSType() < var2->getDSType() ? var2 : var1; }
+inline Value* maxLevelVar(Value* var1, Value* var2){ return var1->getLevel() < var2->getLevel() ? var2 : var1; }
+inline Value* minLevelVar(Value* var1, Value* var2){ return var1->getLevel() < var2->getLevel() ? var1 : var2; }
 
 #endif

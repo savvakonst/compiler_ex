@@ -267,10 +267,10 @@ inline std::string toString(DataStructTypeEn type){
 
 
 
-inline bool isUnknownTy (TypeEn type) { return type == TypeEn::unknown_jty; }
-inline bool isFloating  (TypeEn type) { return (type >= TypeEn::float_jty) && !isUnknownTy(type); }
-inline bool isInteger   (TypeEn type) { return type <= TypeEn::int64_jty; }
-inline bool isUInteger  (TypeEn type) { return false; }
-inline bool isBool      (TypeEn type) { return type == TypeEn::int1_jty; }
+inline bool isUnknownTy(TypeEn type){ return type == TypeEn::unknown_jty; }
+inline bool isFloating(TypeEn type){ return (type >= TypeEn::float_jty) && !isUnknownTy(type); }
+inline bool isInteger(TypeEn type){ return type <= TypeEn::int64_jty; }
+inline bool isUInteger(TypeEn type){ return false; }
+inline bool isBool(TypeEn type){ return type == TypeEn::int1_jty; }
 
 #endif // !1

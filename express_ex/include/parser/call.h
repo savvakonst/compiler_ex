@@ -62,7 +62,7 @@ public:
 
         level_ = ret->getLevel();
         type_ = ret->getType();
-        dsType_ = ret->getDSType();
+        ds_type_ = ret->getDSType();
         length_ = ret->getLength();
 
         if(isConst(ret)){
@@ -170,7 +170,7 @@ public:
 
         level_ = ret->getLevel();
         type_ = ret->getType();
-        dsType_ = ret->getDSType();
+        ds_type_ = ret->getDSType();
         length_ = ret->getLength();
 
         if(isConst(ret)){
@@ -199,7 +199,7 @@ public:
     virtual void genBlocksVisitExit(TableGenContext* context) override{
 
         body_->genTable(context);
-        uniqueName_ = (isLargeArr(this) ? "fb" : "fs") +
+        unique_name_ = (isLargeArr(this) ? "fb" : "fs") +
             std::to_string(context->getUniqueIndex());
         context->setUint(this);
         is_visited_ = false;
@@ -223,7 +223,7 @@ public:
     }
 
     virtual string printUint() override{
-        return uniqueName_ + " = assignCall(" +
+        return unique_name_ + " = assignCall(" +
             body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")";
     }
 
