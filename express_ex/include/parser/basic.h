@@ -34,10 +34,10 @@ protected:
 // body generation context from prototype
 class BodyGenContext{
 public:
-    BodyGenContext (std::vector<Line*>* namespace_ptr, bool is_prototype, GarbageContainer* garbage_container){
+    BodyGenContext (std::vector<Line*>* namespace_ptr, bool is_template, GarbageContainer* garbage_container){
 
         namespace_ptr_ = namespace_ptr;
-        is_prototype_ = is_prototype;
+        is_template_ = is_template;
         garbage_container_ = garbage_container;
     }
     ~BodyGenContext(){}
@@ -47,14 +47,14 @@ public:
     inline Value* pop(){ return var_stack_.pop(); }
     inline std::vector< Line*>& getNamespace(){ return *namespace_ptr_; }
     inline GarbageContainer* getGarbageContainer(){ return garbage_container_; }
-    inline bool isPrototype(){ return is_prototype_; }
+    inline bool isTemplate(){ return is_template_; }
 private:
 
 
     GarbageContainer* garbage_container_ = nullptr;
     stack<Value*>   var_stack_;
     std::vector<Line*>* namespace_ptr_ = nullptr;
-    bool is_prototype_ = false;
+    bool is_template_ = false;
 };
 
 // constant value recursive clculation context 

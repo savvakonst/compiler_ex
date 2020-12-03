@@ -15,7 +15,7 @@
 class Body{
 public:
 
-    Body(std::string name = "main", bool isPrototype = false);
+    Body(std::string name = "main", bool is_template = false);
     ~Body();
 
     bool isRetStackFull (){ return (name_ != "main") ? 0 < return_stack_.size() : false; }
@@ -78,7 +78,7 @@ public:
 
     // tree walker methods
     std::string  print( std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false);
-    Body* genBodyByPrototype(stack<Value*> args ,bool isPrototype);
+    Body* genBodyByPrototype(stack<Value*> args ,bool is_template);
     untyped_t genConstRecusiveByPrototype(stack<Value*>& args);
     void  symplyfy();
 
@@ -90,7 +90,7 @@ private:
 
     bool is_operator_ = false;
     bool is_tail_callable_ = false;
-    bool is_prototype_ = false;
+    bool is_template_ = false;
 
     std::string name_ = "main";
     std::vector<Line*> lines_;

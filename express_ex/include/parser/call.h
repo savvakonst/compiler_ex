@@ -6,23 +6,25 @@ class CallI_ifs: public Value{
 public:
     CallI_ifs ():Value(){
     }
+    ~CallI_ifs(){
+    }
 
-    virtual void visitEnter(stack<Value*>* visitorStack) override{
-        visitorStack->push(this);
-        for(size_t i= (args_.size() - 1); i >= 0; i--){
-            visitorStack->push(args_[i]);
+    virtual void visitEnter(stack<Value*>* visitor_stack) override{
+        visitor_stack->push(this);
+        for(int64_t i = ((int64_t)args_.size() - 1);i >= 0; i--){
+            visitor_stack->push(args_[i]);
         }
         is_visited_ = true;
     };
 
-    virtual void printVisitExit(stack<std::string>* Stack) override{
+    virtual void printVisitExit(stack<std::string>* exit_stack) override{
         if(body_){
             llvm::outs() << body_->print("    ") << "\n";
 
             for(auto& i : args_)
-                auto x = Stack->pop();
+                auto x = exit_stack->pop();
 
-            Stack->push(body_->getName() + ".ret." + toString(type_));
+            exit_stack->push(body_->getName() + ".ret." + toString(type_));
             is_visited_ = false;
         }
     };
@@ -32,10 +34,10 @@ public:
             return nullptr;
 
         if(is_buffered & deep){
-            body_->getRet()[0]->getAssignedVal(true)->setBuffered();
+            body_->getRet().front()->getAssignedVal(true)->setBuffered();
         }
 
-        return body_->getRet()[0]->getAssignedVal(deep);
+        return body_->getRet().front()->getAssignedVal(deep);
     }
 
     virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override {
@@ -91,7 +93,7 @@ public:
             print_error("invalid signature for recursive call method");
         }
         else if(large_array || small_array){
-            if(!context->isPrototype())
+            if(!context->isTemplate())
                 b = body_->genBodyByPrototype(a, false);
 
             context->push(
@@ -182,15 +184,15 @@ public:
     ~Call(){}
 
     // safe functions .external stack is used
-    virtual void markUnusedVisitEnter(stack<Value*>* visitorStack) override{
-        commoMmarkUnusedVisitEnter(visitorStack);
+    virtual void markUnusedVisitEnter(stack<Value*>* visitor_stack) override{
+        commoMmarkUnusedVisitEnter(visitor_stack);
 
         if(body_->getRet().empty())
             print_error("markUnusedVisitEnter: body_->getRet().empty() == true ");
             
         auto ret = body_->getRet().front();
 
-        visitorStack->push(ret);
+        visitor_stack->push(ret);
         ret->setBufferLength(this);
 
         is_unused_ = false;
@@ -213,7 +215,7 @@ public:
 
         Body* b = body_;
 
-        if(!context->isPrototype())
+        if(!context->isTemplate())
             b = body_->genBodyByPrototype(a, false);
 
         context->push(
@@ -224,7 +226,7 @@ public:
 
     virtual string printUint() override{
         return unique_name_ + " = assignCall(" +
-            body_->getRet()[0]->getAssignedVal(true)->getUniqueName() + ")";
+            body_->getRet().front()->getAssignedVal(true)->getUniqueName() + ")";
     }
 
     virtual void setupIR(IRGenerator& builder) override;

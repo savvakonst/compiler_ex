@@ -15,7 +15,7 @@ public:
     Operation():Value() {
         op_code_ = OpCodeEn::none_op; 
     }
-
+    
     // constructor of type conversion operation or shift and decimation 
     Operation(OpCodeEn op, Value* var, TypeEn targetType, int64_t shiftOrDecimation=0):Value() {
         CommonSetup(op, var);
@@ -222,6 +222,6 @@ Value* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Valu
 Value* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, Value* arg3, bool rec_call = false);
 Value* newSliceOp(GarbageContainer* garbageContainer, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
 Value* newSliceOp(GarbageContainer* garbageContainer, Value* arg1, int64_t intVal, OpCodeEn uTypeOp);
-Value* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Value*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool isPrototype = false);
+Value* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Value*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool is_template = false);
 
 #endif

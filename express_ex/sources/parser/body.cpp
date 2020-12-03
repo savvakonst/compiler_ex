@@ -4,11 +4,11 @@
 #include "call.h"
 //void print_error(const std::string &content);
 
-Body::Body( std::string name,  bool isPrototype )
+Body::Body( std::string name,  bool is_template)
 {
 	garbage_contaiiner_ = new GarbageContainer;
 	name_ = name;
-	is_prototype_ = isPrototype;
+	is_template_ = is_template;
 	lines_.reserve(30);
 }
 
@@ -120,7 +120,7 @@ Value* Body::builtInFuncOp(OpCodeEn uTypeOp, Value* arg1 ){
 	Value* ret_arg1 = arg1;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 
-	if (!is_prototype_) {
+	if (!is_template_) {
 		if (TypeEn::float_jty > arg1->getType())
 			ret_arg1 = typeConvOp(TypeEn::float_jty, arg1);
 		targetType = arg1->getType();
@@ -132,7 +132,7 @@ Value* Body::arithmeticOp(OpCodeEn uTypeOp,Value* arg1, Value* arg2)
 {
 	Value * ret_arg1= arg1, * ret_arg2= arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
-	if (!is_prototype_) {
+	if (!is_template_) {
 		targetType = maxTypeVar(arg1, arg2)->getType();
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
@@ -144,7 +144,7 @@ Value* Body::comparsionOp(OpCodeEn uTypeOp, Value* arg1, Value* arg2)
 {
 	Value * ret_arg1= arg1, * ret_arg2= arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
-	if (!is_prototype_) {
+	if (!is_template_) {
 		targetType = maxTypeVar(arg1, arg2)->getType();
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
@@ -158,7 +158,7 @@ Value* Body::convolveOp(OpCodeEn uTypeOp, Value* arg1, Value* arg2,uint32_t shif
 
 	Value* ret_arg1 = arg1, * ret_arg2 = arg2;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
-	if (!is_prototype_) {
+	if (!is_template_) {
 		targetType = maxTypeVar(arg1, arg2)->getType();
 		ret_arg1   = typeConvOp(targetType, arg1);
 		ret_arg2   = typeConvOp(targetType, arg2);
@@ -172,7 +172,7 @@ Value* Body::selectOp( Value* arg1, Value* arg2, Value* arg3)
 	Value* ret_arg2 = arg2, * ret_arg3 = arg3;
 	TypeEn targetType = TypeEn::DEFAULT_JTY;
 	
-	if (!is_prototype_) {
+	if (!is_template_) {
 		targetType = maxTypeVar(arg2, arg3)->getType();
 		ret_arg2   = typeConvOp(targetType, arg2);
 		ret_arg3   = typeConvOp(targetType, arg3);
@@ -268,7 +268,7 @@ void Body::addSmallArrayDefinitionOp(size_t size) {
 	for (size_t i = 0; i < size; i++)
 		op.push(pop());
 	std::reverse(op.begin(), op.end());
-	push(newSmallArrayDefOp(garbage_contaiiner_,op,OpCodeEn::smallArrayDef, is_prototype_));
+	push(newSmallArrayDefOp(garbage_contaiiner_,op,OpCodeEn::smallArrayDef, is_template_));
 }
 
 void Body::addCall(Body* body){
@@ -278,7 +278,7 @@ void Body::addCall(Body* body){
 		a[i] = pop();
 	}
 
-	auto b =is_prototype_? body : body->genBodyByPrototype(a,is_prototype_);
+	auto b =is_template_? body : body->genBodyByPrototype(a,is_template_);
 
 	is_operator_ = is_operator_ || b->is_operator_;
 
@@ -399,20 +399,20 @@ std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
 
 
-Body* Body::genBodyByPrototype(stack<Value*> args, bool isPrototype){
+Body* Body::genBodyByPrototype(stack<Value*> args, bool is_template){
 
 	// try replacing the "var_stack_" member with the "var_stack" local value
 	// it might be worth moving this value to BodyGenContext
 
-	if (is_prototype_ == false)
+	if (is_template_ == false)
 		return this; //dangerous place
 
 
 	auto arg = args.begin();
 
-	auto body = new Body(name_, isPrototype);
+	auto body = new Body(name_, is_template);
 	body->is_operator_ = is_operator_;
-	auto context = new BodyGenContext( &(body->lines_), isPrototype, body->getGarbageContainer());
+	auto context = new BodyGenContext( &(body->lines_), is_template, body->getGarbageContainer());
 
 	stack<Value*> visitor_stack;
 

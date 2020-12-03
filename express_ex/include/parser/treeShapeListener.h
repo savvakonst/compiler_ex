@@ -40,7 +40,7 @@ public:
     ~TreeShapeListener();
 
 
-    void NewBody(std::string name, bool isPrototype);
+    void NewBody(std::string name, bool is_template);
 
     virtual void exitAssign(EGrammarParser::AssignContext* ctx) override;
     virtual void exitAssignParam(EGrammarParser::AssignParamContext* ctx) override;

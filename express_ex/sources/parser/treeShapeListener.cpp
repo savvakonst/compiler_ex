@@ -29,8 +29,8 @@ void TreeShapeListener::setPos(ParserRuleContext* ctx) {
 }
 
 
-void TreeShapeListener::NewBody(std::string name, bool isPrototype) {
-    activ_body_ = new Body(name, isPrototype);
+void TreeShapeListener::NewBody(std::string name, bool is_template) {
+    activ_body_ = new Body(name, is_template);
     context_.push_back(activ_body_);
 }
 

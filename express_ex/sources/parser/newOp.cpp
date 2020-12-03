@@ -213,7 +213,7 @@ Value* newSliceOp(GarbageContainer* garbage_container, Value* arg_a, int64_t int
     return garbage_container->add(new Operation(uTypeOp, arg_a, arg_a->getType(), intVal));
 }
 
-Value* newSmallArrayDefOp(GarbageContainer* garbage_container, stack<Value*> &args, OpCodeEn op_type, bool is_prototype) {
+Value* newSmallArrayDefOp(GarbageContainer* garbage_container, stack<Value*> &args, OpCodeEn op_type, bool is_template) {
 
     if (args.empty())
         print_error("SmallArray is empty");
@@ -234,7 +234,7 @@ Value* newSmallArrayDefOp(GarbageContainer* garbage_container, stack<Value*> &ar
     if (isUnknownTy(targertType) || op_type == OpCodeEn::smallArrayRange)
         return garbage_container->add(new Operation(op_type, args, targertType));
 
-    if (is_prototype)
+    if (is_template)
         return garbage_container->add(new Operation(OpCodeEn::smallArrayDef, args, targertType));
 
     stack<Value*> typedArgs;
