@@ -1,6 +1,6 @@
 
-#include "common.h"
-#include "variable.h"
+#include "parser/common.h"
+#include "parser/variable.h"
 
 
 

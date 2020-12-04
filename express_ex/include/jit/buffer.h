@@ -1,9 +1,9 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "ParameterIO.h"
-#include "common.h"
-#include "variable.h"
+#include "ifs/ParameterIO.h"
+#include "parser/common.h"
+#include "parser/variable.h"
 
  
 

@@ -3,18 +3,19 @@
 #include <strstream>
 #include <fstream>
 
-#include "ParameterIO.h"
-#include "printer.h"
+#include "ifs/ParameterIO.h"
+#include "ifs/printer.h"
 
-#include "body.h"
-#include "treeShapeListener.h"
+#include "parser/body.h"
+#include "parser/treeShapeListener.h"
 
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 #include "llvm/Support/CommandLine.h"
-#include "undefWarningIgnore.h"
+#include "parser/undefWarningIgnore.h"
 
-#include "express_ex.h"
+#include "ifs/express_ex.h"
+
  
 
 

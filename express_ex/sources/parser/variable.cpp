@@ -1,4 +1,4 @@
-#include "variable.h"
+#include "parser/variable.h"
 
 Value::Value(string text, TypeEn type) :SmallArr() {
     text_value_ = text;

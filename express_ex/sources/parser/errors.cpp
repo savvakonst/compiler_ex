@@ -1,10 +1,10 @@
 #include <iostream>
-#include "treeShapeListener.h"
-#include "printer.h"
+#include "parser/treeShapeListener.h"
+#include "ifs/printer.h"
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 //#include "llvm/Support/raw_ostream.h"
-#include "undefWarningIgnore.h"
+#include "parser/undefWarningIgnore.h"
 
 
 namespace WinNs {

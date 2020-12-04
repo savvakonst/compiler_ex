@@ -1,12 +1,12 @@
 
 #include <sstream>
 
-#include "buffer.h"
-#include "body.h"
-#include "table.h"
-#include "llvmHdrs.h"
-#include "IR_generator.h"
-#include "printer.h"
+#include "jit/buffer.h"
+#include "parser/body.h"
+#include "jit/table.h"
+#include "jit/llvmHdrs.h"
+#include "jit/IR_generator.h"
+#include "ifs/printer.h"
 
 //using namespace llvm;
 

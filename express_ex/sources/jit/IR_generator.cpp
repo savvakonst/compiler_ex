@@ -1,7 +1,7 @@
 
 
-#include "IR_generator.h"
-#include "table.h"
+#include "jit/IR_generator.h"
+#include "jit/table.h"
 
 //using namespace llvm;
 

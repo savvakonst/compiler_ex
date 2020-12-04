@@ -1,7 +1,7 @@
 #include <string>
-#include "body.h"
-#include "types_jty.h"
-#include "call.h"
+#include "parser/body.h"
+#include "parser/types_jty.h"
+#include "parser/call.h"
 //void print_error(const std::string &content);
 
 Body::Body( std::string name,  bool is_template)

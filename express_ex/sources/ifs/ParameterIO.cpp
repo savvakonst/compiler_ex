@@ -1,12 +1,12 @@
 #include <type_traits>
 #include <set>
-#include "ParameterIO.h"
-#include "common.h"
+#include "ifs/ParameterIO.h"
+#include "parser/common.h"
 
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 #include "llvm/Support/JSON.h"
-#include "undefWarningIgnore.h"
+#include "parser/undefWarningIgnore.h"
 
 //using namespace llvm;
 

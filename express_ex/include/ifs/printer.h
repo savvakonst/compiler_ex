@@ -5,10 +5,10 @@
 #include "ParameterIO.h"
 
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/JSON.h"
-#include "undefWarningIgnore.h"
+#include "parser/undefWarningIgnore.h"
 
 
 llvm::raw_ostream &stream(llvm::raw_ostream &OS, const SyncParameter &di, std::string offset="");

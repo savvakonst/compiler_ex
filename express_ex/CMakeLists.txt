@@ -36,7 +36,7 @@ include_directories(${EGrammarDir})
 include_directories(${llvmDir}/llvm/include)
 include_directories(${llvmDir}/build_${SPlatform}/include)
 include_directories(${antlr4Dir}/src)
-
+include_directories(include)
 
 aux_source_directory(${EGrammarDir} EGrammar)
 file(GLOB EGrammarHeaders ${EGrammarDir}/*.h)

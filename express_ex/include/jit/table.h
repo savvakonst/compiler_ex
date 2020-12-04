@@ -6,12 +6,12 @@
 #include <set>
 #include <map>
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
-#include "undefWarningIgnore.h"
-#include "common.h"
-#include "ParameterIO.h"
+#include "parser/undefWarningIgnore.h"
+#include "parser/common.h"
+#include "ifs/ParameterIO.h"
 
 using std::string;
 class Value;

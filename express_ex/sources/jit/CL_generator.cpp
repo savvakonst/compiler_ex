@@ -1,4 +1,4 @@
-#include "CL_generator.h"
+#include "jit/CL_generator.h"
 
 
 typedef float local_T;

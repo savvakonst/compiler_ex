@@ -7,8 +7,8 @@
 #include "common.h"
 #include "basic.h"
 
-#include "ParameterIO.h"
-#include "table.h"
+#include "ifs/ParameterIO.h"
+#include "jit/table.h"
 
 
 using std::string;

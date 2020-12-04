@@ -2,7 +2,7 @@
 #define LLVM_HDRS
 
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 //#include "defWarningIgnore.h"
 
 
@@ -31,7 +31,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Utils.h"
-#include "undefWarningIgnore.h"
+#include "parser/undefWarningIgnore.h"
 
 #endif // !LLVM_HDRS
 

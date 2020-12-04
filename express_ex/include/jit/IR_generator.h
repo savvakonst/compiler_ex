@@ -4,14 +4,14 @@
 
 #include <iostream>
 #include <vector>
-#include "types_jty.h"
+#include "parser/types_jty.h"
 #include "buffer.h"
-#include "ParameterIO.h"
+#include "ifs/ParameterIO.h"
 
 
-#include "defWarningIgnore.h"
+#include "parser/defWarningIgnore.h"
 #include "llvm/IR/IRBuilder.h"
-#include "undefWarningIgnore.h"
+#include "parser/undefWarningIgnore.h"
 
 
 class Table;
