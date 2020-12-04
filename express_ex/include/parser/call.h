@@ -127,6 +127,7 @@ public:
 
 class TailCallDirective: public CallI_ifs{
 public:
+
     TailCallDirective(stack<Value*> args):CallI_ifs(){
         args_ = args;
         type_ = TypeEn::unknown_jty;
