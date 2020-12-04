@@ -4,9 +4,6 @@
 #include <iostream>
 #include <vector>
 
-#include "defWarningIgnore.h"
-#include "llvm/Support/raw_ostream.h"
-#include "undefWarningIgnore.h"
 #include "variable.h"
 #include "line.h"
 #include "operations.h"
@@ -66,7 +63,7 @@ public:
     void addDecimationOp();
     void addSmallArrayDefinitionOp(size_t length);
     //create call
-    void addCall(Body* body);
+    void addCall(BodyTemplate* body);
     void addTailCall();
 
     const stack<Line*> &getRet(){ return return_stack_; }
@@ -80,9 +77,6 @@ public:
     std::string  print( std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false);
     Body* genBodyByPrototype(stack<Value*> args ,bool is_template);
     untyped_t genConstRecusiveByPrototype(stack<Value*>& args);
-    void  symplyfy();
-
-    void  genTable(TableGenContext * tableGenContext);
 
 private:
 
@@ -90,7 +84,6 @@ private:
 
     bool is_operator_ = false;
     bool is_tail_callable_ = false;
-    bool is_template_ = false;
 
     std::string name_ = "main";
     std::vector<Line*> lines_;
