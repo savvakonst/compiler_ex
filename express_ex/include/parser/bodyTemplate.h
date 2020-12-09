@@ -1,54 +1,42 @@
 #ifndef BODY_TEMPLATE_H
 #define BODY_TEMPLATE_H
 
+
 #include <iostream>
 #include <vector>
+#include <map>
+#include <list>
 
-#include "variable.h"
-#include "line.h"
-#include "operations.h"
+#include "common.h"
+
+class BodyGenContext;
+class GarbageContainer;
+class Value;
+class Line;
+class Body;
 
 
 class BodyTemplate{
 public:
 
-    BodyTemplate(std::string name = "main");
+    BodyTemplate(std::string name , BodyTemplate* body );
     ~BodyTemplate();
 
-    bool isRetStackFull (){ return (name_ != "main") ? 0 < return_stack_.size() : false; }
-    bool isRetStackEmpty(){ return 0 == return_stack_.size(); }
+    bool isRetStackFull () const{ return (name_ != "main") ? 0 < return_stack_.size() : false; }
+    bool isRetStackEmpty() const{ return 0 == return_stack_.size(); }
 
-    void addLine(const std::string &name, Value* var);
-    void addArg(const std::string &name); //is necessary to add returned status_ value with line ,pos end error code and string;
-    void addParam(Line * line);
-    void addParam(const std::string &name, TypeEn ty, DataStructTypeEn dsty, uint64_t len);
-    void addParam(const std::string &name, const std::string & linkName, DataStructTypeEn dsty=DataStructTypeEn::constant_dsty);
-    void addReturn(const std::string &name, Value* var); //is necessary to add returned status_ value with line ,pos end error code and string;
-
-    //varStack push/pop 
+    //var_stack_ push/pop 
     void push(Value*);
     Value* pop();
     stack<Value*> pop(size_t length);
 
-    std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames(bool hideUnused = false) {
-        std::map<std::string, std::string > ret;
-        for (auto& value : lines_)
-            if (value->isArg())
-                if( ! (hideUnused && value->isUnused()))
-                    ret[value->getName(true)]=value->getLinkName();
-        return ret;
-    }
-
-private:
-    //create operation
-    Value* typeConvOp(TypeEn   targetType, Value* arg1);
-    Value* builtInFuncOp(OpCodeEn    uTypeOp, Value* arg1);
-    Value* arithmeticOp(OpCodeEn    uTypeOp, Value* arg1, Value* arg2);
-    Value* comparsionOp(OpCodeEn uTypeOp, Value * arg1, Value * arg2);
-    Value* selectOp(Value*      arg1, Value* arg2, Value* arg3);
-    Value* convolveOp(OpCodeEn    uTypeOp, Value* arg1, Value* arg2, uint32_t shift=0);
-
-public:
+    //
+    void addLine(const std::string &name, Value* var);
+    void addArg(const std::string &name); //is necessary to add returned status_ value with line ,pos end error code and string;
+    void addParam(Line * line);
+    void addParam(const std::string &name, TypeEn ty, DataStructureTypeEn dsty, uint64_t len);
+    void addParam(const std::string &name, const std::string & linkName, DataStructureTypeEn dsty=DataStructureTypeEn::kConstant);
+    void addReturn(const std::string &name, Value* var); //is necessary to add returned status_ value with line ,pos end error code and string;
     //create operation and push to varStack
     void addTypeConvOp(TypeEn targetType);
     void addBuiltInFuncOp(OpCodeEn uTypeOp);
@@ -66,36 +54,42 @@ public:
     void addCall(BodyTemplate* body);
     void addTailCall();
 
-    const stack<Line*> &getRet(){ return return_stack_; }
-    int getArgCount(){ return arg_count_; }
-    Line* getLastLineFromName(std::string name);
-    std::string getName(){ return name_; };
-    const stack<ParameterIfs*> getOutputParameterList();
-    GarbageContainer* getGarbageContainer(){ return garbage_contaiiner_; }
+
+
+    std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames(bool hide_unused = false) const;
+    const stack<Line*> &getRet()const { return return_stack_; }
+    const int getArgCount() const { return arg_count_; }
+    Line* getLastLineFromName(const std::string &name) const;
+    const std::string& getName()const { return name_; };
+    BodyTemplate* getParent() const{ return parent_body_template_; }
+    BodyTemplate* getFunctionBody (const std::string& name)const;
+    const stack<ParameterIfs*> getOutputParameterList()const;
+    GarbageContainer* getGarbageContainer() const { return garbage_contaiiner_; }
 
     // tree walker methods
-    std::string  print( std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false);
-    Body* genBodyByPrototype(stack<Value*> args ,bool is_template);
-    untyped_t genConstRecusiveByPrototype(stack<Value*>& args);
+    std::string  print( std::string tab = "", bool DSTEna = false, bool hide_unused_lines = false)const;
+    const std::list<std::string> getNamesOfDefinedFunctions() const;
+    Body* genBodyByTemplate(Body * parent_body,stack<Value*> args, bool pure_function)const;
+    untyped_t genConstRecusiveByTemplate(stack<Value*>& args)const;
 
+
+    std::list<BodyTemplate*> child_body_template_list_;
 private:
+    const std::string name_ ;
 
-    GarbageContainer * garbage_contaiiner_;
+    int arg_count_ = 0;
 
     bool is_operator_ = false;
     bool is_tail_callable_ = false;
 
-    std::string name_ = "main";
-    std::vector<Line*> lines_;
-
     stack<Value*> var_stack_;
-
-    stack<Line*> arg_stack_;
+    stack<Line*> lines_;
     stack<Line*> return_stack_;
 
-    int arg_count_ = 0;
-    Body* gen_body_ = nullptr;
+    BodyTemplate* parent_body_template_ = nullptr;
+    GarbageContainer* garbage_contaiiner_;
     
+
     friend BodyGenContext;
 };
 

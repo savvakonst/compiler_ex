@@ -15,17 +15,6 @@ typedef int (*jit_fptr)(char, char *);
 typedef int32_t (*Jit_Call_t)(char**);
 
 
-
-enum class unknownTypeOpEn {
-    uNEG,
-    uADD,
-    uSUB,
-    uMUL,
-    uDIV,
-    uREM,
-    uPOW
-};
-
 enum class TypeEn {
     int1_jty = 0,
     int8_jty,
@@ -41,11 +30,12 @@ enum class TypeEn {
 #define DEFAULT_JTY unknown_jty
 
 
-enum class DataStructTypeEn
+enum class DataStructureTypeEn
 {
-    constant_dsty,
-    smallArr_dsty,
-    largeArr_dsty
+    kConstant,
+    kVariable,
+    kSmallArr,
+    kLargeArr
 };
 
 
@@ -165,12 +155,12 @@ enum class TypeOpCodeEn {
 };
 
 enum class NodeTypeEn {
-    value,
-    operation,
-    line,
-    call,
-    tailCall,
-    tailCallSelect
+    kValue,
+    kOperation,
+    kLine,
+    kCall,
+    kTailCall,
+    kTailCallSelect
 };
 
 
@@ -253,13 +243,13 @@ inline std::string toString(TypeEn type)
 }
 
 
-inline std::string toString(DataStructTypeEn type){
+inline std::string toString(DataStructureTypeEn type){
     std::string t = "pass";
-#define ENUM2STR(x) case (DataStructTypeEn::x):t=#x;   break
+#define ENUM2STR(x) case (DataStructureTypeEn::x):t=#x;   break
     switch(type){
-        ENUM2STR(constant_dsty);
-        ENUM2STR(largeArr_dsty);
-        ENUM2STR(smallArr_dsty);
+        ENUM2STR(kConstant);
+        ENUM2STR(kLargeArr);
+        ENUM2STR(kSmallArr);
     }
     return t;
 #undef ENUM2STR
@@ -272,5 +262,26 @@ inline bool isFloating(TypeEn type){ return (type >= TypeEn::float_jty) && !isUn
 inline bool isInteger(TypeEn type){ return type <= TypeEn::int64_jty; }
 inline bool isUInteger(TypeEn type){ return false; }
 inline bool isBool(TypeEn type){ return type == TypeEn::int1_jty; }
+
+
+#include <vector>
+
+class Signature:protected std::vector<TypeEn>{
+public:
+    using std::vector<TypeEn>::push_back;
+
+    friend bool operator== (const Signature& a, const Signature& b);
+};
+
+inline bool operator== (const Signature& a, const Signature& b){
+    if(a.size() != b.size())
+        return false;
+
+    for(size_t i = 0, size_c = a.size(); i < size_c; i++){
+        if(a[i] != b[i])
+            return false;
+    }
+    return true;
+}
 
 #endif // !1

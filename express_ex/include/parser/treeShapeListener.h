@@ -13,7 +13,7 @@
 #include "EGrammarBaseListener.h"
 #include "undefWarningIgnore.h"
 
-#include "body.h"
+#include "bodyTemplate.h"
 #include "line.h"
 
 
@@ -35,12 +35,8 @@ class TreeShapeListener : public EGrammarBaseListener {
 public:
 
     TreeShapeListener();
-    TreeShapeListener(Body * body, const std::vector<Body*> &context={});
-    // : EGrammarBaseListener()
+    TreeShapeListener(BodyTemplate * body, const std::vector<BodyTemplate*> &context={});
     ~TreeShapeListener();
-
-
-    void NewBody(std::string name, bool is_template);
 
     virtual void exitAssign(EGrammarParser::AssignContext* ctx) override;
     virtual void exitAssignParam(EGrammarParser::AssignParamContext* ctx) override;
@@ -70,19 +66,20 @@ public:
     //array definition
     virtual void exitSmallArrayDefinition(EGrammarParser::SmallArrayDefinitionContext* ctx) override;
 
-    Body* getMainBody();
+    BodyTemplate* getMainBody();
 
-    Body* activ_body_;
-    std::vector<Body*> context_;
+    BodyTemplate* activ_body_ = nullptr;
 
 private:
     void setPos(ParserRuleContext* ctx);
 };
 
+
+
 class KEXParser {
 public:
 
-    KEXParser(Body* body,  std::string str, bool is_file_name = true) {
+    KEXParser(BodyTemplate* body,  std::string str, bool is_file_name = true) {
         listener_ = TreeShapeListener(body);
         init(str, is_file_name);
     }
@@ -106,14 +103,18 @@ public:
         return &listener_;
     }
 
-    Body*  getActivBody() {
+    BodyTemplate*  getActivBody() {
         return listener_.activ_body_;
     }
 
 private:
-    std::vector<Body*> & getContext() {
-        return listener_.context_;
+    /*
+    std::vector<BodyTemplate*> & getContext() {
+        print_error("KEXParser::getContext()");
+        return {nullptr};
+        //return listener_.context_;
     }
+    */
 
     void init(std::string str, bool is_file_name = true) {
 

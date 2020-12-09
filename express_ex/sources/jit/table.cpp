@@ -1,8 +1,14 @@
 
 #include <sstream>
 
-#include "jit/buffer.h"
+
+
 #include "parser/body.h"
+#include "parser/operations.h"
+#include "parser/line.h"
+#include "parser/call.h"
+
+#include "jit/buffer.h"
 #include "jit/table.h"
 #include "jit/llvmHdrs.h"
 #include "jit/IR_generator.h"
@@ -906,7 +912,7 @@ void  Operation::setupIR(IRGenerator & builder){
 
 
     if (isBuffered()|isReturned()) {
-        if (!is_initialized) {
+        if (!is_initialized_) {
             BufferTypeEn bufferType=isReturned()? BufferTypeEn::output: BufferTypeEn::internal;
             if (isReturned()) {
                 builder.AddBufferAlloca(new OutputBuffer(this));
@@ -915,7 +921,7 @@ void  Operation::setupIR(IRGenerator & builder){
                 builder.AddBufferAlloca(new Buffer(this));
             
             IR_buffer_base_ptr_=builder.CreateBufferInit(type_,"internal_");
-            is_initialized=true;
+            is_initialized_=true;
         }
         builder.SetStoreInsertPoint();
         IR_buffer_ptr_ = builder.CreateInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
@@ -935,10 +941,10 @@ void  Line::setupIR(IRGenerator & builder) {
     else {
         //setBuffered();
         llvm::Type * volatile t= builder.getLLVMType(type_);
-        if (!is_initialized) {
+        if (!is_initialized_) {
             builder.AddBufferAlloca(new InputBuffer(this));
             IR_buffer_base_ptr_ = builder.CreateBufferInit(type_, "external_");
-            is_initialized  = true;
+            is_initialized_  = true;
         }
         IR_buffer_ptr_   = builder.CreatePositionalInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
         IR_value_       = builder.CreatePositionalLoad(IR_buffer_ptr_, "arg_buffer_");

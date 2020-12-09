@@ -71,7 +71,7 @@ void EErrorListener::syntaxError(Recognizer* recognizer, Token* offendingSymbol,
     llvm::outs() << ExColors::GREEN << "\t" << offendingSymbol->getText() << "\n" << ExColors::RESET;
 #else
     std::stringstream s;
-    s << "line " << line << "; pos " << charPositionInLine << ":" << "_" << ". ";
+    s << "line " << kLine << "; pos " << charPositionInLine << ":" << "_" << ". ";
     s << "error: ";
     s << msg << ".\n";
     s  << "\t" << offendingSymbol->getText() << "\n" ;

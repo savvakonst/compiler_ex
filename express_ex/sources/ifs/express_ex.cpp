@@ -41,15 +41,15 @@ bool Express_ex::parseText(std::string str, bool is_file_name , std::map<std::st
 
     REMOVE_MEMBER(table_);
     REMOVE_MEMBER(body_);
-    //REMOVE_MEMBER(body_prototype_);
+    //REMOVE_MEMBER(body_template_);
     REMOVE_MEMBER(kex_parser_);
 
 
     try {
         kex_parser_ =new KEXParser(str, is_file_name, lib_str_map);
 
-        body_prototype_ = kex_parser_->getActivBody();
-        body_prototype_->getParameterLinkNames();
+        body_template_ = kex_parser_->getActivBody();
+        body_template_->getParameterLinkNames();
         status=true;
     }
     catch (size_t) {
@@ -79,7 +79,7 @@ bool Express_ex::setParameters(const std::map<std::string ,SyncParameter*> &para
         REMOVE_MEMBER(table_);
         REMOVE_MEMBER(body_);
 
-        body_ = body_prototype_->genBodyByPrototype(args, false);
+        body_ = body_template_->genBodyByTemplate(nullptr, args, false);
         body_->symplyfy();
 
         body_->getParameterLinkNames(true);
@@ -104,8 +104,8 @@ bool Express_ex::setParameters(const std::map<std::string ,SyncParameter*> &para
 }
 
 std::map<std::string, std::string> Express_ex::getParameterLinkNamesMap(bool hide_unused ) {
-    if (body_prototype_)
-        return body_prototype_->getParameterLinkNames(hide_unused);
+    if (body_template_)
+        return body_template_->getParameterLinkNames(hide_unused);
     else
         return std::map<std::string, std::string>();
 }

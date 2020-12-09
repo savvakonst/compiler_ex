@@ -5,8 +5,9 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <list>
 #include "types_jty.h"
-
+#include "body.h"
 
 class Value;
 class Body;
@@ -31,30 +32,49 @@ protected:
     std::set<Value*> value_set_;
 };
 
-// body generation context from prototype
+
+class CallRecursiveFunctionTemplate;
+class CallTemplate;
+// body generation context from Template
 class BodyGenContext{
 public:
-    BodyGenContext (std::vector<Line*>* namespace_ptr, bool is_template, GarbageContainer* garbage_container){
 
-        namespace_ptr_ = namespace_ptr;
-        is_template_ = is_template;
-        garbage_container_ = garbage_container;
-    }
+    BodyGenContext(Body* current_body, bool is_pure_function )
+        :current_body_(current_body),
+        namespace_ptr_(&current_body->lines_),
+        is_pure_function_(is_pure_function),
+        garbage_container_(current_body->getGarbageContainer())
+
+    {}
+
     ~BodyGenContext(){}
-
 
     inline void push(Value* var){ var_stack_.push(var); }
     inline Value* pop(){ return var_stack_.pop(); }
-    inline std::vector< Line*>& getNamespace(){ return *namespace_ptr_; }
-    inline GarbageContainer* getGarbageContainer(){ return garbage_container_; }
-    inline bool isTemplate(){ return is_template_; }
+    inline std::vector< Line*>& getNamespace() const { return *namespace_ptr_; }
+    inline GarbageContainer* getGarbageContainer() const { return garbage_container_; }
+    inline Body* getPureFunctionBody(const std::string &name, const Signature & signature) const {
+        return current_body_->getPureFunctionBody(name, signature);
+    }
+    inline void setPureFunctionBody( Body* body) const{
+        current_body_->setPureFunctionBody( body);
+    }
+    /* inline Body* getOrCreatePureFunctionBody(const BodyTemplate* body, const Signature& signature) const{
+        current_body_->getOrCreatePureFunctionBody( body, signature);
+    }*/
+
+    inline const Body const * getCurrentBody(){ return current_body_; }
+
+    const bool is_pure_function_;
 private:
-
-
     GarbageContainer* garbage_container_ = nullptr;
-    stack<Value*>   var_stack_;
+    stack<Value*> var_stack_;
+    Body* current_body_ =nullptr;
     std::vector<Line*>* namespace_ptr_ = nullptr;
-    bool is_template_ = false;
+
+    
+    friend CallRecursiveFunctionTemplate;
+    friend CallTemplate;
 };
 
 // constant value recursive clculation context 
@@ -78,7 +98,7 @@ private:
     
     stack<untyped_t*> args_reference_;
 
-    friend class TailCallDirective;
+    friend class TailCallDirectiveTemplate;
     friend class Operation;
     //std::map<std::string, Value> namespace_ptr_ ;
 };

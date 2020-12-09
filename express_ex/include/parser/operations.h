@@ -49,7 +49,7 @@ public:
         }
 
         type_  = largeArr->getType();
-        if(ds_type_ == DataStructTypeEn::largeArr_dsty)
+        if(data_structure_type_ == DataStructureTypeEn::kLargeArr)
             length_ = largeArr->getLength();
         else
             length_ = maxInt(largeArr->getLength(), smallArr->getLength());
@@ -86,7 +86,7 @@ public:
         operand_.push_back(var1);
 
         if(rec_call && !isUnknownTy(type_))// it is a dirty hack
-            if(var1->getAssignedVal(true)->getNodeType() == NodeTypeEn::tailCall)
+            if(var1->getAssignedVal(true)->getNodeType() == NodeTypeEn::kTailCall)
                 type_ = var2->getType();
             else
                 type_ = var1->getType();
@@ -113,7 +113,7 @@ public:
                 operand_.push_back(i);
 
             type_ = targetType;
-            ds_type_ = DataStructTypeEn::smallArr_dsty;
+            data_structure_type_ = DataStructureTypeEn::kSmallArr;
             length_ = argsSize;
 
             level_ = 0; 
@@ -125,7 +125,7 @@ public:
             if (isUnknownTy(targetType))
                 return;
 
-            ds_type_ = DataStructTypeEn::smallArr_dsty;
+            data_structure_type_ = DataStructureTypeEn::kSmallArr;
             smallArray();
 
             if (argsSize > 3)print_error("range( .. ) -invalid signature");
@@ -134,7 +134,7 @@ public:
 
     void CommonSetup(OpCodeEn op, Value* var) {
         op_code_ = op;
-        ds_type_ = var->getDSType();
+        data_structure_type_ = var->getDSType();
         length_ = var->getLength();
     }
 
@@ -149,7 +149,7 @@ public:
     }
 
 
-    virtual NodeTypeEn getNodeType()const override { return  contain_rec_call_ ? NodeTypeEn::tailCallSelect :  NodeTypeEn::operation; }
+    virtual NodeTypeEn getNodeType()const override { return  contain_rec_call_ ? NodeTypeEn::kTailCallSelect :  NodeTypeEn::kOperation; }
 
     //safe functions .external stack is used
     void         visitEnterSetupBuffer(stack<Value*>* visitorStack);
@@ -161,7 +161,7 @@ public:
 
     virtual void genBodyVisitExit(BodyGenContext * context) override;
     virtual void calculateConstRecursive(ConstRecursiveGenContext* context)override;
-    virtual void printVisitExit( stack<std::string>* Stack)	override;
+    virtual void printVisitExit( stack<std::string>* Stack)    override;
     virtual void genBlocksVisitExit(TableGenContext* context) override;
 
     virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override;

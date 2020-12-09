@@ -6,7 +6,7 @@
 #include "variable.h"
 
 
-class Line : public Value
+class Line: public Value
 {
 public:
 
@@ -20,26 +20,26 @@ public:
         assigned_val_ = var;
         level_       = var->getLevel();
         type_        = var->getType();
-        ds_type_      = var->getDSType();
+        data_structure_type_      = var->getDSType();
         length_      = var->getLength();
     }
 
 
-    Line(std::string name, TypeEn ty, DataStructTypeEn dsty, uint64_t len) :Value() {
+    Line(std::string name, TypeEn ty, DataStructureTypeEn dsty, uint64_t len) :Value() {
         names_.push_back(name);
         name_   = name;
-        ds_type_ = dsty;
+        data_structure_type_ = dsty;
         type_   = ty;
         length_ = len;
         is_arg = true;
     }
 
-    Line(std::string name, std::string linkName, DataStructTypeEn dsty) :Value() {
+    Line(std::string name, std::string linkName, DataStructureTypeEn dsty) :Value() {
 
         names_.push_back(name);
         name_=name;
         link_name_=linkName;
-        ds_type_ = dsty;
+        data_structure_type_ = dsty;
         is_arg = true;
     }
 
@@ -49,7 +49,7 @@ public:
         link_name_   = parameter->getName();
         type_       = PRMType2JITType(parameter->getRPMType());
         length_     = parameter->getVirtualSize();
-        ds_type_     = DataStructTypeEn::largeArr_dsty;
+        data_structure_type_     = DataStructureTypeEn::kLargeArr;
         is_arg      = true;
         
         parameter_  = new SyncParameter(*parameter);
@@ -70,12 +70,12 @@ public:
     virtual Value* getAssignedVal(bool deep = false) override;
 
     bool isArg();
-    bool haveTargetName(std::string);
+    bool checkName(std::string);
     bool isTermialLargeArray() { return isArg(); }
 
     const std::string getName(bool onlyName = false) const { return onlyName ? name_ :checkBuffer(name_); }
     const std::string getLinkName() const{ return link_name_; }
-    virtual NodeTypeEn getNodeType() const override{ return   NodeTypeEn::line; }
+    virtual NodeTypeEn getNodeType() const override{ return   NodeTypeEn::kLine; }
     untyped_t* getBinaryValuePtr(){ return &binary_value_; }
 
 

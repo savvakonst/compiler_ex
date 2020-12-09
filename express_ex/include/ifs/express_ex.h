@@ -30,7 +30,7 @@ public :
 
 private:
     KEXParser * kex_parser_ = nullptr;
-    Body*   body_prototype_ = nullptr;
+    BodyTemplate* body_template_ = nullptr;
     Body*   body_ = nullptr;
     Table*  table_ = nullptr;
 

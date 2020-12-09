@@ -54,8 +54,8 @@ public:
 
 
 
- bool operator==(Value*        var1, DataStructTypeEn var2); 
- bool operator==(DataStructTypeEn var1, Value*        var2);
+ bool operator==(Value*        var1, DataStructureTypeEn var2); 
+ bool operator==(DataStructureTypeEn var1, Value*        var2);
  bool operator<(TypeEn    var1, Value* var2);
  bool operator<(Value* var1, TypeEn    var2);
 
@@ -188,16 +188,16 @@ public:
 
 
 
-#define OP_LV1(T,ARG_TYPE)   		switch (ARG_TYPE)  \
-	{   \
-		CASE_OP_GLOBAL(TypeEn::double_jty, OP_LV2(T,double)   ); \
-		CASE_OP_GLOBAL(TypeEn::float_jty,  OP_LV2(T,float)    ); \
-		CASE_OP_GLOBAL(TypeEn::int64_jty,  OP_LV2(T,int64_t)  ); \
-		CASE_OP_GLOBAL(TypeEn::int32_jty,  OP_LV2(T,int32_t)  ); \
-		CASE_OP_GLOBAL(TypeEn::int16_jty,  OP_LV2(T,int16_t)  ); \
-		CASE_OP_GLOBAL(TypeEn::int8_jty,   OP_LV2(T,int8_t)   ); \
-		CASE_OP_GLOBAL(TypeEn::int1_jty,   OP_LV2(T,bool)     ); \
-	} 
+#define OP_LV1(T,ARG_TYPE)           switch (ARG_TYPE)  \
+    {   \
+        CASE_OP_GLOBAL(TypeEn::double_jty, OP_LV2(T,double)   ); \
+        CASE_OP_GLOBAL(TypeEn::float_jty,  OP_LV2(T,float)    ); \
+        CASE_OP_GLOBAL(TypeEn::int64_jty,  OP_LV2(T,int64_t)  ); \
+        CASE_OP_GLOBAL(TypeEn::int32_jty,  OP_LV2(T,int32_t)  ); \
+        CASE_OP_GLOBAL(TypeEn::int16_jty,  OP_LV2(T,int16_t)  ); \
+        CASE_OP_GLOBAL(TypeEn::int8_jty,   OP_LV2(T,int8_t)   ); \
+        CASE_OP_GLOBAL(TypeEn::int1_jty,   OP_LV2(T,bool)     ); \
+    } 
 
 
  

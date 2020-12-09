@@ -75,9 +75,9 @@ int main(int argc, const char* argv[]) {
         for (auto i : moduleFiles) modules_map[i]=true;
 
         KEXParser  parser(inputFile,true, modules_map);
-        Body* body_brototype = parser.getActivBody();
+        BodyTemplate* body_template = parser.getActivBody();
 
-        std::map<std::string, std::string> parameterNameList = body_brototype->getParameterLinkNames();
+        std::map<std::string, std::string> parameterNameList = body_template->getParameterLinkNames();
 
         if(showBits.isSet(nameList))
             llvm::outs()<< delimiter <<"names list: \n  "<< parameterNameList <<" \n";
@@ -93,7 +93,7 @@ int main(int argc, const char* argv[]) {
                 print_error("can not find parameter " + i.second);
         }
         if (showBits.isSet(untypedFSR))
-            llvm::outs() << delimiter << body_brototype->print("")<< delimiter <<"\n";
+            llvm::outs() << delimiter << body_template->print("")<< delimiter <<"\n";
 
 
         if (0 == inputDataBaseFile.size()) {
@@ -101,7 +101,7 @@ int main(int argc, const char* argv[]) {
             return 1;
         }
 
-        Body* body = body_brototype->genBodyByPrototype(args, false);
+        Body* body = body_template->genBodyByTemplate(nullptr, args, false);
         body->symplyfy();
 
         /// print block 

@@ -306,8 +306,8 @@ void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 		auto arg_a = calcTypeConvConst(TypeEn::int1_jty, OP(0)->getTempType(), OP(0)->getBinaryValue());
 		if(contain_rec_call_){
 			bool cond = (*((bool*)&arg_a));
-			context->exit_from_loop_ = cond != (OP(1)->getNodeType() == NodeTypeEn::tailCall);
-			binary_value_ = (OP(1)->getNodeType() != NodeTypeEn::tailCall) ? OP(1)->getBinaryValue() : OP(2)->getBinaryValue();
+			context->exit_from_loop_ = cond != (OP(1)->getNodeType() == NodeTypeEn::kTailCall);
+			binary_value_ = (OP(1)->getNodeType() != NodeTypeEn::kTailCall) ? OP(1)->getBinaryValue() : OP(2)->getBinaryValue();
 		}
 		else{
 			temp_type_ = maxTempTypeVar(OP(1), OP(2))->getTempType();

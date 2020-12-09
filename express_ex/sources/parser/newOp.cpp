@@ -57,7 +57,6 @@ Value* newTypeConvOp(GarbageContainer* garbage_container, TypeEn target_type, Va
 Value* newBuiltInFuncOperation(GarbageContainer* garbage_container, TypeEn target_type, Value* arg, OpCodeEn op_type) {
 
     Value* var = arg;
-
     if (TypeEn::float_jty > target_type) {
         var = newTypeConvOp(garbage_container,TypeEn::double_jty, arg);
         target_type=var->getType();

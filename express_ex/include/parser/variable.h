@@ -27,7 +27,7 @@ public:
 
     virtual void setBuffered();
     
-    void setReturned(){ is_returned=true; }
+    void setReturned(){ is_returned_=true; }
     void setBufferLength(uint64_t central_length);
     void setBufferLength(uint64_t left, uint64_t right);
     void setBufferLength(Value* var);
@@ -50,22 +50,22 @@ public:
     uint64_t getRightBufferLen()const{ return right_buffer_length_; }
     TypeEn getType()const{ return type_; }
     TypeEn getTempType()const{ return isUnknownTy(type_) ? temp_type_ : type_; }
-    DataStructTypeEn getDSType()const{ return ds_type_; }
+    DataStructureTypeEn getDSType()const{ return data_structure_type_; }
     SyncParameter* getPatameter()const{ return parameter_; }
 
     llvm::Value* getIRValue(IRGenerator& builder, int64_t parent_level);
     llvm::Value* getIRValueBasePtr(IRGenerator& builder, int64_t parent_level);
     llvm::Value* getIRValuePtr(IRGenerator& builder, int64_t parent_level);
 
-    virtual NodeTypeEn getNodeType() const { return NodeTypeEn::value; }
+    virtual NodeTypeEn getNodeType() const { return NodeTypeEn::kValue; }
     virtual Value* getAssignedVal(bool deep = false) { return this; }
 
 
     bool isUnused(){ return is_unused_; }
-    bool isArray(){ return ds_type_ != DataStructTypeEn::constant_dsty; }
+    bool isArray(){ return data_structure_type_ != DataStructureTypeEn::kConstant; }
     bool isVisited(){ return is_visited_; }
     bool isBuffered(){ return is_buffered; }
-    bool isReturned(){ return is_returned; }
+    bool isReturned(){ return is_returned_; }
 
     virtual bool isTermialLargeArray(){ return false; }
     //safe functions .external stack is used
@@ -128,57 +128,59 @@ protected:
     }
 
 
-    bool is_unused_   = true;
-    bool is_visited_  = false;
+    bool is_unused_ = true;
+    bool is_visited_ = false;
     bool is_buffered = false;
 
-    bool is_returned    = false;
-    bool is_initialized = false;
+    bool is_returned_ = false;
+    bool is_initialized_ = false;
 
-    DataStructTypeEn    ds_type_ = DataStructTypeEn::constant_dsty;
-    TypeEn              type_   = TypeEn::DEFAULT_JTY;
-    TypeEn              temp_type_   = TypeEn::DEFAULT_JTY;
+    DataStructureTypeEn    data_structure_type_ = DataStructureTypeEn::kConstant;
+
+    TypeEn   type_ = TypeEn::DEFAULT_JTY;
+    TypeEn   temp_type_ = TypeEn::DEFAULT_JTY;
 
 
     string   text_value_ = "" ;
     string   unique_name_ = "" ;
 
-    int64_t  length_     = 1;
+    int64_t  length_ = 1;
     int64_t  decimation_ = 0;
-    int64_t  level_      = 0;
+    int64_t  level_ = 0;
 
-    uint64_t left_buffer_length_  = 0;
+    uint64_t left_buffer_length_ = 0;
     uint64_t right_buffer_length_ = 0;
 
     int64_t  buffer_length_ = 0;
 
-    untyped_t binary_value_  = 0;
+    untyped_t binary_value_ = 0;
     uint64_t usage_counter_ = 0;
 
-    uint64_t buffer_num_    = 0; //unused
+    uint64_t buffer_num_ = 0; //unused
 
-    llvm::Value * IR_value_        = nullptr;
-    llvm::Value * IR_loaded_buffer_value_ = nullptr;
-    llvm::Value * IR_buffer_ptr_     = nullptr;
-    llvm::Value * IR_buffer_base_ptr_ = nullptr;
+    llvm::Value* IR_value_ = nullptr;
+    llvm::Value* IR_loaded_buffer_value_ = nullptr;
+    llvm::Value* IR_buffer_ptr_ = nullptr;
+    llvm::Value* IR_buffer_base_ptr_ = nullptr;
 
     SyncParameter * parameter_= nullptr;
-    friend class TailCallDirective;
+    friend class TailCallDirectiveTemplate;
 };
 
 
 
-inline bool operator==  (Value* var1, DataStructTypeEn var2){ return  var1->getDSType() == var2; }
-inline bool operator==  (DataStructTypeEn var1, Value* var2){ return  var1 == var2->getDSType(); }
-inline bool operator<   (TypeEn    var1, Value* var2){ return  var1 < var2->getType(); }
-inline bool operator<   (Value* var1, TypeEn    var2){ return  var1->getType() < var2; }
+inline bool operator==  (Value* var_a, DataStructureTypeEn var_b){ return  var_a->getDSType() == var_b; }
+inline bool operator==  (DataStructureTypeEn var_a, Value* var_b){ return  var_a == var_b->getDSType(); }
+inline bool operator<   (TypeEn    var_a, Value* var_b){ return  var_a < var_b->getType(); }
+inline bool operator<   (Value* var_a, TypeEn    var_b){ return  var_a->getType() < var_b; }
 
 
-inline bool isConst(Value* var1){ return var1 == DataStructTypeEn::constant_dsty; }
-inline bool isSmallArr(Value* var1){ return var1 == DataStructTypeEn::smallArr_dsty; }
-inline bool isLargeArr(Value* var1){ return var1 == DataStructTypeEn::largeArr_dsty; }
-inline bool isSimilar(Value* var1, Value* var2){ return  (var1->getDSType() == var2->getDSType() && (var1->getLength() == var2->getLength())); }
-inline bool isÑompatible(Value* var1, Value* var2){ return isConst(var1) || isConst(var2) || isSimilar(var1, var2); }
+inline bool isConst(Value* var_a){ return var_a == DataStructureTypeEn::kConstant; }
+inline bool isVariable(Value* var_a){ return var_a == DataStructureTypeEn::kVariable; }
+inline bool isSmallArr(Value* var_a){ return var_a == DataStructureTypeEn::kSmallArr; }
+inline bool isLargeArr(Value* var_a){ return var_a == DataStructureTypeEn::kLargeArr; }
+inline bool isSimilar(Value* var_a, Value* var_b){ return  (var_a->getDSType() == var_b->getDSType() && (var_a->getLength() == var_b->getLength())); }
+inline bool isÑompatible(Value* var_a, Value* var_b){ return isConst(var_a) || isConst(var_b) || isVariable(var_a) || isVariable(var_b) || isSimilar(var_a, var_b); }
 
 
 inline bool isUnknownTy(Value* var){ return isUnknownTy(var->getType()); }
@@ -189,9 +191,9 @@ inline bool isBool(Value* var){ return isBool(var->getType()); }
 
 
 
-inline Value* maxTypeVar(Value* var1, Value* var2){ return var1->getType  () < var2->getType  () ? var2 : var1; }
-inline Value* maxTempTypeVar(Value* var1, Value* var2){ return var1->getTempType  () < var2->getTempType  () ? var2 : var1; }
-inline Value* minTypeVar(Value* var1, Value* var2){ return var1->getType  () < var2->getType  () ? var1 : var2; }
+inline Value* maxTypeVar(Value* var_a, Value* var_b){ return var_a->getType  () < var_b->getType  () ? var_b : var_a; }
+inline Value* maxTempTypeVar(Value* var_a, Value* var_b){ return var_a->getTempType  () < var_b->getTempType  () ? var_b : var_a; }
+inline Value* minTypeVar(Value* var_a, Value* var_b){ return var_a->getType  () < var_b->getType  () ? var_a : var_b; }
 inline Value* maxTypeVar(std::vector<Value*> args){
     Value* var=args[0];
     for(auto i : args)
@@ -199,8 +201,8 @@ inline Value* maxTypeVar(std::vector<Value*> args){
     return var;
 } //unsafe function .zero size array check missing
 
-inline Value* maxDSVar(Value* var1, Value* var2){ return var1->getDSType() < var2->getDSType() ? var2 : var1; }
-inline Value* maxLevelVar(Value* var1, Value* var2){ return var1->getLevel() < var2->getLevel() ? var2 : var1; }
-inline Value* minLevelVar(Value* var1, Value* var2){ return var1->getLevel() < var2->getLevel() ? var1 : var2; }
+inline Value* maxDSVar(Value* var_a, Value* var_b){ return var_a->getDSType() < var_b->getDSType() ? var_b : var_a; }
+inline Value* maxLevelVar(Value* var_a, Value* var_b){ return var_a->getLevel() < var_b->getLevel() ? var_b : var_a; }
+inline Value* minLevelVar(Value* var_a, Value* var_b){ return var_a->getLevel() < var_b->getLevel() ? var_a : var_b; }
 
 #endif
