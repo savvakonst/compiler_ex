@@ -192,7 +192,7 @@ public:
             }
         return nullptr;
     }
-    uint64_t      getMaxLevel() {
+    uint64_t getMaxLevel() {
         uint64_t level = 0;
         for (auto i : column_list_) {
             auto tmp = i->getMaxLevel();
@@ -206,6 +206,7 @@ public:
     llvm::Function* getBIFunc(BuiltInFuncMap & UBIFMap, OpCodeEn op, llvm::Type * Ty);
     llvm::Function* getConvolveFunc(TypeEn type);
     llvm::Function* getGPUConvolveFunc(TypeEn type);
+    llvm::Module* getModule(){ return M_; }
 
     void declareBuiltInFunctions(BuiltInFuncMap & UBIFMap, llvm::Type * Ty);
 
@@ -231,10 +232,10 @@ private:
     llvm::Module* M_=nullptr;               //external 
     llvm::LLVMContext * context_=nullptr;   //external 
 
-    std::unique_ptr<llvm::Module> module_U_ptr_;    
+    std::unique_ptr<llvm::Module> module_u_ptr_;    
     std::unique_ptr<llvm::legacy::FunctionPassManager> the_FPM_;
 
-    llvm::Function* mainFunction_ = nullptr;            //external 
+    llvm::Function* main_function_ = nullptr;            //external 
 
     std::map<TypeEn, llvm::Function*> convolve_map_;    //external 
 

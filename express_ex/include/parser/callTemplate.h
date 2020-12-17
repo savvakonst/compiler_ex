@@ -20,14 +20,15 @@ public:
         is_visited_ = true;
     };
 
-    virtual void printVisitExit(stack<std::string>* exit_stack) override{
+    virtual void printVisitExit(PrintBodyContext* context) override{
         if(body_template_){
-            llvm::outs() << body_template_->print("    ") << "\n";
+
+            context->addVoid(body_template_->print(context->tab_ + "  ", context->DST_ena_, context->hide_unused_lines_));
 
             for(auto& i : args_)
-                auto x = exit_stack->pop();
+                auto x = context->pop();
 
-            exit_stack->push(body_template_->getName() + ".ret." + toString(type_));
+            context->push(body_template_->getName() + ".ret." + toString(type_));
             is_visited_ = false;
         }
     };
@@ -35,6 +36,11 @@ public:
     virtual string printUint() override{
         return unique_name_ + " = assignCallTemplate(" +
             body_template_->getRet().front()->getAssignedVal(true)->getUniqueName() + ")";
+    }
+
+    void genRecursiveVisitExit(RecursiveGenContext* context) override{
+        context->setUint(this);
+        is_visited_ = false;
     }
 
 protected:
@@ -104,18 +110,19 @@ public:
         }
         else{
             binary_value_ = body_template_->genConstRecusiveByTemplate(a);
+
             context->push(
                 context->getGarbageContainer()->add(
-                    new Value(binary_value_, body_template_->getRet().front()->getType())
+                    new Value(binary_value_, body_template_->getRet().front()->getTempType())
                 ));
         }
 
         is_visited_ = false;
     }
 
-    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+    virtual void calculateConstRecursive(RecursiveGenContext* context) override{
         binary_value_ = body_template_->genConstRecusiveByTemplate(args_); //it might be worth changing the order
-        type_ = body_template_->getRet().front()->getType();
+        type_ = body_template_->getRet().front()->getTempType();
         is_visited_ = false;
     };
 
@@ -144,10 +151,10 @@ public:
         is_visited_ = false;
     }
 
-    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+    virtual void calculateConstRecursive(RecursiveGenContext* context) override{
         size_t size = context->args_reference_.size();
         for(size_t i = 0; i < size; i++)
-            args_[i]->binary_value_ = *(context->args_reference_[i]);
+            context->args_reference_[i]->binary_value_ = args_[i]->binary_value_;
     }
 
     virtual NodeTypeEn getNodeType() const override{ return   NodeTypeEn::kTailCall; }
@@ -202,9 +209,9 @@ public:
         is_visited_ = false;
     }
 
-    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
+    virtual void calculateConstRecursive(RecursiveGenContext* context) override{
         binary_value_ = body_template_->genConstRecusiveByTemplate(args_); //it might be worth changing the order
-        type_ = body_template_->getRet().front()->getType();
+        type_ = body_template_->getRet().front()->getTempType();
         is_visited_ = false;
     };
 

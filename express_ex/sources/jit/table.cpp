@@ -7,6 +7,7 @@
 #include "parser/operations.h"
 #include "parser/line.h"
 #include "parser/call.h"
+#include "parser/basic.h"
 
 #include "jit/buffer.h"
 #include "jit/table.h"
@@ -176,7 +177,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
             return false;
 
 
-        llvm::BasicBlock* bb_intermediate  = llvm::BasicBlock::Create(context, "intermediate_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+        llvm::BasicBlock* bb_intermediate = llvm::BasicBlock::Create(context, "intermediate_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
         llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
@@ -184,13 +185,10 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
 
         llvm::BasicBlock* bb_last_store=builder.getStoreBlock();
 
-        if (nullptr != bb_last_store)
-        {
+        if (nullptr != bb_last_store) {
             builder.CreateMidleBRs();
             builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_intermediate);
-  
-        }
-        else {
+        } else {
             builder.SetLoopEnterInsertPoint();
             builder.CreateBr(bb_intermediate);
         }
@@ -536,9 +534,9 @@ void configOptimization(llvm::legacy::FunctionPassManager* TheFPM) {
 bool Table::llvmInit() {
     context_ = new llvm::LLVMContext();
 
-    module_U_ptr_  = std::make_unique<llvm::Module>("test", *context_);
-    the_FPM_      = std::make_unique<llvm::legacy::FunctionPassManager>(module_U_ptr_.get());
-    M_ = module_U_ptr_.get();
+    module_u_ptr_ = std::make_unique<llvm::Module>("test", *context_);
+    the_FPM_ = std::make_unique<llvm::legacy::FunctionPassManager>(module_u_ptr_.get());
+    M_ = module_u_ptr_.get();
 
     configOptimization(the_FPM_.get());
     declareFunctions();
@@ -551,14 +549,13 @@ llvm::Function* CreateConvolveFunction(llvm::Module* M, TypeEn type) {
     llvm::LLVMContext & context = M->getContext();
 
     IRGenerator builder(context, nullptr);
-    auto  currentType= builder.getLLVMType(type);
 
+    auto currentType = builder.getLLVMType(type);
+    
     llvm::Function* function =
         llvm::Function::Create(
-            llvm::FunctionType::get(currentType, { currentType->getPointerTo(),currentType->getPointerTo(), builder.getInt64Ty(),builder.getInt64Ty() }, false),
-            llvm::Function::ExternalLinkage,
-            "convolveFunction", M);
-
+            llvm::FunctionType::get(currentType, {currentType->getPointerTo(), currentType->getPointerTo(), builder.getInt64Ty(), builder.getInt64Ty() }, false),
+            llvm::Function::ExternalLinkage, "convolveFunction", M);
 
 
     llvm::BasicBlock* bb_Entry = llvm::BasicBlock::Create(context, "entry_block", function);
@@ -574,13 +571,13 @@ llvm::Function* CreateConvolveFunction(llvm::Module* M, TypeEn type) {
     builder.SetInsertPoint(bb_Entry);
     auto big_arr_base_ptr =  builder.CreateInBoundsGEP(function->getArg(0), offset);
     
-    auto index_ptr
-        =builder.CreateAlloca(builder.getInt64Ty(),nullptr,"index_ptr");
-    auto sum_ptr
-        =builder.CreateAlloca(currentType, nullptr,"sum_ptr");
+    auto index_ptr = builder.CreateAlloca(builder.getInt64Ty(),nullptr,"index_ptr");
+    auto sum_ptr = builder.CreateAlloca(currentType, nullptr,"sum_ptr");
+
     int64_t zero = 0;
     double one = 0;
     uint64_t oneint= *((uint64_t*)&one);
+
     builder.CreateStore(builder.CreateConst(zero, type), sum_ptr);
     builder.CreateStore(builder.getInt64(0), index_ptr);
     builder.CreateBr(bb_LoopBody);
@@ -598,17 +595,14 @@ llvm::Function* CreateConvolveFunction(llvm::Module* M, TypeEn type) {
     auto big_arr_ptr = builder.CreateInBoundsGEP(big_arr_base_ptr, index);
     auto small_arr_ptr = builder.CreateInBoundsGEP(small_arr_base_ptr, inv_index);
 
-    auto a
-        = builder.CreateLoad(big_arr_ptr,"a");
-    auto b
-        = builder.CreateLoad(small_arr_ptr,"b");
-    auto sum_v
-        = builder.CreateLoad(sum_ptr, "sum_v");
+    auto a = builder.CreateLoad(big_arr_ptr, "a");
+    auto b = builder.CreateLoad(small_arr_ptr, "b");
+    auto sum_v = builder.CreateLoad(sum_ptr, "sum_v");
 
     llvm::Value *next_sum;
     if (isInteger(type)) {
-        auto mull = builder.CreateMul(a, b,"mull");
-        next_sum = builder.CreateAdd(mull, sum_v,"next_sum");
+        auto mull = builder.CreateMul(a, b, "mull");
+        next_sum = builder.CreateAdd(mull, sum_v, "next_sum");
     }
     else {
         auto mull = builder.CreateFMul(a, b, "mull");
@@ -617,7 +611,7 @@ llvm::Function* CreateConvolveFunction(llvm::Module* M, TypeEn type) {
 
     builder.CreateStore(next_sum, sum_ptr);
     builder.CreateStore(next_index, index_ptr);
-    auto cond=builder.CreateICmpSLT(next_index, num_of_samples);
+    auto cond = builder.CreateICmpSLT(next_index, num_of_samples);
     builder.CreateCondBr(cond, bb_LoopBody, bb_exit);
 
     //exit_block
@@ -625,7 +619,6 @@ llvm::Function* CreateConvolveFunction(llvm::Module* M, TypeEn type) {
 
     auto return_val=builder.CreateLoad(sum_ptr);
     builder.CreateRet(return_val);
-
 
     return function;
 }
@@ -654,23 +647,40 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     llvm::LLVMContext & context = M_->getContext();
     if(builder_==nullptr)
         builder_=new IRGenerator(context, this);
-    IRGenerator &builder= *builder_;
+    IRGenerator &builder = *builder_;
 
-    mainFunction_ = llvm::Function::Create(
+    main_function_ = llvm::Function::Create(
         llvm::FunctionType::get(llvm::Type::getInt32Ty(context), {llvm::Type::getInt64PtrTy(context)->getPointerTo()}, false),
         llvm::Function::ExternalLinkage,
         "main", 
         M_
     );
-
-    llvm::Value* bufferUpdateFunction=builder.CreateIntToPtr(
+    /*
+    llvm::Value* buffer_update_function = builder.CreateIntToPtr(
         llvm::ConstantInt::get(builder.getInt64Ty(), uintptr_t(updateBuffer)),
         llvm::PointerType::getUnqual(
-            llvm::FunctionType::get(builder.getInt32Ty(),
-                { },
-                false)));
+            llvm::FunctionType::get(builder.getInt32Ty(), {}, false)));
 
-    bufferUpdateFunction->setName("updateBuffer");
+    
+    
+    llvm::Function* buffer_update_function2 = 
+        llvm::cast<llvm::Function*>(
+            M_->getOrInsertFunction(
+                "buffer_update_function",
+                
+                builder.getInt64Ty())); */
+                                                             
+    llvm::Function* buffer_update_function =
+        llvm::Function::Create(
+            llvm::FunctionType::get(builder.getInt32Ty(), {}, false), 
+            llvm::Function::ExternalLinkage, 
+            "buffer_update_function",
+            M_
+        );
+
+
+
+    //buffer_update_function->setName("updateBuffer");
 
     for (auto i : const_list_)
         i->setupIR(builder);
@@ -680,9 +690,9 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 
     ///the main "For loop"
     ///creating jump commands for init cycle
-    builder.SetBufferUpdateFunction(bufferUpdateFunction);
-    builder.SetCurrentFunction(mainFunction_);
-    llvm::BasicBlock* bb= llvm::BasicBlock::Create(context, "init_block", mainFunction_);
+    builder.SetBufferUpdateFunction(buffer_update_function);
+    builder.SetCurrentFunction(main_function_);
+    llvm::BasicBlock* bb= llvm::BasicBlock::Create(context, "init_block", main_function_);
     builder.SetInitInsertPoint(bb);
 
     auto max_level =getMaxLevel()+1;
@@ -694,24 +704,24 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.CreateStartBRs();
     //cond jump to Main Cycle Enter
     
-    llvm::BasicBlock* bbUpdateBuffer = llvm::BasicBlock::Create(context, "update_buffer_block", builder.getCurrentFunction());
-    llvm::BasicBlock* bbLoopEnter = llvm::BasicBlock::Create(context, "loop_enter_block", builder.getCurrentFunction());
+    llvm::BasicBlock* bb_update_buffer = llvm::BasicBlock::Create(context, "update_buffer_block", builder.getCurrentFunction());
+    llvm::BasicBlock* bb_loop_enter = llvm::BasicBlock::Create(context, "loop_enter_block", builder.getCurrentFunction());
 
-    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbUpdateBuffer);
+    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_update_buffer);
 
-    builder.SetInsertPoint(bbUpdateBuffer);
-    builder.CreateCall_(bufferUpdateFunction); //call buffer update
-    builder.CreateBr(bbLoopEnter);
+    builder.SetInsertPoint(bb_update_buffer);
+    builder.CreateCall_(buffer_update_function); //call buffer update
+    builder.CreateBr(bb_loop_enter);
 
-    builder.SetLoopEnterInsertPoint(bbLoopEnter);
+    builder.SetLoopEnterInsertPoint(bb_loop_enter);
     builder.DropBaseInsertPoint();
 
-    llvm::Value* globIndexAlloca=builder.CreatePositionalOffsetAlloca("glob_index_alloca",0);
+    llvm::Value* glob_index_alloca=builder.CreatePositionalOffsetAlloca("glob_index_alloca",0);
     builder.CreatePositionalOffsetAlloca("common_offset_alloca", 0);
 
 
-    builder.SetLoopEnterInsertPoint(bbLoopEnter);
-    llvm::Value* globIndex=builder.CreateLoad(globIndexAlloca, "glob_index");
+    builder.SetLoopEnterInsertPoint(bb_loop_enter);
+    llvm::Value* glob_index=builder.CreateLoad(glob_index_alloca, "glob_index");
 
 
     for (uint32_t j=0; j < max_level; j++)
@@ -719,37 +729,37 @@ bool Table::generateIR(std::string basicBlockPrefix) {
             i->generateIR(builder, CycleStageEn::midle,j);
    
     builder.CreateMidleBRs();
-    llvm::BasicBlock* bbCycleExit = llvm::BasicBlock::Create(context, "cycle_exit_block", builder.getCurrentFunction());
-    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbCycleExit);
-    builder.SetCycleExitInsertPoint(bbCycleExit);
+    llvm::BasicBlock* bb_cycle_exit = llvm::BasicBlock::Create(context, "cycle_exit_block", builder.getCurrentFunction());
+    builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_cycle_exit);
+    builder.SetCycleExitInsertPoint(bb_cycle_exit);
 
     ///global index increment, and index comparsion with maxTypeVar iteration number
     ///increasing the global index and comparing the index with the maxTypeVar iteration number
-    llvm::Value* nextGlobIndex = builder.CreateAdd(globIndex, builder.getInt64(1));
-    builder.CreateStore(nextGlobIndex, globIndexAlloca);
+    llvm::Value* next_glob_index = builder.CreateAdd(glob_index, builder.getInt64(1));
+    builder.CreateStore(next_glob_index, glob_index_alloca);
     builder.SetCurrentCMPRes(
         builder.CreateICmpSLT(
-            nextGlobIndex,
+            next_glob_index,
             builder.getInt64( ( iterations_ - 1 ) )));
 
 
-    llvm::BasicBlock* bbTerminalLoopEnter = llvm::BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
-    builder.CreateCall_(bufferUpdateFunction); //call buffer update
-    builder.CreateCondBr(builder.getCurrentCMPRes(), bbLoopEnter, bbTerminalLoopEnter);
-    builder.SetLoopEnterInsertPoint(bbTerminalLoopEnter);
+    llvm::BasicBlock* bb_terminal_loop_enter = llvm::BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
+    builder.CreateCall_(buffer_update_function); //call buffer update
+    builder.CreateCondBr(builder.getCurrentCMPRes(), bb_loop_enter, bb_terminal_loop_enter);
+    builder.SetLoopEnterInsertPoint(bb_terminal_loop_enter);
     builder.DropBaseInsertPoint();
     
-    bool  isNotIdle = false;
+    bool  is_not_idle = false;
     for (uint32_t j=0; j < max_level; j++)
         for (auto i : column_list_)
-            isNotIdle |= i->generateIR(builder, CycleStageEn::end,j);
+            is_not_idle |= i->generateIR(builder, CycleStageEn::end,j);
    
-    if (isNotIdle) {
+    if (is_not_idle) {
         builder.CreateMidleBRs();
         llvm::BasicBlock* bbExit = llvm::BasicBlock::Create(context, "exit_block", builder.getCurrentFunction());
         builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbExit);
         builder.SetExitInsertPoint(bbExit);
-        builder.CreateCall_(bufferUpdateFunction); //call buffer update
+        builder.CreateCall_(buffer_update_function); //call buffer update
     }
     
     builder.CreateRet(builder.getInt32(1));
@@ -768,7 +778,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 }
 
 bool Table::runOptimization() {
-    the_FPM_->run(*mainFunction_);
+    the_FPM_->run(*main_function_);
     for (auto i : convolve_map_)
         the_FPM_->run(*i.second);
     return true;
@@ -778,13 +788,15 @@ bool Table::run() {
 
     //auto mainF=M_->getFunction("main");
     std::string errStr;
-    llvm::ExecutionEngine* EE = llvm::EngineBuilder(std::move(module_U_ptr_)) .setErrorStr(&errStr).create();
+    llvm::ExecutionEngine* EE = llvm::EngineBuilder(std::move(module_u_ptr_)) .setErrorStr(&errStr).create();
+    EE->addGlobalMapping("buffer_update_function", uintptr_t(updateBuffer));
+
     if (!EE) {
         llvm::outs() << ": Failed to construct ExecutionEngine: " << errStr << "\n";
         return false;
     }
 
-    if (verifyFunction(*mainFunction_, &llvm::outs())) {
+    if (verifyFunction(*main_function_, &llvm::outs())) {
         llvm::outs() << ": Error constructing main function!\n\n";
         return false;
     }
@@ -796,14 +808,14 @@ bool Table::run() {
         }
         
 
-    if (verifyModule(*M_)) {
+    if (verifyModule(*M_, &llvm::outs())) {
         llvm::outs() << ": Error constructing module!\n";
         return false;
     }
 
     EE->finalizeObject();
 
-    Jit_Call_t Call = (Jit_Call_t)EE->getPointerToFunction(mainFunction_);
+    Jit_Call_t Call = (Jit_Call_t)EE->getPointerToFunction(main_function_);
 
 
     char ** buffers_array = new char*[g_buffers->size()];
@@ -839,35 +851,40 @@ std::string Table::printllvmIr() {
 ///
 ///
 llvm::Value* Value::getIRValue(IRGenerator & builder, int64_t parentLevel) {
-    llvm::Value * ret=nullptr;
+    llvm::Value * ret = nullptr;
     if (isBuffered() & (parentLevel != level_) ) {
         if (!builder.CheckExistence(IR_buffer_base_ptr_)) {
             IR_buffer_ptr_=builder.CreatePositionalInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
             IR_loaded_buffer_value_=builder.CreatePositionalLoad(IR_buffer_ptr_, "buffer_");
             builder.AddInitializedValue(IR_buffer_base_ptr_);
         }
-        ret=IR_loaded_buffer_value_;
+        ret = IR_loaded_buffer_value_;
     }
-    else ret=IR_value_;
+    else 
+        ret = IR_value_;
 
-    if (ret == nullptr) print_IR_error("IRValue - is nullptr :" + getUniqueName());
+    if ((ret == nullptr) && !builder.is_pure_function_)
+        print_IR_error("IRValue - is nullptr :" + getUniqueName());
+
     return ret;
 }
 
 llvm::Value* Value::getIRValueBasePtr(IRGenerator & builder, int64_t parentLevel) {
     auto ret =isBuffered () ? IR_buffer_base_ptr_ : nullptr;
-    if (ret == nullptr) print_IR_error("getIRValueBasePtr - is nullptr :" + getUniqueName());
+    if (ret == nullptr) 
+        print_IR_error("getIRValueBasePtr - is nullptr :" + getUniqueName());
     return ret;
 }
 
 llvm::Value* Value::getIRValuePtr(IRGenerator & builder, int64_t parentLevel) {
     auto ret =isBuffered () ? IR_buffer_ptr_ : nullptr;
-    if (ret == nullptr) print_IR_error("getIRValuePtr - is nullptr :" + getUniqueName());
+    if (ret == nullptr) 
+        print_IR_error("getIRValuePtr - is nullptr :" + getUniqueName());
     return ret;
 }
 
 void  Value::setupIR(IRGenerator & builder) {
-    IR_value_=builder.CreateConst(binary_value_, type_, "");
+    IR_value_ = builder.CreateConst(binary_value_, type_, "");
 }
 
 void  Operation::setupIR(IRGenerator & builder){
@@ -891,14 +908,28 @@ void  Operation::setupIR(IRGenerator & builder){
         IR_value_ =builder.CreateBuiltInFunc(OP(0), op_code_, getUniqueName());
     }
     else if (isSelect(op_code_)) {
-        IR_value_ =builder.CreateSelect(OP(0), OP(1), OP(2),  getUniqueName());
+        if(contain_rec_call_){
+            llvm::Value* ret_val = nullptr;
+            if(operand_[1]->getAssignedVal(true)->getNodeType() == NodeTypeEn::kTailCall){
+                builder.CreateCondBr(OP(0), builder.getCurrentBlock(), builder.getExitBlock());
+                ret_val = OP(2);
+            }
+            else{
+                builder.CreateCondBr(OP(0), builder.getExitBlock(), builder.getCurrentBlock());
+                ret_val = OP(1);
+            }
+            builder.SetExitInsertPoint();
+            builder.CreateRet(ret_val);
+            builder.SetCalcInsertPoint();
+        }
+        else
+            IR_value_ =builder.CreateSelect(OP(0), OP(1), OP(2),  getUniqueName());
     }
     else if (isConvolve(op_code_)) {
-        //outs()<<operand[1]->getAssignedVal(true)->printSmallArray()<<"\n";
         auto second_op=operand_[1]->getAssignedVal(true);
         auto length = second_op->getLength();
         auto f = OP(0);
-        IR_value_ =builder.CreateConvolve(OP_PTR(0), second_op->getBufferPtr(), length, -(length / 2 + shift_parameter_),type_, getUniqueName());
+        IR_value_ = builder.CreateConvolve(OP_PTR(0), second_op->getBufferPtr(), length, -(length / 2 + shift_parameter_),type_, getUniqueName());
     }
     else if (isSlice(op_code_)) {
 
@@ -934,23 +965,166 @@ void  Operation::setupIR(IRGenerator & builder){
 }
 
 void  Line::setupIR(IRGenerator & builder) {
-
+    
     if (!is_arg) {
         //pass
     }
     else {
         //setBuffered();
-        llvm::Type * volatile t= builder.getLLVMType(type_);
-        if (!is_initialized_) {
-            builder.AddBufferAlloca(new InputBuffer(this));
-            IR_buffer_base_ptr_ = builder.CreateBufferInit(type_, "external_");
-            is_initialized_  = true;
+        if(isVariable(this)){
+            builder.SetInitInsertPoint();
+            llvm::Function* function = builder.getCurrentFunction();
+            IR_buffer_ptr_ = builder.CreateAlloca(builder.getLLVMType(type_));
+            size_t arg_number = builder.arg_ptr_list_.size();
+            builder.CreateStore(function->getArg((uint32_t)arg_number), IR_buffer_ptr_);
+            builder.arg_ptr_list_.push_back(IR_buffer_ptr_);
+
+            //insert to  loop_block
+            builder.SetCalcInsertPoint();
+            IR_value_ = builder.CreateLoad(IR_buffer_ptr_);
+            
         }
-        IR_buffer_ptr_   = builder.CreatePositionalInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
-        IR_value_       = builder.CreatePositionalLoad(IR_buffer_ptr_, "arg_buffer_");
+        else{
+
+            if(!is_initialized_){
+                builder.AddBufferAlloca(new InputBuffer(this));
+                IR_buffer_base_ptr_ = builder.CreateBufferInit(type_, "external_");
+                is_initialized_  = true;
+            }
+            IR_buffer_ptr_ = builder.CreatePositionalInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_arg_incr");
+            IR_value_ = builder.CreatePositionalLoad(IR_buffer_ptr_, "arg_buffer_");
+        }
     }
 }
 
 void  Call::setupIR(IRGenerator & builder){
-    //pass
+    if(builder.is_pure_function_){
+        llvm::Function* function = body_->getOrGenIRPureFunction(builder);
+        std::vector<llvm::Value*> arg_list;
+        for(auto i : args_){
+            arg_list.push_back(
+                i->getAssignedVal(true)->getIRValue(builder, level_));
+
+        }
+        IR_value_ = builder.CreateCall(function, arg_list, "call_" + body_->getName());
+    }
+}
+
+void CallRecursiveFunction::setupIR(IRGenerator& builder){
+    
+    llvm::Function* function = body_->getOrGenIRPureFunction(builder);
+    std::vector<llvm::Value*> arg_list;
+    for(auto i : args_) {
+        arg_list.push_back(
+            i->getAssignedVal(true)->getIRValue(builder, level_));
+        
+    }
+    IR_value_ = builder.CreateCall(function, arg_list, "call_" + body_->getName());
+
+
+    if(isBuffered() | isReturned()){ // replace to new function 
+        if(!is_initialized_){
+            BufferTypeEn bufferType = isReturned() ? BufferTypeEn::output : BufferTypeEn::internal;
+            if(isReturned()){
+                builder.AddBufferAlloca(new OutputBuffer(this));
+            }
+            else
+                builder.AddBufferAlloca(new Buffer(this));
+
+            IR_buffer_base_ptr_=builder.CreateBufferInit(type_, "internal_");
+            is_initialized_=true;
+        }
+        builder.SetStoreInsertPoint();
+        IR_buffer_ptr_ = builder.CreateInBoundsGEP(IR_buffer_base_ptr_, builder.getCurrentOffsetValue(), "offset_incr");
+        builder.CreatePositionalStore(IR_value_, IR_buffer_ptr_);
+    }
+
+
+}
+
+void TailCallDirective::setupIR(IRGenerator& builder){
+    size_t size = builder.arg_ptr_list_.size();
+    for(size_t i = 0; i < size; i++){
+        llvm::Value* arg = args_[i]->getAssignedVal(true)->getIRValue(builder, level_);
+        builder.CreateStore(arg, builder.arg_ptr_list_[i]);
+    }
+}
+
+
+llvm::Function* Body::getOrGenIRPureFunction(IRGenerator& builder){
+
+    if(function_)
+        return function_;
+
+    llvm::LLVMContext& context = builder.getContext();
+    IRGenerator local_builder(context, nullptr, true);
+
+    std::vector<llvm::Type*> params;
+    const std::vector<TypeEn> signature = getSignature().getList();
+    for(auto i : signature)
+       params.push_back(local_builder.getLLVMType(i));
+
+    function_ =
+        llvm::Function::Create(
+            llvm::FunctionType::get(
+                local_builder.getLLVMType(return_stack_.front()->getType()),
+                params, 
+                false),
+            llvm::Function::ExternalLinkage, getName() , builder.getCurrentModule());
+
+    local_builder.SetCurrentFunction(function_);
+
+    local_builder.SetInitInsertPoint(llvm::BasicBlock::Create(context, "init_block", function_));
+    local_builder.SetCalcInsertPoint(llvm::BasicBlock::Create(context, "loop_block", function_));
+    local_builder.SetExitInsertPoint(llvm::BasicBlock::Create(context, "exit_block", function_));
+    local_builder.SetCalcInsertPoint();
+
+    stack<Value*> visitor_stack;
+    RecursiveGenContext gen_context(is_tail_callable_, false);
+    
+    for(auto& line : lines_){
+        if(line->isArg()){        
+            gen_context.addArg(line);
+        }
+        else{
+            visitor_stack.push(line->getAssignedVal());
+            do{
+                auto var = visitor_stack.pop();
+                if(var->isVisited())
+                    var->genRecursiveVisitExit(&gen_context);
+                else
+                    var->visitEnter(&visitor_stack);
+            } while(!visitor_stack.empty());
+            gen_context.setUint(line);
+        }
+    }
+
+    for(auto& value : return_stack_){
+        visitor_stack.push(value->getAssignedVal());
+        do{
+            auto var = visitor_stack.pop();
+            if(var->isVisited())
+                var->genRecursiveVisitExit(&gen_context);
+            else
+                var->visitEnter(&visitor_stack);
+        } while(!visitor_stack.empty());
+        gen_context.setUint(value);
+    }
+    
+    size_t size = gen_context.instructions_list_.size();
+    for(size_t index = 0; index < size; index++)
+        gen_context.instructions_list_[index]->setupIR(local_builder);
+    
+    if(!local_builder.getCurrentBlock()->back().isTerminator()){
+        local_builder.SetCalcInsertPoint();
+        local_builder.CreateBr(builder.getExitBlock());
+        local_builder.SetExitInsertPoint();
+        local_builder.CreateRet(
+            return_stack_.front()->getAssignedVal(true)->getIRValue(builder, 0));
+    }
+    
+    local_builder.SetInitInsertPoint();
+    local_builder.CreateBr(local_builder.getCalcBlock());
+
+    return function_;
 }

@@ -141,65 +141,42 @@ Body* Body::getPureFunctionBody(const std::string& name, const Signature& signat
 // tree walker methods
 std::string   Body::print(std::string tab, bool DSTEna, bool hideUnusedLines){
 
-    //hideUnusedLines =true;
+    PrintBodyContext context(tab, DSTEna, hideUnusedLines);
     stack<Value*> visitor_stack;
-    stack<std::string> string_stack;
 
-    const size_t max_line_length=90;
-    
-    std::string result = " " + getName() + "\n";
-    std::string txt_line, txt_skip, txt_shifts;
+    context.setName(getName());
 
-    for (auto& value : lines_) {
-        if (value->isArg()) {
-            //std::string postfix = (!hideUnusedLines || !line->isUnused()) ? "" : " \t\t#unused";
-            if (!hideUnusedLines || !value->isUnused()) {
-                txt_line     = value->getName() + "=arg()" ;
-                txt_shifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-                txt_skip     = std::string(max_line_length - ((txt_line.length() > max_line_length) ? 0 : txt_line.length()), ' ');
-                result     += txt_line + txt_skip + txt_shifts + "\n";
-            }
+    for(auto& value : lines_){
+        if(value->isArg()){
+            context.createArg(value);
         }
-        else {
+        else{
             visitor_stack.push(value->getAssignedVal());
-            do {
+            do{
                 auto var = visitor_stack.pop();
-                if (var->isVisited())
-                    var->printVisitExit(&string_stack);
+                if(var->isVisited())
+                    var->printVisitExit(&context);
                 else
                     var->visitEnter(&visitor_stack);
-            } while (!visitor_stack.empty());
+            } while(!visitor_stack.empty());
 
-            auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
-            //std::cout << tab << line->getName()+"."+ line->getTxtDSType()<< "=" << stringStack.pop()  << "\n";
-            if (!hideUnusedLines || !value->isUnused()){
-                txt_line     = tab + value->getName() + DST_postfix + "=" + string_stack.pop() ;
-                txt_shifts   = std::to_string(value->getLeftBufferLen())+" : "+ std::to_string(value->getRightBufferLen()) + " : " + std::to_string(value->getLength());
-                txt_skip     = std::string(max_line_length - ((txt_line.length() > max_line_length) ? max_line_length-2 : txt_line.length()), ' ');
-                result     += txt_line + txt_skip + txt_shifts + "\n";
-            }
+            context.createLine(value);
         }
     }
-    
-    for (auto& value : return_stack_) {
+
+    for(auto& value : return_stack_){
         visitor_stack.push(value->getAssignedVal());
-        do {
+        do{
             auto var = visitor_stack.pop();
-            if (var->isVisited())
-                var->printVisitExit(&string_stack);
+            if(var->isVisited())
+                var->printVisitExit(&context);
             else
                 var->visitEnter(&visitor_stack);
-        } while (!visitor_stack.empty());
-
-        auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
-
-        txt_line = tab + value->getName() + DST_postfix + "  " + string_stack.pop();
-        txt_shifts = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-        txt_skip = std::string(max_line_length - ((txt_line.length() > max_line_length) ? 0 : txt_line.length()), ' ');
-        result += txt_line + txt_skip + txt_shifts + "\n";
+        } while(!visitor_stack.empty());
+        context.createReurn(value);
     }
 
-    return   result ;
+    return context.getResult();
 }
 
 
@@ -240,14 +217,11 @@ void Body::genTable(TableGenContext * context){
                 else
                     var->visitEnter(&visitor_stack);
             } while (!visitor_stack.empty());
-
         }
     }
     int64_t maxBufferLength = 0;
     for (auto& value : return_stack_) {
-
         visitor_stack.push(value->getAssignedVal());
-
         do {
             auto var = visitor_stack.pop();
             if (var->isVisited())
@@ -287,3 +261,5 @@ bool DeclaratedBodysMap::setPureFunctionBody(Body* body){
     a->second.push_back(body);
     return true;
 }
+
+

@@ -31,7 +31,7 @@ class IRGenerator : public llvm::IRBuilder <>
 public:
 
 
-    IRGenerator(llvm::LLVMContext & context, Table * table_=nullptr);
+    IRGenerator(llvm::LLVMContext & context, Table * table_, bool is_pure_function = false);
     ~IRGenerator();
 
      
@@ -106,22 +106,26 @@ public:
     llvm::BasicBlock* getStoreBlock() { return store_block_; }
     llvm::BasicBlock* getTerminalOpBlock() { return terminal_op_block_; }
     llvm::BasicBlock* getCurrentBlock() { return BB; }
+    llvm::BasicBlock* getExitBlock(){ return exit_block_; }
 
     llvm::BasicBlock* getBlock(int N) { return bb_List_[N]; }
     llvm::BasicBlock* getLastBlock(int N) { return bb_List_.back(); }
 
-    llvm::Value*    getCurrentOffsetValueAlloca() { return current_offset_value_alloca_; }
-    llvm::Value*    getCurrentOffsetValue() { return current_offset_value_;}
-    llvm::Value*    getCurrentCMPRes() { return current_CMP_res_; }
+    llvm::Value* getCurrentOffsetValueAlloca() { return current_offset_value_alloca_; }
+    llvm::Value* getCurrentOffsetValue() { return current_offset_value_;}
+    llvm::Value* getCurrentCMPRes() { return current_CMP_res_; }
 
-    llvm::Type*     getLLVMType(TypeEn targetTy);
+    llvm::Type* getLLVMType(TypeEn targetTy);
     llvm::Function* getCurrentFunction() { return current_Function_; }
+    llvm::Module* getCurrentModule();
 
-    std::vector<Buffer*>  * getBufferList(BufferTypeEn bufferType = BufferTypeEn::input)  {
+    std::vector<Buffer*>  * getBufferList(BufferTypeEn bufferType = BufferTypeEn::input) {
         return &buffer_list_;
     }
 
 
+    std::vector<llvm::Value*> arg_ptr_list_;
+    const bool is_pure_function_;
 private:
     typedef llvm::BasicBlock* BasicBlockPtr;
 
@@ -135,7 +139,8 @@ private:
         SetInsertPoint(bb);
     }
 
-    std::vector <Buffer *>  buffer_list_;
+
+    std::vector<Buffer*> buffer_list_;
 
     llvm::BasicBlock* init_bock_=nullptr;
     llvm::BasicBlock* calc_block_=nullptr;
@@ -153,15 +158,15 @@ private:
     //  this list should be cleared every time in the transition to a next block.
     std::vector <llvm::Value*>  initialized_value_list_; 
 
-    llvm::Value * convolve_double_function_=nullptr;
-    llvm::Value * convolve_float_function_=nullptr;
+    llvm::Value* convolve_double_function_=nullptr;
+    llvm::Value* convolve_float_function_=nullptr;
 
-    llvm::Value * convolve_I64_function_=nullptr;
-    llvm::Value * convolve_I32_function_=nullptr;
+    llvm::Value* convolve_I64_function_=nullptr;
+    llvm::Value* convolve_I32_function_=nullptr;
 
-    llvm::Value * current_offset_value_alloca_ =nullptr;
-    llvm::Value * current_offset_value_ =nullptr;
-    llvm::Value * current_CMP_res_      =nullptr;
+    llvm::Value* current_offset_value_alloca_=nullptr;
+    llvm::Value* current_offset_value_=nullptr;
+    llvm::Value* current_CMP_res_=nullptr;
 
 
 

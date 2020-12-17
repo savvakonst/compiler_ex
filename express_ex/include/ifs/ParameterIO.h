@@ -132,10 +132,10 @@ protected:
     }
 
     inline int64_t getDataIntervalIndex(double time) {
-
-        for (int64_t i =current_interval_index_ <0?0:current_interval_index_; i< numer_of_intervals_; i++) {
+        // debug cond => { time == 134.00097656250000 }
+        for (int64_t i =current_interval_index_ <0 ? 0:current_interval_index_; i< numer_of_intervals_; i++) {
             DataInterval &a =interval_list_[i];
-            if ((a.time_interval.bgn <= time) && ((time < a.time_interval.end) + additional_time_)) return i;
+            if ((a.time_interval.bgn <= time) && (time < (a.time_interval.end + additional_time_)) ) return i;
         }
         return -1;
     }
@@ -157,7 +157,7 @@ protected:
         // std::ios::app |  std::ios::trunc
 
     }
-    const double additional_time_ = 0.001;
+    const double additional_time_ = 0.0009765625;
     PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
     double  frequency_  = -1;
 };

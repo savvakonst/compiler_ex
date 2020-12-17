@@ -94,16 +94,18 @@ public:
         is_visited_ = false;
     };
 
-    virtual void printVisitExit(stack<string> *Stack) {
-        Stack->push(text_value_); is_visited_ = false;
+    virtual void printVisitExit(PrintBodyContext *context) {
+        context->push(text_value_); is_visited_ = false;
     };
 
-    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context){
+    virtual void genRecursiveVisitExit(RecursiveGenContext* context){
         //context->setUint(this);  //not used. this should be removed.
+        if (!context->hide_const_values_)
+            context->setUint(this);
         is_visited_ = false;
     };
 
-    virtual void calculateConstRecursive(ConstRecursiveGenContext* context){
+    virtual void calculateConstRecursive(RecursiveGenContext* context){
         
     }
 

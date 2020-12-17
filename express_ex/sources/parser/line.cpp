@@ -76,10 +76,8 @@ void Line::genBodyVisitExit(BodyGenContext * context) {
 }
 
 
-
-
-void Line::printVisitExit(stack<std::string>* varStack){
+void Line::printVisitExit(PrintBodyContext* context){
     is_visited_ = false;
-    varStack->push( name_ + "." + toString(type_));
+    context->push(name_ + "." + toString(type_));
 }
 

@@ -10,7 +10,9 @@
 #include "body.h"
 
 class Value;
+class Line;
 class Body;
+
 
 class GarbageContainer
 {
@@ -35,6 +37,45 @@ protected:
 
 class CallRecursiveFunctionTemplate;
 class CallTemplate;
+#include <iterator>
+
+class PrintBodyContext{
+public:
+    PrintBodyContext(std::string tab, bool DST_ena, bool hide_unused_lines)
+        :hide_unused_lines_(hide_unused_lines),
+        DST_ena_(DST_ena),
+        tab_(tab)
+    {
+    }
+
+    void createArg(Line* value);
+    void createLine(Line* value);
+    void createReurn(Line* value);
+    void setName(const std::string& name);
+    inline void push(const std::string &var){ string_stack_.push(var); }
+    inline const std::string pop(){ return string_stack_.pop(); }
+    inline void addVoid(const std::string& var){ return void_definition_list_.push(var); }
+    inline std::string getResult(){ 
+        std::ostringstream imploded;
+        std::copy(void_definition_list_.begin(), void_definition_list_.end(), std::ostream_iterator<std::string>(imploded," \n"));
+        
+        return   tab_ + "\n" + name_  + imploded.str()  + "\n"+result_;
+    }
+    const std::string tab_;
+    const bool DST_ena_;
+    const bool hide_unused_lines_;
+private:
+
+    const size_t max_line_length_ = 90;
+
+    stack<std::string> void_definition_list_;
+    stack<std::string> string_stack_;
+    std::string result_ = "";
+    std::string name_ = "";
+
+};
+
+
 // body generation context from Template
 class BodyGenContext{
 public:
@@ -43,9 +84,8 @@ public:
         :current_body_(current_body),
         namespace_ptr_(&current_body->lines_),
         is_pure_function_(is_pure_function),
-        garbage_container_(current_body->getGarbageContainer())
-
-    {}
+        garbage_container_(current_body->getGarbageContainer()){
+    }
 
     ~BodyGenContext(){}
 
@@ -53,18 +93,14 @@ public:
     inline Value* pop(){ return var_stack_.pop(); }
     inline std::vector< Line*>& getNamespace() const { return *namespace_ptr_; }
     inline GarbageContainer* getGarbageContainer() const { return garbage_container_; }
-    inline Body* getPureFunctionBody(const std::string &name, const Signature & signature) const {
-        return current_body_->getPureFunctionBody(name, signature);
-    }
-    inline void setPureFunctionBody( Body* body) const{
-        current_body_->setPureFunctionBody( body);
-    }
+    inline Body* getPureFunctionBody(const std::string &name, const Signature & signature) const { 
+        return current_body_->getPureFunctionBody(name, signature);}
+    inline void setPureFunctionBody( Body* body) const{ current_body_->setPureFunctionBody( body);}
     /* inline Body* getOrCreatePureFunctionBody(const BodyTemplate* body, const Signature& signature) const{
         current_body_->getOrCreatePureFunctionBody( body, signature);
     }*/
 
     inline const Body const * getCurrentBody(){ return current_body_; }
-
     const bool is_pure_function_;
 private:
     GarbageContainer* garbage_container_ = nullptr;
@@ -78,25 +114,32 @@ private:
 };
 
 // constant value recursive clculation context 
-class ConstRecursiveGenContext{
+class RecursiveGenContext{
 public:
-    ConstRecursiveGenContext(bool is_recursive = true){
-        
-        exit_from_loop_ = !is_recursive; 
-    }
-    ~ConstRecursiveGenContext(){}
+    RecursiveGenContext(bool is_recursive, bool hide_const_values = true)
+        :exit_from_loop_(!is_recursive),
+        hide_const_values_(hide_const_values)
+    {}
+
+    ~RecursiveGenContext(){}
     
     inline void setUint(Value* var){ instructions_list_.push(var); }
     inline uint32_t getReference(){ return reference_cnt_++; }
-    void addArg(untyped_t* arg){ args_reference_.push(arg); }
+
+    void addArg(Value* arg){ 
+        if(!hide_const_values_)
+            instructions_list_.push(arg);
+        args_reference_.push(arg); 
+    }
     bool exitFromLoop(){ return exit_from_loop_; }
     stack<Value*> instructions_list_;
-
+    const bool hide_const_values_;
 private:
-    bool exit_from_loop_ = false;
+    
+    bool exit_from_loop_ ;
     uint32_t reference_cnt_ = 0;
     
-    stack<untyped_t*> args_reference_;
+    stack<Value* > args_reference_;
 
     friend class TailCallDirectiveTemplate;
     friend class Operation;

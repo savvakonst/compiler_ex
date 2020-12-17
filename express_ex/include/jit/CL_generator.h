@@ -12,6 +12,7 @@
 
 
 
+
 template<typename T>
 void rangeVector(std::vector<T> & arr, int N, double step) {
     arr.clear();

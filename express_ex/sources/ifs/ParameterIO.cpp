@@ -334,22 +334,21 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
     int64_t   points_to_read = point_number;
     uint8_t*  ptr = (uint8_t * )data_buffer_ptr;
     //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
-
-
+    // (*((ParameterIfs*)this)).point_number_ == 1704067;
     while (points_to_read) {
-        const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
+        const double current_time = time_interval_.bgn + ( (double) point_number_ ) / frequency_;
         
+        // debug cond =>{ points_to_read == 393088 }
         int64_t di_index = getDataIntervalIndex(current_time);
         int64_t local_points_to_read;
 
         if (di_index == -1) {
 
-            double end_time;
-            bool   is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
-            if (is_last_interval)
-                end_time = time_interval_.end + additional_time_;
-            else
-                end_time = getTimeInterval(current_interval_index_ + 1).bgn;
+            const bool is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
+
+            const double end_time = is_last_interval ? 
+                time_interval_.end + additional_time_ :
+                getTimeInterval(current_interval_index_ + 1).bgn;
 
             local_points_to_read = (int)((end_time - current_time) * frequency_);
 
@@ -366,10 +365,10 @@ int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
         else {
             const DataInterval &di = interval_list_[di_index];
 
-            int64_t local_start_pos =       (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_read =  (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
+            int64_t local_start_pos = (int)((current_time - di.time_interval.bgn) * frequency_);
+            local_points_to_read = (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
 
-            if (di_index != current_interval_index_ || (ifs_ == nullptr)) {
+            if (di_index != current_interval_index_ || (ifs_ == nullptr)){
                 openNewInterval((double)di_index);
                 ifs_->seekp(local_start_pos * sizeof_data_type_);
             }
@@ -482,9 +481,9 @@ SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, PRMTypesEn ta
 
 SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string &name) {
     std::set<SyncParameter*> parameterSet;
-    SyncParameter* p=nullptr;
+    SyncParameter* p = nullptr;
     for (auto i : arg_list) {
-        p=intersection(p, i, target_ty, name);
+        p = intersection(p, i, target_ty, name);
         parameterSet.insert(p);
     }
 
@@ -492,6 +491,7 @@ SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn t
         parameterSet.erase(i);
 
     parameterSet.erase(nullptr);
+    //if(p)
     parameterSet.erase(p);
 
     for (auto i : parameterSet)

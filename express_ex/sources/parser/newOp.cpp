@@ -26,8 +26,11 @@ Value* newTypeConvOp(GarbageContainer* garbage_container, TypeEn target_type, Va
         return garbage_container->add(ret_val);
     }
 
-    if((target_type == arg_type) || isUnknownTy(arg_type)){
+    if( target_type == arg_type ){
         return arg;
+    }
+    else if(isUnknownTy(arg_type)){
+        ret_val= new Operation(OpCodeEn::common_cast, arg, target_type);
     }
     else if(isFloating(target_type) && isFloating(arg_type)){
         if(target_type < arg_type)
@@ -189,7 +192,7 @@ Value* newSelectOp(GarbageContainer* garbage_container, TypeEn target_type, Valu
 
     auto i1=newTypeConvOp(garbage_container,TypeEn::int1_jty, arg_a);
     
-    if (isConst(i1) && !isUnknownTy(i1))
+    if (isConst(i1) && !isUnknownTy(i1) && !isUnknownTy(target_type))
         if (i1->getConvTypeVal<bool>())
             return arg_b;
         else

@@ -17,9 +17,9 @@ public:
     }
     
     // constructor of type conversion operation or shift and decimation 
-    Operation(OpCodeEn op, Value* var, TypeEn targetType, int64_t shiftOrDecimation=0):Value() {
+    Operation(OpCodeEn op, Value* var, TypeEn target_type, int64_t shiftOrDecimation=0):Value() {
         CommonSetup(op, var);
-        type_ = targetType;
+        type_ = target_type;
 
         if (op == OpCodeEn::shift){
             shift_parameter_=shiftOrDecimation;
@@ -61,39 +61,39 @@ public:
     }
 
     // constructor of arithetic, logic or comparsion operation 
-    Operation(OpCodeEn op, Value* var1, Value* var2) :Value() {
-        CommonSetup(op, maxDSVar(var1, var2));
+    Operation(OpCodeEn op, Value* var_a, Value* var_b) :Value() {
+        CommonSetup(op, maxDSVar(var_a, var_b));
 
-        type_  = maxTypeVar(var1, var2)->getType();
+        type_  = maxTypeVar(var_a, var_b)->getType();
         type_  = isComparsion(op) && !isUnknownTy(type_) ? TypeEn::int1_jty : type_;
 
-        level_ = maxLevelVar(var1, var2)->getLevel();
+        level_ = maxLevelVar(var_a, var_b)->getLevel();
 
-        operand_.push_back(var1);
-        operand_.push_back(var2);
+        operand_.push_back(var_a);
+        operand_.push_back(var_b);
 
         for (auto i : operand_)
             if (i->getLevel() < level_) i->getAssignedVal(true)->setBuffered();
     }
 
     // constructor of trenary operation 
-    Operation(OpCodeEn op, Value* var1, Value* var2, Value* var3, TypeEn targetType, bool rec_call = false) :Value() {
-        CommonSetup(op, maxDSVar(var1, var2));
-        type_ = targetType;
-        level_ = maxLevelVar(maxLevelVar(var1, var2), var3)->getLevel();
+    Operation(OpCodeEn op, Value* var_a, Value* var_b, Value* var_c, TypeEn target_type, bool rec_call = false) :Value() {
+        CommonSetup(op, maxDSVar(var_a, var_b));
+        type_ = target_type;
+        level_ = maxLevelVar(maxLevelVar(var_a, var_b), var_c)->getLevel();
         contain_rec_call_ = rec_call;
 
-        operand_.push_back(var1);
+        operand_.push_back(var_a);
 
         if(rec_call && !isUnknownTy(type_))// it is a dirty hack
-            if(var1->getAssignedVal(true)->getNodeType() == NodeTypeEn::kTailCall)
-                type_ = var2->getType();
+            if(var_b->getAssignedVal(true)->getNodeType() == NodeTypeEn::kTailCall)
+                type_ = var_c->getType();
             else
-                type_ = var1->getType();
+                type_ = var_b->getType();
             
 
-        operand_.push_back(var2);
-        operand_.push_back(var3);
+        operand_.push_back(var_b);
+        operand_.push_back(var_c);
 
         
         for (auto i : operand_)
@@ -101,7 +101,7 @@ public:
     }
 
     // constructor of small array definition
-    Operation(OpCodeEn op, stack<Value*> &args, TypeEn targetType) :Value() {
+    Operation(OpCodeEn op, stack<Value*> &args, TypeEn target_type) :Value() {
 
         size_t argsSize=args.size();
         op_code_ = op;
@@ -112,7 +112,7 @@ public:
             for (auto &i : args)
                 operand_.push_back(i);
 
-            type_ = targetType;
+            type_ = target_type;
             data_structure_type_ = DataStructureTypeEn::kSmallArr;
             length_ = argsSize;
 
@@ -122,7 +122,7 @@ public:
             for (auto &i : args)
                 operand_.push_back(i);
 
-            if (isUnknownTy(targetType))
+            if (isUnknownTy(target_type))
                 return;
 
             data_structure_type_ = DataStructureTypeEn::kSmallArr;
@@ -160,11 +160,11 @@ public:
 
 
     virtual void genBodyVisitExit(BodyGenContext * context) override;
-    virtual void calculateConstRecursive(ConstRecursiveGenContext* context)override;
-    virtual void printVisitExit( stack<std::string>* Stack)    override;
+    virtual void calculateConstRecursive(RecursiveGenContext* context)override;
+    virtual void printVisitExit(PrintBodyContext* context) override;
     virtual void genBlocksVisitExit(TableGenContext* context) override;
 
-    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override;
+    virtual void genRecursiveVisitExit(RecursiveGenContext* context) override;
 
 
     virtual Value* getAssignedVal(bool deep = false)  override { return this; }
@@ -194,11 +194,10 @@ private:
 
     bool contain_rec_call_ = false;
 
-    std::string arSym[14]    = { "+","+.","-","-.","*","*.","/","/","/.","%","%","%.","**","**." };
-    std::string arComp[16]   = { "==","!=","/","/","/","/",    ">",">=","<","<=", 
-                                  ">",">=","<","<=", "/"};
-    std::string arTConv[9]   = { "trunc","zext","sext","fptrunc","fpext","fptoi","fptosi","uitofp","sitofp" };
-    std::string arBuiltIn[6] = { "log" ,"log2", "log10" , "cos" ,"sin" , "exp" };
+    std::string arSym[14]    = { "+", "+.", "-", "-.", "*", "*.", "/", "/", "/.", "%", "%", "%.", "**", "**." };
+    std::string arComp[17]   = { "==", "!=", " ugt ", " uge ", " ult ", " ule ", ">", ">=", " less ", "<=", "==", "!=", ">", ">=", " less ", "<=", "_",};
+    std::string arTConv[10]   ={ "trunc", "zext", "sext", "fptrunc", "fpext", "fptoi", "fptosi", "uitofp", "sitofp", "common_cast"};
+    std::string arBuiltIn[6] = { "log", "log2", "log10", "cos", "sin", "exp" };
     std::string arSlice[2]   = { "decimation", "shift" };
 
 
@@ -214,12 +213,12 @@ private:
 
 
 Value* newInvOperation(GarbageContainer* garbageContainer, Value* arg1);
-Value* newBuiltInFuncOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, OpCodeEn uTypeOp);
-Value* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
-Value* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
-Value* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, int64_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
-Value* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1);
-Value* newSelectOp(GarbageContainer* garbageContainer, TypeEn targetType, Value* arg1, Value* arg2, Value* arg3, bool rec_call = false);
+Value* newBuiltInFuncOperation(GarbageContainer* garbageContainer, TypeEn target_type, Value* arg1, OpCodeEn uTypeOp);
+Value* newArithmeticOperation(GarbageContainer* garbageContainer, TypeEn target_type, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
+Value* newComparsionOperation(GarbageContainer* garbageContainer, TypeEn target_type, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
+Value* newConvolveOperation(GarbageContainer* garbageContainer, TypeEn target_type, Value* arg1, Value* arg2, int64_t shift=0, OpCodeEn uTypeOp = OpCodeEn::convolve);
+Value* newTypeConvOp(GarbageContainer* garbageContainer, TypeEn target_type, Value* arg1);
+Value* newSelectOp(GarbageContainer* garbageContainer, TypeEn target_type, Value* arg1, Value* arg2, Value* arg3, bool rec_call = false);
 Value* newSliceOp(GarbageContainer* garbageContainer, Value* arg1, Value* arg2, OpCodeEn uTypeOp);
 Value* newSliceOp(GarbageContainer* garbageContainer, Value* arg1, int64_t intVal, OpCodeEn uTypeOp);
 Value* newSmallArrayDefOp(GarbageContainer* garbageContainer, stack<Value*> &args, OpCodeEn uTypeOp=OpCodeEn::smallArrayDef, bool is_template = false);

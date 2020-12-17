@@ -8,10 +8,11 @@
 #include "parser/call.h"
 #include "parser/callTemplate.h"
 
-BodyTemplate::BodyTemplate(std::string name, BodyTemplate* body )
-    :name_(name)
+BodyTemplate::BodyTemplate(std::string name, BodyTemplate* parent_body_template)
+    :name_(name),
+    parent_body_template_(parent_body_template)
 {
-    garbage_contaiiner_ = new GarbageContainer;
+    garbage_contaiiner_ = new GarbageContainer();
     lines_.reserve(30);
 }
 
@@ -61,9 +62,9 @@ void BodyTemplate::addReturn(const std::string& name, Value* var){//?remove Valu
     auto line = new Line(name, var);
 
     if(is_tail_callable_){
-        var = var->getAssignedVal(true);
+        auto assigned_var = var->getAssignedVal(true);
 
-        bool valid_recursion = var->getNodeType() == NodeTypeEn::kTailCallSelect;
+        bool valid_recursion = assigned_var->getNodeType() == NodeTypeEn::kTailCallSelect;
         if(!valid_recursion)
             print_error("it isn't tail recursion");
     }
@@ -211,7 +212,7 @@ void BodyTemplate::addTailCall(){
 
     is_tail_callable_ = true;
     //new TailCallDirective(a);
-    push(garbage_contaiiner_->add(new TailCallDirective(a)));
+    push(garbage_contaiiner_->add(new TailCallDirectiveTemplate(a)));
 }
 
 
@@ -249,69 +250,47 @@ const stack<ParameterIfs*> BodyTemplate::getOutputParameterList()const{
 
 
 
-// tree walker methods
-std::string   BodyTemplate::print(std::string tab, bool DSTEna, bool hideUnusedLines) const{
 
-    //hideUnusedLines =true;
-    stack<Value*> visitorStack;
-    stack<std::string> stringStack;
+std::string   BodyTemplate::print(std::string tab, bool DST_ena, bool hide_unused_lines) const{
 
-    const size_t max_line_length=90;
+    PrintBodyContext context(tab, DST_ena, hide_unused_lines);
+    stack<Value*> visitor_stack;
 
-    std::string result = " " + getName() + "\n";
-    std::string txt_line, txt_skip, txt_shifts;
+    context.setName(getName());
 
     for(auto& value : lines_){
         if(value->isArg()){
-    
-            if(!hideUnusedLines || !value->isUnused()){
-                txt_line     = value->getName() + "=arg()";
-                txt_shifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-                txt_skip     = std::string(max_line_length - ((txt_line.length() > max_line_length) ? 0 : txt_line.length()), ' ');
-                result     += txt_line + txt_skip + txt_shifts + "\n";
-            }
+            context.createArg(value);
         }
         else{
-            visitorStack.push(value->getAssignedVal());
+            visitor_stack.push(value->getAssignedVal());
             do{
-                auto var = visitorStack.pop();
+                auto var = visitor_stack.pop();
                 if(var->isVisited())
-                    var->printVisitExit(&stringStack);
+                    var->printVisitExit(&context);
                 else
-                    var->visitEnter(&visitorStack);
-            } while(!visitorStack.empty());
+                    var->visitEnter(&visitor_stack);
+            } while(!visitor_stack.empty());
 
-            auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
-
-            if(!hideUnusedLines || !value->isUnused()){
-                txt_line     = tab + value->getName() + DST_postfix + "=" + stringStack.pop();
-                txt_shifts   = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen()) + " : " + std::to_string(value->getLength());
-                txt_skip     = std::string(max_line_length - ((txt_line.length() > max_line_length) ? max_line_length - 2 : txt_line.length()), ' ');
-                result     += txt_line + txt_skip + txt_shifts + "\n";
-            }
+            context.createLine(value);
         }
     }
 
     for(auto& value : return_stack_){
-        visitorStack.push(value->getAssignedVal());
+        visitor_stack.push(value->getAssignedVal());
         do{
-            auto var = visitorStack.pop();
+            auto var = visitor_stack.pop();
             if(var->isVisited())
-                var->printVisitExit(&stringStack);
+                var->printVisitExit(&context);
             else
-                var->visitEnter(&visitorStack);
-        } while(!visitorStack.empty());
-
-        auto DST_postfix = DSTEna ? "." + value->getTxtDSType() : "";
-        
-        txt_line = tab + value->getName() + DST_postfix + "  " + stringStack.pop();
-        txt_shifts = std::to_string(value->getLeftBufferLen()) + " : " + std::to_string(value->getRightBufferLen());
-        txt_skip = std::string(max_line_length - ((txt_line.length() > max_line_length) ? 0 : txt_line.length()), ' ');
-        result += txt_line + txt_skip + txt_shifts + "\n";
+                var->visitEnter(&visitor_stack);
+        } while(!visitor_stack.empty());
+        context.createReurn(value);
     }
 
-    return result;
+    return context.getResult();
 }
+
 
 const std::list<std::string> BodyTemplate::getNamesOfDefinedFunctions()const{
     std::list<std::string> ret;
@@ -328,14 +307,13 @@ Body* BodyTemplate::genBodyByTemplate(Body * parent_body, stack<Value*> args, bo
 
 
     Body* body = new Body(name_, getNamesOfDefinedFunctions(), parent_body, is_operator_);
-    BodyGenContext* context = new BodyGenContext(body,is_pure_function);
+    BodyGenContext context(body,is_pure_function);
 
     stack<Value*> visitor_stack;
 
     auto arg = args.begin();
     for(auto& value : lines_){
         if(value->isArg()){
-
             if(name_ == "main"){
                 body->addParam((Line*)*(arg));
                 arg++;
@@ -355,11 +333,11 @@ Body* BodyTemplate::genBodyByTemplate(Body * parent_body, stack<Value*> args, bo
             do{
                 auto var = visitor_stack.pop();
                 if(var->isVisited())
-                    var->genBodyVisitExit(context);
+                    var->genBodyVisitExit(&context);
                 else
                     var->visitEnter(&visitor_stack);
             } while(!visitor_stack.empty());
-            body->addLine(value->getName(), context->pop());
+            body->addLine(value->getName(), context.pop());
         }
     }
     for(auto& value : return_stack_){
@@ -367,44 +345,38 @@ Body* BodyTemplate::genBodyByTemplate(Body * parent_body, stack<Value*> args, bo
         do{
             auto var = visitor_stack.pop();
             if(var->isVisited())
-                var->genBodyVisitExit(context);
+                var->genBodyVisitExit(&context);
             else
                 var->visitEnter(&visitor_stack);
         } while(!visitor_stack.empty());
-        body->addReturn(return_stack_[0]->getName(), context->pop());
+        body->addReturn(return_stack_[0]->getName(), context.pop());
     }
 
-    delete context;
     return body;
 }
 
 untyped_t BodyTemplate::genConstRecusiveByTemplate(stack<Value*>& args)const{
 
     stack<Value*> visitor_stack;
-    stack<std::string> stringStack;
+    RecursiveGenContext context(is_tail_callable_);
 
-
-    auto context =new ConstRecursiveGenContext();
-
-    std::vector<Value*> instructions_list;
     auto arg = args.begin();
 
     for(auto& line : lines_){
         if(line->isArg()){
             line->setTempTypeAndBinaryValue(*arg++);
-            context->addArg(line->getBinaryValuePtr());
-
+            context.addArg(line);
         }
         else{
             visitor_stack.push(line->getAssignedVal());
             do{
                 auto var = visitor_stack.pop();
                 if(var->isVisited())
-                    var->genConstRecursiveVisitExit(context);
+                    var->genRecursiveVisitExit(&context);
                 else
                     var->visitEnter(&visitor_stack);
             } while(!visitor_stack.empty());
-            line->genConstRecursiveVisitExit(context);
+            context.setUint(line);
         }
     }
 
@@ -413,26 +385,26 @@ untyped_t BodyTemplate::genConstRecusiveByTemplate(stack<Value*>& args)const{
         do{
             auto var = visitor_stack.pop();
             if(var->isVisited())
-                var->genConstRecursiveVisitExit(context);
+                var->genRecursiveVisitExit(&context);
             else
                 var->visitEnter(&visitor_stack);
-            value->genConstRecursiveVisitExit(context);
         } while(!visitor_stack.empty());
+        context.setUint(value);
     }
 
-    int32_t iteration_cnt = 0;
+    size_t size = context.instructions_list_.size();
+    for(int32_t iteration_cnt = 0; !context.exitFromLoop(); iteration_cnt++){
 
-    for(int32_t index = 0; context->exitFromLoop(); iteration_cnt++){
-        for(auto& instruction : context->instructions_list_)
-            instruction->calculateConstRecursive(context);
+        for(size_t index = 0; index < size; index++)
+            context.instructions_list_[index]->calculateConstRecursive(&context);
 
         if(iteration_cnt == -1)
             print_error("recursion too deep");
     }
 
     // maybe it is not necessary
-    untyped_t return_val = context->instructions_list_.back()->getBinaryValue();
-    delete context;
+
+    untyped_t return_val = context.instructions_list_.back()->getBinaryValue();
     return return_val;
 }
 

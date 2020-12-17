@@ -86,23 +86,6 @@ public:
  Value* minLevelVar(Value* var1, Value* var2);
 
 
- inline std::string getTxtType(TypeEn type) {
-     std::string t = "pass";
-#define ENUM2STR(x) case (TypeEn::x):t=#x;   break
-     switch (type)
-     {
-         ENUM2STR(int1_jty);
-         ENUM2STR(int8_jty);
-         ENUM2STR(int16_jty);
-         ENUM2STR(int32_jty);
-         ENUM2STR(float_jty);
-         ENUM2STR(double_jty);
-         ENUM2STR(unknown_jty);
-     }
-     return  t;
-#undef ENUM2STR
- }
-
 
 #define CASE_OP_GLOBAL(depend,target) case (depend):  target ;  break
 

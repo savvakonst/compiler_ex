@@ -101,18 +101,8 @@ void Value::setLevel(int64_t var) {
     level_=maxInt(level_, var);
 }
 
-string Value::getTxtDSType()const{
-    string t = "pass";
-#define ENUM2STR(x) case (DataStructureTypeEn::x):t=#x;   break
-    switch (data_structure_type_)
-    {
-        ENUM2STR(kConstant);
-        ENUM2STR(kVariable);
-        ENUM2STR(kSmallArr);
-        ENUM2STR(kLargeArr);
-    }
-    return  t;
-#undef ENUM2STR
+std::string Value::getTxtDSType()const{
+    return toString(data_structure_type_);
 }
 
 double Value::getDoubleValue()const {

@@ -19,7 +19,7 @@ class Body;
 class BodyTemplate{
 public:
 
-    BodyTemplate(std::string name , BodyTemplate* body );
+    BodyTemplate(std::string name, BodyTemplate* parent_body_template);
     ~BodyTemplate();
 
     bool isRetStackFull () const{ return (name_ != "main") ? 0 < return_stack_.size() : false; }
@@ -57,19 +57,20 @@ public:
 
 
     std::map<std::string /*name*/, std::string /*link name*/> getParameterLinkNames(bool hide_unused = false) const;
-    const stack<Line*> &getRet()const { return return_stack_; }
-    const int getArgCount() const { return arg_count_; }
-    Line* getLastLineFromName(const std::string &name) const;
-    const std::string& getName()const { return name_; };
+    const stack<Line*>& getRet()const{ return return_stack_; }
+    const int getArgCount() const{ return arg_count_; }
+    Line* getLastLineFromName(const std::string& name) const;
+    const std::string& getName() const{ return name_; };
     BodyTemplate* getParent() const{ return parent_body_template_; }
-    BodyTemplate* getFunctionBody (const std::string& name)const;
-    const stack<ParameterIfs*> getOutputParameterList()const;
-    GarbageContainer* getGarbageContainer() const { return garbage_contaiiner_; }
+    BodyTemplate* getFunctionBody(const std::string& name) const;
+    const stack<ParameterIfs*> getOutputParameterList() const;
+    GarbageContainer* getGarbageContainer() const{ return garbage_contaiiner_; }
 
     // tree walker methods
-    std::string  print( std::string tab = "", bool DSTEna = false, bool hide_unused_lines = false)const;
+
+    std::string print(std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false) const;
     const std::list<std::string> getNamesOfDefinedFunctions() const;
-    Body* genBodyByTemplate(Body * parent_body,stack<Value*> args, bool pure_function)const;
+    Body* genBodyByTemplate(Body* parent_body, stack<Value*> args, bool pure_function)const;
     untyped_t genConstRecusiveByTemplate(stack<Value*>& args)const;
 
 

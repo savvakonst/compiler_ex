@@ -111,7 +111,7 @@ int main(int argc, const char* argv[]) {
         if (showBits.isSet(allFSR))
             llvm::outs() << delimiter << body->print("");
 
-        if (showBits.isSet(redusedFSR))
+        if (showBits.isSet(redusedFSR)) 
             llvm::outs() << delimiter << body->print("", false, true);
 
 

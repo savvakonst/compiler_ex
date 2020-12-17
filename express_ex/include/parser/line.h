@@ -46,7 +46,7 @@ public:
     Line(std::string name, SyncParameter * parameter) :Value() {
         names_.push_back(name);
         name_       = name;
-        link_name_   = parameter->getName();
+        link_name_  = parameter->getName();
         type_       = PRMType2JITType(parameter->getRPMType());
         length_     = parameter->getVirtualSize();
         data_structure_type_     = DataStructureTypeEn::kLargeArr;
@@ -84,8 +84,8 @@ public:
     virtual void markUnusedVisitEnter(stack<Value*>* visitorStack) override;
 
     virtual void genBodyVisitExit(BodyGenContext* context) override;
-    virtual void printVisitExit  (stack<std::string>* varStack) override;
-    virtual void genBlocksVisitExit  (TableGenContext* context) override;
+    virtual void printVisitExit(PrintBodyContext* context) override;
+    virtual void genBlocksVisitExit(TableGenContext* context) override;
     virtual void setupIR(IRGenerator & builder) override;
 
 
@@ -98,27 +98,28 @@ public:
 private:
     uint32_t reference_; //atavism
 public:
-    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override{
-        context->setUint(this); 
+    virtual void genRecursiveVisitExit(RecursiveGenContext* context) override{
+        //context->setUint(this); 
         is_visited_ = false;
     };
 
-    virtual void calculateConstRecursive(ConstRecursiveGenContext* context) override{
-        binary_value_ = assigned_val_->getBinaryValue();
+    virtual void calculateConstRecursive(RecursiveGenContext* context) override{
+        binary_value_ =is_arg ? binary_value_ :assigned_val_->getBinaryValue();
+        temp_type_ = assigned_val_->getTempType();
     }
 
 
     virtual string printUint() { return unique_name_ + (is_arg?" = arg()"  :" = assign(" + assigned_val_->getUniqueName()+")"); }
 
 private:
-    bool        is_arg       = false;
+    bool is_arg = false;
 
-    Value    *assigned_val_ = nullptr;
+    Value* assigned_val_ = nullptr;
 
     std::vector<std::string> names_;
 
-    std::string name_        = std::string();
-    std::string link_name_    = std::string();
+    std::string name_ = std::string();
+    std::string link_name_ = std::string();
 
     
 };

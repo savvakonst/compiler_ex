@@ -18,7 +18,7 @@
 //	}
 //}
 
-
+ 
 void Operation::visitEnterSetupBuffer(stack<Value*>* visitorStack){
 	if (isConvolve(op_code_)) {
 		auto smallArray = operand_[1];
@@ -110,7 +110,7 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 	context->setUint(this);
 	is_visited_ = false;
 
-	PRMTypesEn RPMType=JITType2PRMType(type_);
+	PRMTypesEn RPMType = JITType2PRMType(type_);
 
 	if (isSelect(op_code_)	 || 
 		isArithetic(op_code_)  || 
@@ -121,10 +121,10 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 
 		std::vector<SyncParameter *> p_list;
 		for (auto i : operand_) p_list.push_back(i->getAssignedVal(true)->getPatameter());
-		parameter_=intersection(p_list, RPMType, "");
+		parameter_ = intersection(p_list, RPMType, "");
 	}
 	else if (isTypeConv(op_code_) ) {
-		parameter_ =retyping(operand_.front()->getAssignedVal(true)->getPatameter(), RPMType, "");
+		parameter_ = retyping(operand_.front()->getAssignedVal(true)->getPatameter(), RPMType, "");
 	}
 	else if (isSlice(op_code_)) {
 
@@ -141,7 +141,7 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 		context->setParameter(parameter_);
 }
 
-void Operation::genConstRecursiveVisitExit(ConstRecursiveGenContext* context){
+void Operation::genRecursiveVisitExit(RecursiveGenContext* context){
 	context->setUint(this);
 	is_visited_ = false;
 }
@@ -172,13 +172,13 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 				"right operand:" + ((op2 != nullptr)? "a"  : "unknown")
 			);
 		}
-		TypeEn targetType = maxTypeVar(op1, op2)->getType();
+		TypeEn target_type = maxTypeVar(op1, op2)->getType();
 		
 		ret = newArithmeticOperation(
 			garbage_container,
-			targetType, 
-			newTypeConvOp(garbage_container, targetType, op1), 
-			newTypeConvOp(garbage_container, targetType, op2),  
+			target_type, 
+			newTypeConvOp(garbage_container, target_type, op1), 
+			newTypeConvOp(garbage_container, target_type, op2),  
 			(OpCodeEn)(int)op_code_);
 
 	}
@@ -194,13 +194,13 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 				"right operand:" + ((op2 != nullptr) ? "a" : "unknown")
 			);
 		}
-		TypeEn targetType = maxTypeVar(op1, op2)->getType();
+		TypeEn target_type = maxTypeVar(op1, op2)->getType();
 
 		ret = newComparsionOperation(
 			garbage_container,
-			targetType,
-			newTypeConvOp(garbage_container, targetType, op1),
-			newTypeConvOp(garbage_container, targetType, op2),
+			target_type,
+			newTypeConvOp(garbage_container, target_type, op1),
+			newTypeConvOp(garbage_container, target_type, op2),
 			(OpCodeEn)(int)op_code_);
 
 	}
@@ -217,30 +217,37 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 		if (TypeEn::float_jty > op1->getType()) {
 			op1 = newTypeConvOp(garbage_container, TypeEn::float_jty, op1);
 		}
-		TypeEn targetType = op1->getType();
-		ret = newBuiltInFuncOperation(garbage_container, targetType, op1 , op_code_);
+		TypeEn target_type = op1->getType();
+		ret = newBuiltInFuncOperation(garbage_container, target_type, op1 , op_code_);
 	}
 	else if (isSelect(op_code_)) {
 		auto op3 = context->pop();
 		auto op2 = context->pop();
 		auto op1 = context->pop();
-		TypeEn targetType = maxTypeVar(op2, op3)->getType();
-		ret = newSelectOp(
-			garbage_container, 
-			targetType, 
-			op1, 
-			newTypeConvOp(garbage_container, targetType, op2), 
-			newTypeConvOp(garbage_container, targetType, op3));
+
+
+		TypeEn target_type;
+		if(contain_rec_call_){
+			target_type = (operand_[1]->getAssignedVal(true)->getNodeType() == NodeTypeEn::kTailCall) ? op3->getType() : op2->getType();
+		}
+		else{
+			target_type = maxTypeVar(op2, op3)->getType();
+			op2 = newTypeConvOp(garbage_container, target_type, op2);
+			op3 = newTypeConvOp(garbage_container, target_type, op3);
+		}
+
+		ret = newSelectOp(garbage_container, target_type, op1, op2, op3, contain_rec_call_);
+
 	}
 	else if(isConvolve(op_code_)){
 		auto op2 = context->pop();
 		auto op1 = context->pop();
-		TypeEn targetType = maxTypeVar(op1, op2)->getType();
+		const TypeEn target_type = maxTypeVar(op1, op2)->getType();
 		ret = newConvolveOperation(
 			garbage_container, 
-			targetType, 
-			newTypeConvOp(garbage_container, targetType, op1), 
-			newTypeConvOp(garbage_container, targetType, op2), 
+			target_type, 
+			newTypeConvOp(garbage_container, target_type, op1), 
+			newTypeConvOp(garbage_container, target_type, op2), 
 			shift_parameter_, 
 			op_code_);
 	}
@@ -266,11 +273,10 @@ void Operation::genBodyVisitExit(BodyGenContext* context){
 }
 
 
-void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
-	context->setUint(this);
+void Operation::calculateConstRecursive(RecursiveGenContext* context){
+
 
 #define OP(i)     (operand_[(i)] )
-
 	if(isArithetic(op_code_)){
 		temp_type_ = maxTempTypeVar(OP(0), OP(1))->getTempType();
 		auto arg_a = calcTypeConvConst(temp_type_, OP(0)->getTempType(), OP(0)->getBinaryValue());
@@ -281,8 +287,8 @@ void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 		auto local_type_ = maxTempTypeVar(OP(0), OP(1))->getTempType();
 		auto arg_a = calcTypeConvConst(local_type_, OP(0)->getTempType(), OP(0)->getBinaryValue());
 		auto arg_b = calcTypeConvConst(local_type_, OP(1)->getTempType(), OP(1)->getBinaryValue());
-		binary_value_ = calcComparsionConst(op_code_, local_type_, arg_a, arg_b);
-
+		untyped_t binary_value = calcComparsionConst(op_code_, local_type_, arg_a, arg_b);
+		binary_value_ = binary_value;
 		temp_type_ = TypeEn::int1_jty;
 	}
 	else if(isInv(op_code_)){
@@ -291,7 +297,7 @@ void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 	}
 	else if(isTypeConv(op_code_)){
 		temp_type_ = type_;
-		auto arg_b = calcTypeConvConst(temp_type_, OP(1)->getTempType(), OP(1)->getBinaryValue());
+		binary_value_ = calcTypeConvConst(temp_type_, OP(0)->getTempType(), OP(0)->getBinaryValue());
 	}
 	else if(isBuiltInFunc(op_code_)){
 		untyped_t temp_var = 0;
@@ -307,7 +313,9 @@ void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 		if(contain_rec_call_){
 			bool cond = (*((bool*)&arg_a));
 			context->exit_from_loop_ = cond != (OP(1)->getNodeType() == NodeTypeEn::kTailCall);
-			binary_value_ = (OP(1)->getNodeType() != NodeTypeEn::kTailCall) ? OP(1)->getBinaryValue() : OP(2)->getBinaryValue();
+			auto active_operand = (OP(1)->getNodeType() != NodeTypeEn::kTailCall) ? OP(1) : OP(2);
+			binary_value_ = active_operand->getBinaryValue();
+			temp_type_ = active_operand->getTempType();
 		}
 		else{
 			temp_type_ = maxTempTypeVar(OP(1), OP(2))->getTempType();
@@ -332,61 +340,63 @@ void Operation::calculateConstRecursive(ConstRecursiveGenContext* context){
 };
 
 
-void Operation::printVisitExit(stack<std::string>* Stack) {
+
+void Operation::printVisitExit(PrintBodyContext* context){
 	is_visited_ = false;
 	std::string txtOperation = "";
 #define OP(i) (operand_[(i)]->getUniqueName() )
 
-	if (isArithetic(op_code_)) {
-		auto op2 = Stack->pop();auto op1 = Stack->pop();
-		Stack->push(checkBuffer("(" + op1 + txtArOp(op_code_) + op2 + ")" ));
+	if(isArithetic(op_code_)){
+		auto op2 = context->pop(); auto op1 = context->pop();
+		context->push(checkBuffer("(" + op1 + txtArOp(op_code_) + op2 + ")"));
 	}
-	else if (isComparsion(op_code_)) {
-		auto op2 = Stack->pop(); auto op1 = Stack->pop();
-		Stack->push(checkBuffer("(" + op1 + txtCompOp(op_code_) + op2 + ")"));
+	else if(isComparsion(op_code_)){
+		auto op2 = context->pop(); auto op1 = context->pop();
+		context->push(checkBuffer("(" + op1 + txtCompOp(op_code_) + op2 + ")"));
 	}
-	else if (isInv(op_code_)) {
-		Stack->push(checkBuffer("(-" + Stack->pop() + ")"));
+	else if(isInv(op_code_)){
+		context->push(checkBuffer("(-" + context->pop() + ")"));
 	}
-	else if (isTypeConv(op_code_)) {
-		Stack->push(checkBuffer(txtTConOp(op_code_) + "(" + Stack->pop() + ")"));
+	else if(isTypeConv(op_code_)){
+		context->push(checkBuffer(txtTConOp(op_code_) + "(" + context->pop() + ")"));
 	}
-	else if (isBuiltInFunc(op_code_)) {
+	else if(isBuiltInFunc(op_code_)){
 		txtOperation = arBuiltIn[((int)op_code_ - (int)TypeOpCodeEn::builtInFunc)];
-		Stack->push(checkBuffer(txtBuiltInOp(op_code_) + "(" + Stack->pop() + ")"));
+		context->push(checkBuffer(txtBuiltInOp(op_code_) + "(" + context->pop() + ")"));
 	}
-	else if (isSelect(op_code_)) {
-		auto op3 = Stack->pop();auto op2 = Stack->pop();auto op1 = Stack->pop();
-		Stack->push(checkBuffer("(" + op1 +"? "+ op2 + ": "+ op3 + ")"));
+	else if(isSelect(op_code_)){
+		auto op3 = context->pop(); auto op2 = context->pop(); auto op1 = context->pop();
+		context->push(checkBuffer("(" + op1 + "? " + op2 + ": " + op3 + ")"));
 	}
-	else if (isConvolve(op_code_)) {
-		auto op2 = Stack->pop();auto op1 = Stack->pop();
-		Stack->push(checkBuffer("convolve(" + op1 + ", " + op2 + "," + std::to_string(shift_parameter_) + ")"));
+	else if(isConvolve(op_code_)){
+		auto op2 = context->pop(); auto op1 = context->pop();
+		context->push(checkBuffer("convolve(" + op1 + ", " + op2 + "," + std::to_string(shift_parameter_) + ")"));
 	}
-	else if (isSlice(op_code_)) {
-		Stack->push(checkBuffer(txtSliceOp(op_code_) +"(" + Stack->pop() + ", " + std::to_string(getSliceParameter()) + ")"));
+	else if(isSlice(op_code_)){
+		context->push(checkBuffer(txtSliceOp(op_code_) + "(" + context->pop() + ", " + std::to_string(getSliceParameter()) + ")"));
 	}
-	else if (isStoreToBuffer(op_code_)) {
+	else if(isStoreToBuffer(op_code_)){
 		print_error("visitExitTxt StoreToBuffer unknown command .");
 	}
-	else if (isSmallArrayDef(op_code_)) {
+	else if(isSmallArrayDef(op_code_)){
 		size_t size = operand_.size();
 		stack<string > op;
 
-		for (size_t i = 0; i < size; i++)
-			op.push(Stack->pop());
+		for(size_t i = 0; i < size; i++)
+			op.push(context->pop());
 		std::reverse(op.begin(), op.end());
 
 		std::string out="";
-		for (auto &i : op)
+		for(auto& i : op)
 			out += i + ", ";
 
-		if (op_code_ == OpCodeEn::smallArrayDef)
-			Stack->push("[" + out + "]");
+		if(op_code_ == OpCodeEn::smallArrayDef)
+			context->push("[" + out + "]");
 		else
-			Stack->push("range[" + out + "]");
+			context->push("range[" + out + "]");
 
-	}else{
+	}
+	else{
 		print_error("visitExitTxt unknown command .");
 	}
 #undef OP

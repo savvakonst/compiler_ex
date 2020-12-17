@@ -101,7 +101,7 @@ enum class OpCodeEn {
     fptosi,
     uitofp,
     sitofp,
-    Unknown_conv,
+    common_cast,
 
     convolve,
     convolve_f,
@@ -234,6 +234,7 @@ inline std::string toString(TypeEn type)
         ENUM2STR(int8_jty);
         ENUM2STR(int16_jty);
         ENUM2STR(int32_jty);
+        ENUM2STR(int64_jty);
         ENUM2STR(float_jty);
         ENUM2STR(double_jty);
         ENUM2STR(unknown_jty);
@@ -248,10 +249,11 @@ inline std::string toString(DataStructureTypeEn type){
 #define ENUM2STR(x) case (DataStructureTypeEn::x):t=#x;   break
     switch(type){
         ENUM2STR(kConstant);
-        ENUM2STR(kLargeArr);
+        ENUM2STR(kVariable);
         ENUM2STR(kSmallArr);
+        ENUM2STR(kLargeArr);
     }
-    return t;
+    return  t;
 #undef ENUM2STR
 }
 
@@ -263,6 +265,7 @@ inline bool isInteger(TypeEn type){ return type <= TypeEn::int64_jty; }
 inline bool isUInteger(TypeEn type){ return false; }
 inline bool isBool(TypeEn type){ return type == TypeEn::int1_jty; }
 
+inline DataStructureTypeEn maxDS(const DataStructureTypeEn &var_a,const DataStructureTypeEn &var_b){ return var_a< var_b ? var_b : var_a; }
 
 #include <vector>
 
@@ -271,6 +274,10 @@ public:
     using std::vector<TypeEn>::push_back;
 
     friend bool operator== (const Signature& a, const Signature& b);
+    const std::vector<TypeEn>& getList() const {
+        std::vector<TypeEn>& ret =*((std::vector<TypeEn>*)(this));
+        return ret;
+    }
 };
 
 inline bool operator== (const Signature& a, const Signature& b){

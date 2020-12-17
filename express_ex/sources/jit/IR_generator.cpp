@@ -6,7 +6,10 @@
 //using namespace llvm;
 
 
-IRGenerator::IRGenerator(llvm::LLVMContext & context,Table * table_):IRBuilder<>(context){
+IRGenerator::IRGenerator(llvm::LLVMContext & context,Table * table_,bool is_pure_function)
+    :IRBuilder<>(context),
+    is_pure_function_(is_pure_function )
+{
     table=table_;
 }
 
@@ -121,6 +124,7 @@ llvm::Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCod
     case OpCodeEn::sext:    ret = CreateSExt(aOperand, destTy, name);     break;
     case OpCodeEn::zext:    ret = CreateZExt(aOperand, destTy, name);     break;
     case OpCodeEn::fpext:   ret = CreateFPExt(aOperand, destTy, name);    break;
+    default: ret = aOperand;
     }
     return ret;
 }
@@ -356,4 +360,8 @@ llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
     }
     
     return ret;
+}
+
+llvm::Module* IRGenerator::getCurrentModule(){
+    return table->getModule();
 }

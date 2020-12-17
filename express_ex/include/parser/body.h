@@ -8,6 +8,12 @@
 
 #include "common.h"
 
+
+
+namespace llvm{
+    class Function;
+}
+class IRGenerator;
 class BodyGenContext;
 class TableGenContext;
 class GarbageContainer;
@@ -66,11 +72,11 @@ public:
     //Body*               getOrCreatePureFunctionBody(const BodyTemplate* name, const Signature& signature) const;
 
     // tree walker methods
-    std::string  print(std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false);
-    void  symplyfy();
-    void  genTable(TableGenContext* tableGenContext);
-
-
+    std::string print(std::string tab = "", bool DSTEna = false, bool hideUnusedLines = false);
+    void symplyfy();
+    void genTable(TableGenContext* tableGenContext);
+    llvm::Function* getOrGenIRPureFunction(IRGenerator& builder);
+    
     const bool is_operator_ = false;
     const bool is_pure_function_ = false;
 
@@ -78,7 +84,7 @@ protected:
 
     GarbageContainer* garbage_contaiiner_;
 
-
+    llvm::Function* function_ = nullptr;
     bool is_tail_callable_ = false;
 
     const std::string name_ ;

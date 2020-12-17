@@ -1,5 +1,15 @@
 #ifndef CALL_H_
 #define CALL_H_
+#include "variable.h"
+#include "line.h"
+#include "body.h"
+#include "basic.h"
+
+
+namespace llvm{
+    class Function;
+}
+class IRGenerator;
 
 
 class CallI_ifs: public Value{
@@ -17,14 +27,15 @@ public:
         is_visited_ = true;
     };
 
-    virtual void printVisitExit(stack<std::string>* exit_stack) override{
+
+    virtual void printVisitExit(PrintBodyContext* context) override{
         if(body_){
-            llvm::outs() << body_->print("    ") << "\n";
+            context->addVoid(body_->print(context->tab_ + "  ", context->DST_ena_, context->hide_unused_lines_));
 
             for(auto& i : args_)
-                auto x = exit_stack->pop();
+                auto x = context->pop();
 
-            exit_stack->push(body_->getName() + ".ret." + toString(type_));
+            context->push(body_->getName() + ".ret." + toString(type_));
             is_visited_ = false;
         }
     };
@@ -45,7 +56,7 @@ public:
     }
 
 
-    virtual void genConstRecursiveVisitExit(ConstRecursiveGenContext* context) override {
+    virtual void genRecursiveVisitExit(RecursiveGenContext* context) override {
         context->setUint(this);
         is_visited_ = false;
     }
@@ -56,99 +67,55 @@ protected:
 };
 
 
+class Call: public CallI_ifs{
+public:
+
+    Call(Body* body, const stack<Value*>& args ={});
+    ~Call(){}
+
+
+    virtual void markUnusedVisitEnter(stack<Value*>* visitor_stack) override;
+    virtual void genBlocksVisitExit(TableGenContext* context) override;
+    virtual void setupIR(IRGenerator& builder) override;
+
+
+    virtual NodeTypeEn getNodeType()const override{ return NodeTypeEn::kCall; }
+
+};
+
+
 class CallRecursiveFunction: public CallI_ifs{
 public:
 
-    CallRecursiveFunction(Body* body,const stack<Value*> &args ={}):CallI_ifs(){
-        body_ = body;
-        args_ = args;
-
-        if(body_->getRet().empty())
-            return;
-        auto ret = body_->getRet().front() ;
-
-        level_ = ret->getLevel();
-        type_ = ret->getType();
-        data_structure_type_ = ret->getDSType();
-        length_ = ret->getLength();
-
-        if(isConst(ret)){
-            binary_value_ = ret->getBinaryValue();
-            text_value_   = ret->getTextValue();
-        }
-    }
-
+    CallRecursiveFunction(Body* body, const stack<Value*>& args ={});
     ~CallRecursiveFunction(){}
 
-    virtual NodeTypeEn getNodeType()const override{ return   NodeTypeEn::kCall; }
+
+    virtual void markUnusedVisitEnter(stack<Value*>* visitorStack);
+    virtual void genBlocksVisitExit(TableGenContext* context) override;
+    virtual void setupIR(IRGenerator& builder) override;
+
+    virtual Value* getAssignedVal(bool deep = false) override{ return this; }
+    virtual NodeTypeEn getNodeType()const override{ return NodeTypeEn::kCall; }
 };
 
 
 class TailCallDirective: public CallI_ifs{
 public:
 
-    TailCallDirective(stack<Value*> args):CallI_ifs(){
-        args_ = args;
+    TailCallDirective(stack<Value*> args)
+        :CallI_ifs(){
         type_ = TypeEn::unknown_jty;
+        args_ = (args);
     }
-
     ~TailCallDirective(){}
-
-    virtual NodeTypeEn getNodeType() const override{return   NodeTypeEn::kTailCall; }
-};
-
-class Call: public CallI_ifs{
-public:
-
-    Call(Body* body, const stack<Value*>& args ={}): CallI_ifs(){
-        body_ = body;
-        args_ = args;
-
-        if(body_->getRet().empty())
-            return;
-        auto ret = body_->getRet().front();
-
-        level_ = ret->getLevel();
-        type_ = ret->getType();
-        data_structure_type_ = ret->getDSType();
-        length_ = ret->getLength();
-
-        if(isConst(ret)){
-            binary_value_ = ret->getBinaryValue();
-            text_value_ = ret->getTextValue();
-        }
-    }
-
-    ~Call(){}
-
-    // safe functions .external stack is used
-    virtual void markUnusedVisitEnter(stack<Value*>* visitor_stack) override{
-        commoMmarkUnusedVisitEnter(visitor_stack);
-
-        if(body_->getRet().empty())
-            print_error("markUnusedVisitEnter: body_->getRet().empty() == true ");
-            
-        auto ret = body_->getRet().front();
-
-        visitor_stack->push(ret);
-        ret->setBufferLength(this);
-
-        is_unused_ = false;
-    }
-
-    virtual void genBlocksVisitExit(TableGenContext* context) override{
-
-        body_->genTable(context);
-        unique_name_ = (isLargeArr(this) ? "fb" : "fs") +
-            std::to_string(context->getUniqueIndex());
-        context->setUint(this);
-        is_visited_ = false;
-    };
 
 
     virtual void setupIR(IRGenerator& builder) override;
-    virtual NodeTypeEn getNodeType()const override{ return   NodeTypeEn::kCall; }
 
+    virtual Value* getAssignedVal(bool deep = false) override{ return this; }
+    virtual NodeTypeEn getNodeType() const override{ return NodeTypeEn::kTailCall; }
 };
+
 
 #endif
