@@ -3,9 +3,8 @@
 
 typedef float local_T;
 void clGpuConvolve() {
+
     GPUPlatform platform;
-
-
 
     const int size_of_large_v = 1 << 20;
     const int size_of_small_v = 1 << 10;
@@ -14,7 +13,6 @@ void clGpuConvolve() {
     std::vector<local_T> small_input_v;  rangeVector(small_input_v, size_of_small_v, 1);
 
     std::vector<local_T> output_v; output_v.resize(size_of_large_v);
-
 
     GpuConvolve<local_T> convolve(&platform);
     convolve.sizeInit(size_of_large_v, size_of_small_v, 0);
@@ -35,7 +33,6 @@ void clGpuConvolve() {
 //template<typename local_T>
 int clGpuConvolveTemplate(void)
 {
-
     
     std::string stype = typeid(local_T).name();
     std::string kernel_header = std::string() + "__kernel void convolve( global const" + stype +"*left_v, global const" + stype + "*right_v,  global double" + stype + "*output_v)";
@@ -50,8 +47,6 @@ int clGpuConvolveTemplate(void)
     cl_int err = CL_SUCCESS;
     try {
 
-
-
         ///
         ///
         ///
@@ -63,7 +58,6 @@ int clGpuConvolveTemplate(void)
             std::cout << "Platform size 0\n";
             return -1;
         }
-
 
         //cl_context_properties properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0 };
         //cl::Context context_(CL_DEVICE_TYPE_CPU, properties);
@@ -80,7 +74,7 @@ int clGpuConvolveTemplate(void)
         cl::Event event;
 
         const int number_of_points = 4000;
-        const int size_in_bytes    = number_of_points * sizeof(local_T);
+        const int size_in_bytes = number_of_points * sizeof(local_T);
 
         std::vector<local_T> input_v;  rangeVector(input_v, number_of_points, 1);
         std::vector<local_T> output_v; output_v.resize(number_of_points);

@@ -6,6 +6,7 @@
 
 class KEXParser;
 class Body;
+class BodyTemplate;
 class Table;
 
 

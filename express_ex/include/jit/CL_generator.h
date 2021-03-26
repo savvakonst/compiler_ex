@@ -7,6 +7,7 @@
 #include <iostream>
 #include <strstream>
 #include <fstream>
+#include <parser/types_jty.h>
 #include <CL/cl.hpp>
 #include <cstdlib>
 
@@ -117,7 +118,7 @@ public:
     void run( const local_T * left_v,  const local_T * right_v, local_T * output_v) {
 
         auto &context = parent_->context_;
-        const int type_size=sizeof(local_T);
+        const int type_size = sizeof(local_T);
 
         queue_.enqueueWriteBuffer(input_left_buffer_, CL_TRUE, 0, (left_size_ + right_size_) * type_size, left_v);
         queue_.enqueueWriteBuffer(input_right_buffer_, CL_TRUE, 0, right_size_ * type_size, right_v);

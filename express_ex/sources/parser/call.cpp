@@ -7,6 +7,7 @@
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
 
 Call::Call(Body* body, const stack<Value*>& args): CallI_ifs(){
+    char buffer[1<<24];
     body_ = body;
     args_ = args;
 

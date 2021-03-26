@@ -44,9 +44,9 @@ void print_IR_error(const std::string &content) {
 #ifdef CONSOLE_APP_
     llvm::outs() << ExColors::RED << "IR generation error: \n    " << ExColors::RESET << content <<"\n";
 #else
-    std::stringstream s;
+    std::stringstream s; 
     s << "IR generation error: \n    "  << content << "\n";
-    g_error_str = s.str();
+    g_error_str = s.str(); 
 #endif
     throw  content.length();
 }
@@ -71,7 +71,7 @@ void EErrorListener::syntaxError(Recognizer* recognizer, Token* offendingSymbol,
     llvm::outs() << ExColors::GREEN << "\t" << offendingSymbol->getText() << "\n" << ExColors::RESET;
 #else
     std::stringstream s;
-    s << "line " << kLine << "; pos " << charPositionInLine << ":" << "_" << ". ";
+    //  s << "line " << kLine << "; pos " << charPositionInLine << ":" << "_" << ". ";
     s << "error: ";
     s << msg << ".\n";
     s  << "\t" << offendingSymbol->getText() << "\n" ;

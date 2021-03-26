@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-SET(IS_SHARED False)
+SET(IS_SHARED true)
 
 if( NOT CMAKE_CL_64 )
     set(SPlatform  x86)
@@ -201,9 +201,11 @@ if(MSVC)
 
         
         foreach( FILE_NAME_MASK ${FILE_NAMES_TO_COPY})
-            file(GLOB FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}")
-            set(FILES_TO_COPYasfsaf "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
-
+            message( "-------------------------FILES_TO_COPY: " $<CONFIG:express_ex> )   
+            #file(GLOB FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}")
+            #set(FILES_TO_COPYasfsaf "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
+            file(GLOB FILES_TO_COPY "$<CONFIG>/${FILE_NAME_MASK}")
+            set(FILES_TO_COPYasfsaf "$<CONFIG>/${FILE_NAME_MASK}" )
             message( "-------------------------FILES_TO_COPY: " "$<TARGET_FILE_DIR:express_ex>" )   
             #set(FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
 

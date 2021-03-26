@@ -540,6 +540,7 @@ void Operation::smallArray(Value* arg1, Value* arg2, Value* arg3) {
 		length_    = arg3->getBinaryValue();
 	}
 	else {
+		//print_error("range(start_num,stop_num,length) -signature is not supported yet");
 		print_error("range(start_num,stop_num,length) -signature is not supported yet");
 		return;
 	}
