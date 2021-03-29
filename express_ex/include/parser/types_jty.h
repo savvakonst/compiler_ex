@@ -12,7 +12,7 @@ typedef  int64_t  ex_size_t;
 typedef int32_t (*jit_simple)();
 typedef int (*jit_f)(char *, char *);
 typedef int (*jit_fptr)(char, char *);
-typedef int32_t (*Jit_Call_t)(char**);
+typedef int32_t (*Jit_Call_t)(char***);
 
 
 enum class TypeEn {

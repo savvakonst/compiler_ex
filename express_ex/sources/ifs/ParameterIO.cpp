@@ -64,6 +64,8 @@ TypeEn PRMType2JITType(PRMTypesEn arg) {
     }
 }
 
+
+
 PRMTypesEn  JITType2PRMType(TypeEn arg) {
     if (isFloating(arg))
         return (PRMTypesEn)(0x20 | sizeOfTy(arg) );
@@ -101,6 +103,11 @@ std::string toString(PRMTypesEn arg) {
 #undef CASE_OP
 }
 
+bool isAsync(PRMTypesEn arg){
+    if(arg == PRMTypesEn::PRM_TYPE_UNKNOWN)
+        return false;
+    return (bool)(0x1000 & (uint64_t)arg);
+}
 
 
 
@@ -148,7 +155,7 @@ DataInterval getDataInterval(llvm::json::Value &DataFragment, llvm::json::Array 
 
 
 
-bool readParametersList(std::string databaseFName, std::vector<SyncParameter*>& parameterList) {
+bool readParametersList(std::string databaseFName, std::vector<ParameterIfs*>& parameterList) {
     std::ifstream ifs(databaseFName);
     if (ifs.bad())
         return false;
@@ -183,326 +190,30 @@ bool readParametersList(std::string databaseFName, std::vector<SyncParameter*>& 
 
 
         bool ret= true;
+        int64_t int_type_represintation=0;
         ret &=O.map(" Name", name);
         ret &=O.map("sTime.Begin", time_interval.bgn);
         ret &=O.map("sTime.End", time_interval.end);
+        ret &=O.map("Data.Type", int_type_represintation);
 
-        SyncParameter * parameter= new SyncParameter(name, time_interval, interval_list);
+        ParameterIfs* parameter = nullptr;
+        if (isAsync ((PRMTypesEn)int_type_represintation))
+            parameter= new AsyncParameter(name, time_interval, interval_list);
+        else
+            parameter= new SyncParameter(name, time_interval, interval_list);
+        
+
+
 
         parameterList.push_back(parameter);
     }
     return true;
 }
 
-std::vector<SyncParameter*>  readParametersList(std::string databaseFName) {
-    std::vector<SyncParameter *>  parameterInfoList;
+std::vector<ParameterIfs*>  readParametersList(std::string databaseFName) {
+    std::vector<ParameterIfs*>  parameterInfoList;
     readParametersList(databaseFName, parameterInfoList);
     return parameterInfoList;
 }
 
 
-SyncParameter::SyncParameter(
-    std::string name, 
-    const std::vector<DataInterval> &interval_list,
-    bool save_fnames
-) 
-{
-    name_=name;
-    //for (auto i : interval_list)
-    //    interval_list_.push_back(i);
-
-    interval_list_ = interval_list;
-    numer_of_intervals_ = interval_list.size();
-    if (save_fnames == false) {
-        for (auto &i : interval_list_) {
-            i.file_name = "";
-            i.local = true;
-        }
-    }
-
-    if (interval_list_.size()) {
-        sizeof_data_type_=sizeOfTy(interval_list_.front().type);
-        type_ = interval_list_.front().type;
-        calcMinMaxPtr = g_calcMinMax_select(type_);
-    }
-    
-
-    auto bgn=interval_list_.front().time_interval.bgn;
-    auto end=interval_list_.back().time_interval.end;
-
-    time_interval_ ={  bgn, end };
-    calcExtendedInfo();
-}
-
-
-SyncParameter::SyncParameter(
-    std::string name,
-    const TimeInterval &time_interval,
-    const std::vector<DataInterval> &interval_list,
-    bool save_fnames
-):SyncParameter(name, interval_list, save_fnames)
-{
-    time_interval_ = time_interval;
-    calcExtendedInfo();
-}
-
-
-
-bool SyncParameter::seek(int64_t point_umber) {
-
-    point_number_ = point_umber;
-    const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
-    current_interval_index_ = getDataIntervalIndex(current_time);
-
-    if (current_interval_index_ != -1) {
-        openNewInterval((double)current_interval_index_);
-        int64_t local_start_pos =    (int)((current_time - getTimeInterval(current_interval_index_).bgn) * frequency_);
-        ifs_->seekg(local_start_pos * sizeof_data_type_);
-    }
-    return true;
-}
-
-
-
-int64_t SyncParameter::write(char * data_buffer_ptr, int64_t point_number) {
-    if (!opened_to_read_)
-        open();
-
-    int64_t points_to_write = point_number;
-    char*   ptr = data_buffer_ptr;
-    //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
-
-
-    while (points_to_write) {
-        const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
-        
-        int64_t di_index = getDataIntervalIndex(current_time);
-        int64_t local_points_to_write;
-
-        if (di_index == -1) {
-
-            double end_time;
-            bool   is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
-
-            if (is_last_interval)
-                end_time = time_interval_.end + additional_time_;
-            else
-                end_time = getTimeInterval(current_interval_index_ + 1).bgn;
-
-            local_points_to_write = (int)((end_time - current_time) * frequency_);
-
-            if (points_to_write <= local_points_to_write)
-                local_points_to_write = points_to_write;
-            else if (is_last_interval) {
-                return point_number - points_to_write + local_points_to_write;
-            }
-
-        }
-        else {
-            DataInterval &di = interval_list_[di_index];
-
-            int64_t local_start_pos = (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_write = (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
-
-            bool is_new_interval = (di_index != current_interval_index_) || (ifs_ == nullptr);
-            if (is_new_interval ) {
-                openNewInterval((double)di_index);
-                //ifs_->seekg(local_start_pos * sizeof_data_type_);
-            }
-
-            if (points_to_write <= local_points_to_write)
-                local_points_to_write = points_to_write;
-            
-            if (calcMinMaxPtr)
-                calcMinMaxPtr(ptr, local_points_to_write , di.val_max, di.val_min, is_new_interval);
-
-            ifs_->write(ptr, local_points_to_write * sizeof_data_type_);
-        }
-
-        ptr += local_points_to_write * sizeof_data_type_;
-        points_to_write -= local_points_to_write;
-        point_number_ += local_points_to_write;
-    }
-
-    return point_number - points_to_write;
-}
-
-int64_t SyncParameter::read(char * data_buffer_ptr, int64_t point_number) {
-    if ( !opened_to_read_ )
-        open();
-
-    int64_t   points_to_read = point_number;
-    uint8_t*  ptr = (uint8_t * )data_buffer_ptr;
-    //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
-    // (*((ParameterIfs*)this)).point_number_ == 1704067;
-    while (points_to_read) {
-        const double current_time = time_interval_.bgn + ( (double) point_number_ ) / frequency_;
-        
-        // debug cond =>{ points_to_read == 393088 }
-        int64_t di_index = getDataIntervalIndex(current_time);
-        int64_t local_points_to_read;
-
-        if (di_index == -1) {
-
-            const bool is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
-
-            const double end_time = is_last_interval ? 
-                time_interval_.end + additional_time_ :
-                getTimeInterval(current_interval_index_ + 1).bgn;
-
-            local_points_to_read = (int)((end_time - current_time) * frequency_);
-
-            if (points_to_read <= local_points_to_read)
-                local_points_to_read = points_to_read;
-            else if (is_last_interval) {
-                memset(ptr, 0, local_points_to_read * sizeof_data_type_);
-                return point_number - points_to_read + local_points_to_read;
-            }
-
-            memset(ptr, 0, local_points_to_read * sizeof_data_type_);
-
-        }
-        else {
-            const DataInterval &di = interval_list_[di_index];
-
-            int64_t local_start_pos = (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_read = (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
-
-            if (di_index != current_interval_index_ || (ifs_ == nullptr)){
-                openNewInterval((double)di_index);
-                ifs_->seekp(local_start_pos * sizeof_data_type_);
-            }
-
-            if (points_to_read <= local_points_to_read)
-                local_points_to_read = points_to_read;
-
-            ifs_->read((char*)ptr, local_points_to_read * sizeof_data_type_);
-        }
-
-        ptr += local_points_to_read * sizeof_data_type_;
-        points_to_read -= local_points_to_read;
-        point_number_ += local_points_to_read;
-    }
-    
-    return point_number - points_to_read;
-}
-
-
-SyncParameter *  SyncParameter::intersection(SyncParameter  *b, PRMTypesEn target_ty, const std::string &name) {
-    auto parameter_a = this;
-    auto parameter_b = b;
-
-    if (parameter_a == parameter_b)
-        return this;
-
-    if (parameter_a->frequency_ != parameter_b->frequency_) {
-        error_info_ = "different frequencys is not supported yet ";
-        return nullptr;
-    }
-
-    else if (parameter_a->frequency_ <= 0.0) {
-        error_info_ = "async parameter is not supported yet";
-        return nullptr;
-    }
-
-    auto frequency = parameter_a->frequency_;
-    std::vector<DataInterval> ret;
-
-    for (auto a : parameter_a->interval_list_) {
-        for (auto b : parameter_b->interval_list_) {
-            auto t =a & b;
-            if (!isEmpty(t)) {
-                auto interval = createInterval(t, frequency, target_ty);
-                if (!ret.empty()) {
-                    auto t2 = ret.back() || interval;
-                    if (!isEmpty(t))
-                        ret.back() = createInterval(t2, frequency, target_ty);
-                    else
-                        ret.push_back(interval);
-                }
-                else
-                    ret.push_back(interval);
-            }
-        }
-    }
-    return new SyncParameter(name, time_interval_, ret);
-}
-
-
-
-
-SyncParameter *  SyncParameter::enlargeFrequency(int64_t arg, PRMTypesEn target_ty , const std::string &name ) {
-    auto parameter_a=this;
-    SyncParameter* ret= this;
-    std::vector<DataInterval> data_interval;
-   
-    double frequency=.0;
-
-    if (arg > 1)
-        frequency = this->frequency_ * arg;
-    else if (arg < -1) {
-        if (((int)this->frequency_) % arg)
-            return nullptr;
-        frequency = this->frequency_ / arg;
-    }
-    else
-        return this;
-
-    for (auto a : parameter_a->interval_list_) {
-        auto interval = createInterval(a.time_interval, frequency, target_ty);
-        data_interval.push_back(interval);
-    }
-
-    return new SyncParameter(name, time_interval_, data_interval);
-}
-
-SyncParameter * SyncParameter::retyping(PRMTypesEn target_ty, const std::string & name)
-{
-    if (getRPMType() == target_ty)
-        return this;
-
-    std::vector<DataInterval> data_interval;
-    for (auto a : interval_list_) {
-        auto interval = createInterval({}, frequency_, target_ty);
-        data_interval.push_back(interval);
-    }
-    return new SyncParameter(name, time_interval_, data_interval);
-}
-
-
-SyncParameter *  intersection(SyncParameter  *a,SyncParameter  *b, PRMTypesEn target_ty, const std::string &name) {
-    if (a == nullptr)
-        return b;
-    if (b == nullptr)
-        return a;
-    return a->intersection(b, target_ty, name);
-
-}
-
-SyncParameter *  intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string &name) {
-    std::set<SyncParameter*> parameterSet;
-    SyncParameter* p = nullptr;
-    for (auto i : arg_list) {
-        p = intersection(p, i, target_ty, name);
-        parameterSet.insert(p);
-    }
-
-    for (auto i : arg_list)
-        parameterSet.erase(i);
-
-    parameterSet.erase(nullptr);
-    //if(p)
-    parameterSet.erase(p);
-
-    for (auto i : parameterSet)
-        delete i;
-
-    return p;
-}
-
-SyncParameter *retyping(SyncParameter  *a,PRMTypesEn target_ty, const std::string & name)
-{
-    if (a == nullptr)
-        return nullptr;
-    return a->retyping(target_ty, name);
-}

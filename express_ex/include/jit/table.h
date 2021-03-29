@@ -61,7 +61,7 @@ public:
     string   print();
 
     bool generateIR(IRGenerator &builder, CycleStageEn type=CycleStageEn::midle,
-        std::string basicBlockPrefix="", std::string basicBlockPostfix="");
+        std::string basic_block_prefix="", std::string basic_block_postfix="");
 
 private:
     stack<Value*> uint_list_;
@@ -163,9 +163,9 @@ private:
 class Table
 {
 public:
-    Table ( int maxBufferLength=(1<<20), int minBufferLength=0) {
-        max_buffer_length_=maxBufferLength;
-        min_buffer_length_=minBufferLength;
+    Table ( int max_buffer_length=(1<<20), int min_buffer_length=0) {
+        max_buffer_length_=max_buffer_length;
+        min_buffer_length_=min_buffer_length;
     }
 
 
@@ -185,6 +185,7 @@ public:
         for (auto i : column_list_)
             i->recalcLeftRightBufferLengths();
     }
+
     TableColumn * getColumn(uint64_t length){
         for (auto i : column_list_)
             if (i->getLength() == length) {
@@ -217,6 +218,8 @@ public:
     
     bool generateIR(std::string basicBlockPrefix="");
 
+    
+
     bool runOptimization();
     bool run();
 
@@ -226,15 +229,30 @@ public:
 
     friend class TableGenContext;
 private:
+
+    typedef struct{
+        uint64_t max_length;
+        uint64_t min_length;
+        uint64_t iterations;
+        stack<TableColumn*> column_list;
+    } Group;
+
+    
+    
+    std::vector<Group> group_list_;
+
+    bool generateIRInGroup(Group& group, uint32_t index);
     void declareFunctions();
 
-    //what means external
+    //what means external ?
     llvm::Module* M_=nullptr;               //external 
     llvm::LLVMContext * context_=nullptr;   //external 
 
     std::unique_ptr<llvm::Module> module_u_ptr_;    
     std::unique_ptr<llvm::legacy::FunctionPassManager> the_FPM_;
 
+
+    llvm::Function* buffer_update_function_ = nullptr;   //external 
     llvm::Function* main_function_ = nullptr;            //external 
 
     std::map<TypeEn, llvm::Function*> convolve_map_;    //external 
@@ -273,7 +291,7 @@ public:
     TableGenContext (Table *arg) { table_ =arg;  }
     ~TableGenContext() {}
     
-    uint64_t          getUniqueIndex () { unique_name_counter_++; return (unique_name_counter_ -3); }
+    uint64_t          getUniqueIndex () { unique_name_counter_++; return (unique_name_counter_ - 3); }
     void              setUint(Value * var) { table_->setUint(var);};
     void              setParameter(SyncParameter * var) { table_->parameterSet_.insert(var); };
     void              setMaxBufferLength(int64_t length) { 

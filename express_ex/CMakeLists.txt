@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-SET(IS_SHARED true)
+SET(IS_SHARED false)
 
 if( NOT CMAKE_CL_64 )
     set(SPlatform  x86)
@@ -13,7 +13,7 @@ else()
     set(SPlatform  x64)
     set(APlarform  x64)
 endif()
-
+ 
 # specify the C++ standard 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)

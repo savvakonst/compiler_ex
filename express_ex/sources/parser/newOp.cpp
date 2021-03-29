@@ -9,7 +9,7 @@
 #include "parser/operations.h"
 #include <string>
 #include <math.h>
-
+ 
 
 Value* newInvOperation(GarbageContainer* garbage_container, Value* arg) {
     print_error("inverse operation is not supported yet");

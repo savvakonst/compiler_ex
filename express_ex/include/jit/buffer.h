@@ -44,17 +44,17 @@ public:
 	}
 
 	virtual int64_t init(){
-		std::memset(ptr_, 0, sizeof_data_type_ * (length_ + left_offset_ + right_offset_));
+		std::memset(ptr_, 0, (size_t)(sizeof_data_type_ * (length_ + left_offset_ + right_offset_)));
 		return 0;
 	}
 
 	virtual int64_t update(){
-		std::memcpy(ptr_, top_ptr_, (left_offset_ + right_offset_) * sizeof_data_type_);
+		std::memcpy(ptr_, top_ptr_, (size_t)((left_offset_ + right_offset_) * sizeof_data_type_));
 		return 0;
 	}
 
 	void setBufferAlloca() {
-		ptr_ = new char[sizeof_data_type_ * (length_ + left_offset_ + right_offset_)];
+		ptr_ = new char[(size_t)(sizeof_data_type_ * (length_ + left_offset_ + right_offset_))];
 		left_ptr_   = ptr_ + sizeof_data_type_ * left_offset_ ;
 		bottom_ptr_ = ptr_ + sizeof_data_type_ * (left_offset_ + right_offset_) ;
 		top_ptr_	= ptr_ + sizeof_data_type_ * length_ ;
@@ -118,7 +118,7 @@ public:
 	~InputBuffer(){ }
 
 	virtual int64_t init(){
-		std::memset(ptr_, 0, sizeof_data_type_ * (length_ + left_offset_ + right_offset_));
+		std::memset(ptr_, 0, (size_t)(sizeof_data_type_ * (length_ + left_offset_ + right_offset_)));
 		parameter_->open();
 		//parameter_->read(ptr_, left_offset_ + length_ + right_offset_);
 		parameter_->read(left_ptr_, length_ + right_offset_); //is not true
@@ -126,7 +126,7 @@ public:
 	}
 
 	virtual int64_t update() {
-		std::memcpy( ptr_, top_ptr_, (left_offset_ + right_offset_) * sizeof_data_type_);
+		std::memcpy( ptr_, top_ptr_, (size_t)((left_offset_ + right_offset_) * sizeof_data_type_));
 		parameter_->read(bottom_ptr_, length_);
 		return 0;
 	}

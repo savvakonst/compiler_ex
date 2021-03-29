@@ -47,18 +47,18 @@ string SubBlock::print()
     return out;
 }
 
-bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string basicBlockPrefix, std::string basicBlockPostfix)
+bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string basic_block_prefix, std::string basic_block_postfix)
 {
     llvm::LLVMContext & context = builder.getContext();
 
-    std::string  level_txt=basicBlockPostfix;
+    std::string  level_txt=basic_block_postfix;
 
 
-    llvm::BasicBlock* bb_intermediate  = llvm::BasicBlock::Create(context, "intermediate_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-    llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"   + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-    llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"   + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-    llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_"   + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-    //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+    llvm::BasicBlock* bb_intermediate  = llvm::BasicBlock::Create(context, "intermediate_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
+    llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"   + basic_block_prefix + level_txt, builder.getCurrentFunction());
+    llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"   + basic_block_prefix + level_txt, builder.getCurrentFunction());
+    llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_"   + basic_block_prefix + level_txt, builder.getCurrentFunction());
+    //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
 
     llvm::BasicBlock* bb_last_store=builder.getStoreBlock();
 
@@ -79,8 +79,8 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
     builder.SetCalcInsertPoint();
 
 
-    llvm::Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, - (int64_t)left_length_ );
-    //Value* alloc =builder.CreatePositionalOffset(basicBlockPrefix + level_txt, 0);
+    llvm::Value* alloc =builder.CreatePositionalOffset(basic_block_prefix + level_txt, - (int64_t)left_length_ );
+    //Value* alloc =builder.CreatePositionalOffset(basic_block_prefix + level_txt, 0);
     builder.SetStoreInsertPoint();
     llvm::Value* next_offset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
     builder.CreateStore(next_offset, alloc);
@@ -165,7 +165,7 @@ string  Block::print() {
 }
 
 
-bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basicBlockPrefix)
+bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basic_block_prefix)
 {
     llvm::LLVMContext & context = builder.getContext();
 
@@ -177,11 +177,11 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
             return false;
 
 
-        llvm::BasicBlock* bb_intermediate = llvm::BasicBlock::Create(context, "intermediate_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-        llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-        llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"  + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-        llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
-        //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basicBlockPrefix + level_txt, builder.getCurrentFunction());
+        llvm::BasicBlock* bb_intermediate = llvm::BasicBlock::Create(context, "intermediate_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
+        llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"  + basic_block_prefix + level_txt, builder.getCurrentFunction());
+        llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"  + basic_block_prefix + level_txt, builder.getCurrentFunction());
+        llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
+        //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
 
         llvm::BasicBlock* bb_last_store=builder.getStoreBlock();
 
@@ -227,7 +227,7 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
         std::string  levelTxt=std::to_string(level_);
         size_t sub_level=0;
         for (auto i : sub_block_list_) {
-            i->generateIR(builder, type, basicBlockPrefix, levelTxt+"_"+std::to_string(sub_level));
+            i->generateIR(builder, type, basic_block_prefix, levelTxt+"_"+std::to_string(sub_level));
             sub_level++;
         }
 
@@ -333,28 +333,39 @@ llvm::Value* genConvolve(IRGenerator& builder, llvm::Type* type, uintptr_t addr)
 }
 
 
-std::vector <Buffer* >   *g_buffers=nullptr;
+
+std::vector<std::list<Buffer*>*>* g_list_of_buffer_groups=nullptr;
 
 
 ParametersDB*  g_IO_IFS =nullptr;
 
 bool isInvalidBuffers() {
     return 
-        nullptr == g_buffers ;
+        nullptr == g_list_of_buffer_groups ;
 }
 
 int32_t initBuffers() {
     if (isInvalidBuffers())
         return 1;
-    for (auto i : *g_buffers)
-        i->init();
+    for (auto group : *g_list_of_buffer_groups)
+        for(auto i : *group)
+            i->init();
     return 0;
 }
-
+/*
 int32_t updateBuffer() {
     if (isInvalidBuffers()) 
         return 1;
-    for (auto i : *g_buffers)
+    for(auto group : *g_list_of_buffer_groups)
+        for(auto i : *group)
+            i->update();
+    return 0;
+}
+*/
+int32_t updateBuffer(int32_t group_number){
+    if(isInvalidBuffers())
+        return 1;
+    for(auto i : *((*g_list_of_buffer_groups)[group_number]))
         i->update();
     return 0;
 }
@@ -390,6 +401,7 @@ void    Table::setUint(Value * var){
             i->setUint(var);
             return;
         }
+    
     column_list_.push(new TableColumn(var));
 }
 
@@ -456,60 +468,52 @@ string  Table::print() {
 
 void Table::calculateBufferLength(std::string basicBlockPrefix){
 
-    int64_t maxLength = 0;
-    int64_t minLength = column_list_[0]->getLength();
-
-    typedef struct {
-        uint64_t maxLength;
-        uint64_t minLength;
-        uint64_t iterations;
-        stack<TableColumn *> columnList;
-    } group;
-
-    std::vector<group> groupList;
-
     for (auto  i : column_list_){
-        uint64_t length=i->getLength();
-        bool exist=false;
+        uint64_t length = i->getLength();
+        bool exist = false;
        
-        for (auto &j : groupList) {
-            auto remainder =(j.maxLength > length) ? j.maxLength % length : length % j.maxLength;
+        for (auto &j : group_list_) {
+            auto remainder =(j.max_length > length) ? j.max_length % length : length % j.max_length;
             if (remainder == 0) {
                 exist=true;
-                j.maxLength=length > j.maxLength ? length : j.maxLength;
-                j.minLength=length < j.minLength ? length : j.minLength;
-                j.columnList.push_back(i);
+                j.max_length = length > j.max_length ? length : j.max_length;
+                j.min_length = length < j.min_length ? length : j.min_length;
+                j.column_list.push_back(i);
                 break;
             }
         }
 
         if (!exist) {
-            group g={ length ,length };
-            g.columnList.push_back(i);
-            groupList.push_back(g);
+            Group g={length, length};
+            g.column_list.push_back(i);
+            group_list_.push_back(g);
         }
     }
 
-    for (auto &j : groupList) {
+    for (auto &j : group_list_) {
 
-        int64_t subMaxBufferLength = min_buffer_length_ * j.maxLength / j.minLength;
+        if(j.max_length < max_buffer_length_)
+            max_buffer_length_ = j.max_length/4;
+
+        int64_t sub_max_buffer_length = min_buffer_length_ * j.max_length / j.min_length;
         
-        if (subMaxBufferLength > max_buffer_length_) {
-            llvm::outs() << "maxBufferLength = subMaxBufferLength;\n";
-            max_buffer_length_ = subMaxBufferLength;
+        if (sub_max_buffer_length > max_buffer_length_) {
+            llvm::outs() << "max_buffer_length_ = sub_max_buffer_length;\n";
+            max_buffer_length_ = sub_max_buffer_length;
         }
-        iterations_ =  j.maxLength / max_buffer_length_;
-        j.iterations =  j.maxLength / max_buffer_length_;
+        
+        iterations_ =  j.max_length / max_buffer_length_;
+        j.iterations =  iterations_;
 
-        for (auto i : j.columnList){
-            i->setBufferLength(max_buffer_length_ / (j.maxLength / i->getLength()));
+        for (auto i : j.column_list){
+            i->setBufferLength(max_buffer_length_ / (j.max_length / i->getLength()));
         }
-
     }
-    if (groupList.size() !=1)
+
+    if (group_list_.size() !=1)
         print_IR_error("non multiple large array lengths is not supported yet\n");
 
-    //iterations=groupList[0].columnList[0]->getLength()/ groupList[0].columnList[0]->get();
+    //iterations=group_list[0].column_list[0]->get_length()/ group_list[0].column_list[0]->get();
 }
 
 DLL_EXPORT void  jit_init();
@@ -649,74 +653,88 @@ bool Table::generateIR(std::string basicBlockPrefix) {
         builder_=new IRGenerator(context, this);
     IRGenerator &builder = *builder_;
 
+
+    buffer_update_function_ =
+        llvm::Function::Create(
+            llvm::FunctionType::get(builder.getInt32Ty(), {}, false),
+            llvm::Function::ExternalLinkage,
+            "buffer_update_function",
+            M_
+        );
+    builder.SetBufferUpdateFunction(buffer_update_function_);
+
     main_function_ = llvm::Function::Create(
-        llvm::FunctionType::get(llvm::Type::getInt32Ty(context), {llvm::Type::getInt64PtrTy(context)->getPointerTo()}, false),
+        llvm::FunctionType::get(llvm::Type::getInt32Ty(context), {llvm::Type::getInt64PtrTy(context)->getPointerTo()->getPointerTo()}, false),
         llvm::Function::ExternalLinkage,
         "main", 
         M_
     );
-    /*
-    llvm::Value* buffer_update_function = builder.CreateIntToPtr(
-        llvm::ConstantInt::get(builder.getInt64Ty(), uintptr_t(updateBuffer)),
-        llvm::PointerType::getUnqual(
-            llvm::FunctionType::get(builder.getInt32Ty(), {}, false)));
-
+    llvm::BasicBlock* bb= llvm::BasicBlock::Create(context, "init_block", main_function_);
     
-    
-    llvm::Function* buffer_update_function2 = 
-        llvm::cast<llvm::Function*>(
-            M_->getOrInsertFunction(
-                "buffer_update_function",
-                
-                builder.getInt64Ty())); */
-                                                             
-    llvm::Function* buffer_update_function =
-        llvm::Function::Create(
-            llvm::FunctionType::get(builder.getInt32Ty(), {}, false), 
-            llvm::Function::ExternalLinkage, 
-            "buffer_update_function",
-            M_
-        );
 
-
-
-    //buffer_update_function->setName("updateBuffer");
-
-    for (auto i : const_list_)
+    for(auto i: const_list_)
         i->setupIR(builder);
 
-    for (auto i : small_array_list_)
+    for(auto i: small_array_list_)
         i->calculate();
+
+
+    uint32_t group_index = 0;
+    for(auto& i : group_list_){
+        generateIRInGroup(i, group_index);
+        group_index++;
+    }
+    builder.SetInsertPoint(&(main_function_->back()));
+    builder.CreateRet(builder.getInt32(1));
+
+    g_list_of_buffer_groups = builder.getBufferList();
+    
+    return true;
+}
+
+
+bool Table::generateIRInGroup(Group &group, uint32_t index){
+
+    llvm::LLVMContext& context = M_->getContext();
+    IRGenerator& builder = *builder_;
+
+    llvm::Function *sub_function = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getInt32Ty(context), {llvm::Type::getInt64PtrTy(context)->getPointerTo()}, false),
+        llvm::Function::ExternalLinkage,
+        "main",
+        M_
+    );
+
+    llvm::Constant * group_index = builder.getInt32(index);
 
     ///the main "For loop"
     ///creating jump commands for init cycle
-    builder.SetBufferUpdateFunction(buffer_update_function);
-    builder.SetCurrentFunction(main_function_);
-    llvm::BasicBlock* bb= llvm::BasicBlock::Create(context, "init_block", main_function_);
+    builder.SetCurrentFunction(sub_function);
+    llvm::BasicBlock* bb= llvm::BasicBlock::Create(context, "init_block", sub_function);
     builder.SetInitInsertPoint(bb);
 
-    auto max_level =getMaxLevel()+1;
-    for (uint32_t j=0;j < max_level;j++ )
-        for (auto i : column_list_) 
-            i->generateIR(builder,CycleStageEn::start, j);
+    auto max_level = getMaxLevel() + 1;
+    for(uint32_t j=0; j < max_level; j++)
+        for(auto i : column_list_)
+            i->generateIR(builder, CycleStageEn::start, j);
 
     ///creating jump commands for init cycle
     builder.CreateStartBRs();
     //cond jump to Main Cycle Enter
-    
+
     llvm::BasicBlock* bb_update_buffer = llvm::BasicBlock::Create(context, "update_buffer_block", builder.getCurrentFunction());
     llvm::BasicBlock* bb_loop_enter = llvm::BasicBlock::Create(context, "loop_enter_block", builder.getCurrentFunction());
 
     builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_update_buffer);
 
     builder.SetInsertPoint(bb_update_buffer);
-    builder.CreateCall_(buffer_update_function); //call buffer update
+    builder.CreateCall_(buffer_update_function_, group_index); //call buffer update
     builder.CreateBr(bb_loop_enter);
 
     builder.SetLoopEnterInsertPoint(bb_loop_enter);
     builder.DropBaseInsertPoint();
 
-    llvm::Value* glob_index_alloca=builder.CreatePositionalOffsetAlloca("glob_index_alloca",0);
+    llvm::Value* glob_index_alloca=builder.CreatePositionalOffsetAlloca("glob_index_alloca", 0);
     builder.CreatePositionalOffsetAlloca("common_offset_alloca", 0);
 
 
@@ -724,10 +742,10 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     llvm::Value* glob_index=builder.CreateLoad(glob_index_alloca, "glob_index");
 
 
-    for (uint32_t j=0; j < max_level; j++)
-        for (auto i : column_list_)
-            i->generateIR(builder, CycleStageEn::midle,j);
-   
+    for(uint32_t j=0; j < max_level; j++)
+        for(auto i : column_list_)
+            i->generateIR(builder, CycleStageEn::midle, j);
+
     builder.CreateMidleBRs();
     llvm::BasicBlock* bb_cycle_exit = llvm::BasicBlock::Create(context, "cycle_exit_block", builder.getCurrentFunction());
     builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_cycle_exit);
@@ -740,42 +758,44 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     builder.SetCurrentCMPRes(
         builder.CreateICmpSLT(
             next_glob_index,
-            builder.getInt64( ( iterations_ - 1 ) )));
+            builder.getInt64((group.iterations - 1))));
 
 
     llvm::BasicBlock* bb_terminal_loop_enter = llvm::BasicBlock::Create(context, "terminal_loop_enter", builder.getCurrentFunction());
-    builder.CreateCall_(buffer_update_function); //call buffer update
+    builder.CreateCall_(buffer_update_function_, group_index); //call buffer update
     builder.CreateCondBr(builder.getCurrentCMPRes(), bb_loop_enter, bb_terminal_loop_enter);
     builder.SetLoopEnterInsertPoint(bb_terminal_loop_enter);
     builder.DropBaseInsertPoint();
-    
+
     bool  is_not_idle = false;
-    for (uint32_t j=0; j < max_level; j++)
-        for (auto i : column_list_)
-            is_not_idle |= i->generateIR(builder, CycleStageEn::end,j);
-   
-    if (is_not_idle) {
+    for(uint32_t j=0; j < max_level; j++)
+        for(auto i : column_list_)
+            is_not_idle |= i->generateIR(builder, CycleStageEn::end, j);
+
+    if(is_not_idle){
         builder.CreateMidleBRs();
         llvm::BasicBlock* bbExit = llvm::BasicBlock::Create(context, "exit_block", builder.getCurrentFunction());
         builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bbExit);
         builder.SetExitInsertPoint(bbExit);
-        builder.CreateCall_(buffer_update_function); //call buffer update
+        builder.CreateCall_(buffer_update_function_, group_index); //call buffer update
     }
-    
+
     builder.CreateRet(builder.getInt32(1));
     ///create jump from init block to the next
     builder.SetInitInsertPoint();
     builder.CreateBr(builder.getBlock(1));
 
-    //
-    g_buffers = builder.getBufferList();
-    
-    //for (auto i : *g_buffers) 
-    //    if(i)
-    //        llvm::outs() << Delimiter::RED << *i;
-    
-    return true;
+    builder.nextBufferGeoup();
+
+
+    builder.SetInsertPoint(&(main_function_->back()));
+    auto buffer_group_ptr = builder.CreateInBoundsGEP(main_function_->getArg(0), builder.getInt32(index), "offset_incr");
+    builder.CreateCall_(sub_function, buffer_group_ptr);
+
 }
+
+
+
 
 bool Table::runOptimization() {
     the_FPM_->run(*main_function_);
@@ -817,23 +837,28 @@ bool Table::run() {
 
     Jit_Call_t Call = (Jit_Call_t)EE->getPointerToFunction(main_function_);
 
-
-    char ** buffers_array = new char*[g_buffers->size()];
-    char ** buffers_array_temp = buffers_array;
-    for (auto &i : *g_buffers)
-        *(buffers_array_temp++)=i->getPtr();
-
-    //llvm::outs()<<buffers <<
-
     initBuffers();
-    Call(buffers_array);
 
-    //updateBuffer();
+    char*** buffer_groups_array = new char** [g_list_of_buffer_groups->size()];
+    char*** buffer_groups_array_temp =buffer_groups_array;
+    for(auto& buffer_group : *g_list_of_buffer_groups){
+        char** buffers_array = new char* [buffer_group->size()];
+        *(buffer_groups_array_temp++)=buffers_array;
 
-    for (auto &i : *g_buffers)
-        i->close();
+        for(auto& i : *buffer_group)
+            *(buffers_array++)=i->getPtr();
+    }
 
-    delete [] buffers_array;
+    Call(buffer_groups_array);
+
+    buffer_groups_array_temp=buffer_groups_array;
+    for(auto& buffer_group : *g_list_of_buffer_groups){
+        for(auto& i : *buffer_group)
+            i->close();
+        delete[] * (buffer_groups_array_temp++);
+    }
+    delete[] buffer_groups_array;
+    
     return  true;
 }
 

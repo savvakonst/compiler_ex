@@ -7,10 +7,14 @@
 #include <list>
 
 #include "defWarningIgnore.h"
+#pragma warning( push )  
+#pragma warning( disable : 4251)
 #include "antlr4-runtime.h"
+
 #include "EGrammarLexer.h"
 #include "EGrammarParser.h"
 #include "EGrammarBaseListener.h"
+#pragma warning( pop )  
 #include "undefWarningIgnore.h"
 
 #include "bodyTemplate.h"

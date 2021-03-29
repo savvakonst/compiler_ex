@@ -112,12 +112,13 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 
 	PRMTypesEn RPMType = JITType2PRMType(type_);
 
-	if (isSelect(op_code_)	 || 
-		isArithetic(op_code_)  || 
-		isComparsion(op_code_) ||
-		isBuiltInFunc(op_code_)||
-		isSelect(op_code_)	 ||
-		isConvolve(op_code_)) {
+	if (isSelect(op_code_)      || 
+		isArithetic(op_code_)   || 
+		isComparsion(op_code_)  ||
+		isBuiltInFunc(op_code_) ||
+		isSelect(op_code_)	    ||
+		isConvolve(op_code_))
+	{
 
 		std::vector<SyncParameter *> p_list;
 		for (auto i : operand_) p_list.push_back(i->getAssignedVal(true)->getPatameter());

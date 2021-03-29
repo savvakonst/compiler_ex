@@ -9,8 +9,9 @@
 #include <iostream>     
 #include <fstream>      
 #include "config.h"
-
-
+ 
+#pragma warning( push )  
+#pragma warning( disable : 4251)
 
 enum class PRMTypesEn : uint64_t {
     PRM_TYPE_U08            = 0x0001, 
@@ -140,10 +141,12 @@ inline DataInterval createInterval(TimeInterval time_interval, double frequency,
 
 typedef void (*calcMinMaxTy)(char* carg, int64_t Number, double & dmax, double & dmin, bool init);
 
+
+
 class DLL_EXPORT ParameterIfs {
 public:
 
-    void addIntrval(const  DataInterval &interval) {
+    void addIntrval(const  DataInterval& interval){
         interval_list_.push_back(interval);
     }
 
@@ -192,7 +195,7 @@ protected:
     bool    opened_to_write_         = false;
 
     std::string work_directory_ = "";
-    std::string error_info_    = "";
+    std::string error_info_     = "";
 };
-
+#pragma warning( pop )  
 #endif

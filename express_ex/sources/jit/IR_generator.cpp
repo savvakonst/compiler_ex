@@ -14,8 +14,11 @@ IRGenerator::IRGenerator(llvm::LLVMContext & context,Table * table_,bool is_pure
 }
 
 IRGenerator::~IRGenerator(){
-    for (auto i : buffer_list_)
-        delete i;
+    for(auto buffer_group : buffer_list_){
+        for(auto i: *buffer_group)
+            delete i;
+        delete buffer_group;
+    }
 }
 
 llvm::Value * IRGenerator::CreateFPow(llvm::Value *aOperand, llvm::Value *bOperand, const std::string &name) {
@@ -254,28 +257,28 @@ void    IRGenerator::CreatePositionalStore(llvm::Value * value, llvm::Value * pt
 
 llvm::Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &name)
 {
-    int numberOfBuffer = (int) buffers_List_.size();
-    std::string numberOfBufferTxt=std::to_string(numberOfBuffer);
+    int number_of_buffer = (int) buffers_List_.size();
+    std::string number_of_buffer_txt=std::to_string(number_of_buffer);
 
     SetInitInsertPoint();
     llvm::Value* arg              = current_Function_->getArg(0);
 
-    llvm::Value* untypedBufferPtr =CreateInBoundsGEP(
+    llvm::Value* untyped_buffer_ptr =CreateInBoundsGEP(
         getInt64Ty()->getPointerTo(),
         arg,
-        getInt32(numberOfBuffer),
-        name + "untyped_buffer_ptr_"+ numberOfBufferTxt);
+        getInt32(number_of_buffer),
+        name + "untyped_buffer_ptr_"+ number_of_buffer_txt);
 
-    llvm::Value* untypedBuffer    = CreateLoad(
-        untypedBufferPtr,
+    llvm::Value* untyped_buffer    = CreateLoad(
+        untyped_buffer_ptr,
         true,
-        name+"untyped_buffer_"+ numberOfBufferTxt);
+        name+"untyped_buffer_"+ number_of_buffer_txt);
 
 
     llvm::Value* buffer           = CreateBitCast(
-        untypedBuffer,
+        untyped_buffer,
         getLLVMType(targetTy)->getPointerTo(),
-        name + "buffer_"+ numberOfBufferTxt);
+        name + "buffer_"+ number_of_buffer_txt);
     
     buffers_List_.push_back(buffer);
 
@@ -303,7 +306,7 @@ void IRGenerator::CreateMidleBRs()
 
 void * IRGenerator::AddBufferAlloca(Buffer *s)
 {
-    buffer_list_.push_back(s);
+    buffer_list_.back()->push_back(s);
     return nullptr;
 }
 

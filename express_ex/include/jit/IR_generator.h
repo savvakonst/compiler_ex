@@ -118,11 +118,13 @@ public:
     llvm::Type* getLLVMType(TypeEn targetTy);
     llvm::Function* getCurrentFunction() { return current_Function_; }
     llvm::Module* getCurrentModule();
-
-    std::vector<Buffer*>  * getBufferList(BufferTypeEn bufferType = BufferTypeEn::input) {
+    
+    std::vector<std::list<Buffer*>*>* getBufferList(BufferTypeEn bufferType = BufferTypeEn::input) {
         return &buffer_list_;
     }
-
+    void nextBufferGeoup(){
+        buffer_list_.push_back(new std::list<Buffer*>());
+    }
 
     std::vector<llvm::Value*> arg_ptr_list_;
     const bool is_pure_function_;
@@ -139,8 +141,7 @@ private:
         SetInsertPoint(bb);
     }
 
-
-    std::vector<Buffer*> buffer_list_;
+    std::vector<std::list<Buffer*>*> buffer_list_;
 
     llvm::BasicBlock* init_bock_=nullptr;
     llvm::BasicBlock* calc_block_=nullptr;

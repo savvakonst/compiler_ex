@@ -25,7 +25,6 @@ void clGpuConvolve();
 int main(int argc, const char* argv[]) {
 
 
-
     enum  ShowNames {
         nameList, untypedFSR, activeNameList, allFSR, redusedFSR, tableSSR, outputPrm, llvmIRcode
     };
@@ -39,7 +38,7 @@ int main(int argc, const char* argv[]) {
     static  llvm::cl::list<std::string> inputDataBaseFile("db", llvm::cl::desc("input data base files"), llvm::cl::value_desc("directory"), llvm::cl::ZeroOrMore, llvm::cl::cat(mainCategory));
     static  llvm::cl::opt<bool>         runJit("runJit", llvm::cl::desc("run jit"), llvm::cl::Optional, llvm::cl::cat(mainCategory));
     static  llvm::cl::bits<ShowNames>   showBits(llvm::cl::desc("show:"), llvm::cl::cat(mainCategory), llvm::cl::ZeroOrMore,
-        llvm::cl::values(
+    llvm::cl::values(
             clEnumVal(nameList, "names list"),
             clEnumVal(untypedFSR, "FSR(first stage representation) without type calculation"),
             clEnumVal(activeNameList, "Procedure Integration"),
@@ -85,9 +84,10 @@ int main(int argc, const char* argv[]) {
         stack<Value*> args;
         for (auto i : parameterNameList) {
             auto p =parameterDB[i.second];
+            llvm::outs() << delimiter << "Parameter: \n  " << *p << " \n";
             if (p != nullptr) {
                 p->setLocal(false);
-                args.push(new Line(i.first, p));
+                args.push(new Line(i.first, (SyncParameter*)p));//potential error
             }
             else
                 print_error("can not find parameter " + i.second);
@@ -210,7 +210,7 @@ int main2(int argc, const char* argv[]) {
 
     std::map<std::string, SyncParameter*> parameters_map;
     for (auto i : map)
-        parameters_map[i.first]=(parameterDB[i.second]);
+        parameters_map[i.first]=(SyncParameter*)(parameterDB[i.second]);//potential error
 
     express_ex->setParameters(parameters_map);
     express_ex->getOutputParameterVector(); //
@@ -223,7 +223,7 @@ int main2(int argc, const char* argv[]) {
 
     std::map<std::string, SyncParameter*> parameters_map2;
     for (auto i : map)
-        parameters_map2[i.first]=(parameterDB[i.second]);
+        parameters_map2[i.first]=(SyncParameter*)(parameterDB[i.second]);//potential error
 
     express_ex->setParameters(parameters_map2);
 

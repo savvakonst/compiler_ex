@@ -136,7 +136,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const DataInterval &
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ParametersDB & arg) {
     auto db_parameters_  =arg.getDBParameterList();
     for (auto i : db_parameters_)
-        ::stream(OS, *i);
+        ::stream(OS, *(SyncParameter *)i);//potential error
     return OS;
 }
 

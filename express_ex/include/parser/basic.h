@@ -100,14 +100,14 @@ public:
         current_body_->getOrCreatePureFunctionBody( body, signature);
     }*/
 
-    inline const Body const * getCurrentBody(){ return current_body_; }
+    inline const Body  * getCurrentBody(){ return current_body_; }
     const bool is_pure_function_;
 private:
     GarbageContainer* garbage_container_ = nullptr;
     stack<Value*> var_stack_;
     Body* current_body_ =nullptr;
     std::vector<Line*>* namespace_ptr_ = nullptr;
-
+     
     
     friend CallRecursiveFunctionTemplate;
     friend CallTemplate;

@@ -22,7 +22,7 @@ public:
     virtual void visitEnter(stack<Value*>* visitor_stack) override{
         visitor_stack->push(this);
         for(int64_t i = ((int64_t)args_.size() - 1);i >= 0; i--){
-            visitor_stack->push(args_[i]);
+            visitor_stack->push(args_[(size_t)i]);
         }
         is_visited_ = true;
     };
