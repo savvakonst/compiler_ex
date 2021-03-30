@@ -57,6 +57,29 @@ SyncParameter::SyncParameter(
 
 
 
+inline bool SyncParameter::open(bool open_to_write){
+    if(opened_to_read_ | opened_to_write_)
+        return false;
+    ifs_ = nullptr;
+
+    //seek(0);
+    opened_to_read_ = !open_to_write;
+    opened_to_write_= open_to_write;
+    return opened_to_read_;
+}
+
+inline bool SyncParameter::close(){
+    if(opened_to_read_ | opened_to_write_){
+        if(ifs_)
+            ifs_->close();
+        ifs_ = nullptr;
+        opened_to_read_  = false;
+        opened_to_write_ = false;
+        return true;
+    }
+    return false;
+}
+
 bool SyncParameter::seek(int64_t point_umber){
 
     point_number_ = point_umber;
@@ -73,11 +96,11 @@ bool SyncParameter::seek(int64_t point_umber){
 
 
 
-int64_t SyncParameter::write(char* data_buffer_ptr, int64_t point_number){
+uint64_t SyncParameter::write(char* data_buffer_ptr, uint64_t point_number){
     if(!opened_to_read_)
         open();
 
-    int64_t points_to_write = point_number;
+    uint64_t points_to_write = point_number;
     char* ptr = data_buffer_ptr;
     //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
 
@@ -136,11 +159,11 @@ int64_t SyncParameter::write(char* data_buffer_ptr, int64_t point_number){
     return point_number - points_to_write;
 }
 
-int64_t SyncParameter::read(char* data_buffer_ptr, int64_t point_number){
+uint64_t SyncParameter::read(char* data_buffer_ptr, uint64_t point_number){
     if(!opened_to_read_)
         open();
 
-    int64_t   points_to_read = point_number;
+    uint64_t points_to_read = point_number;
     uint8_t* ptr = (uint8_t*)data_buffer_ptr;
     //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
     // (*((ParameterIfs*)this)).point_number_ == 1704067;
@@ -279,6 +302,18 @@ ParameterIfs* SyncParameter::retyping(PRMTypesEn target_ty, const std::string& n
 
 ParameterIfs* SyncParameter::newParameter(){
     return new SyncParameter("", this->getMainTimeInterval(), this->getDataIntervalList(), false);
+}
+
+inline bool SyncParameter::calcExtendedInfo(){
+    if(interval_list_.size()){
+        frequency_=interval_list_.front().frequency;
+        for(auto i : interval_list_)
+            if(frequency_ != i.frequency){
+                error_info_ = "calcExtendedInfo - different frequencys";
+                return false;
+            }
+    }
+    return true;
 }
 
 

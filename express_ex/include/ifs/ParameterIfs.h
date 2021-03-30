@@ -147,9 +147,12 @@ typedef void (*calcMinMaxTy)(char* carg, int64_t Number, double & dmax, double &
 class DLL_EXPORT ParameterIfs {
 public:
 
-    void addIntrval(const  DataInterval& interval){
-        interval_list_.push_back(interval);
-    }
+
+    const std::string& getName() const{ return name_; }
+    const TimeInterval& getMainTimeInterval() const{ return time_interval_; }
+    const std::vector<DataInterval>& getDataIntervalList() const{ return interval_list_; }
+    virtual const size_t getVirtualSize() = 0;
+
 
     virtual bool isAsync() = 0;
 
@@ -161,30 +164,34 @@ public:
         double * top_buffer_ptr, double * bottom_buffer_ptr, double * time_buffer_ptr,
         double from, double to, size_t max_point_number_to_read) = 0;
 
+
     virtual bool open(bool open_to_write = false) = 0;
-    virtual bool close() = 0; 
+    virtual bool close() = 0;
 
-    const std::string               & getName() const { return name_; }
-    const TimeInterval              & getMainTimeInterval() const { return time_interval_; }
-    const std::vector<DataInterval> & getDataIntervalList() const { return interval_list_;}
-
-    virtual int64_t write(char* data_buffer_ptr, int64_t point_number)= 0;
-    virtual int64_t read(char* data_buffer_ptr, int64_t point_number)= 0;
-
-    virtual void setName(const std::string &name) = 0;
-
+    virtual uint64_t write(char* data_buffer_ptr, uint64_t point_number)= 0;
+    virtual uint64_t read(char* data_buffer_ptr, uint64_t point_number)= 0;
 
     virtual ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")= 0;
     virtual ParameterIfs* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")= 0;
 
+    virtual void setName(const std::string& name){
+        name_=name;
+        if(interval_list_.size() == 1)
+            interval_list_.front().file_name = name + ".dat";
+
+        int64_t index=0;
+        for(auto i : interval_list_)
+            i.file_name = name + "_" + std::to_string(index++) + ".dat";
+    }
 
 
     void setPath(std::string dirname) { work_directory_ = dirname; }
     void setLocal(bool val = true) { for (auto &i : interval_list_) i.local=val; }
-
+    void addIntrval(const  DataInterval& interval){
+        interval_list_.push_back(interval);
+    }
 
     virtual ParameterIfs* newParameter()=0;
-
     virtual std::stringstream& stream(std::stringstream& OS, std::string offset="") const{
         OS << offset << "ParameterInfo{\n";
         OS << offset << "  parameter_name: " << name_ << "\n";
@@ -210,6 +217,7 @@ protected:
     TimeInterval                time_interval_;
     std::vector<DataInterval>   interval_list_;
 
+    const double additional_time_ = 0.0009765625;
 
     int64_t current_interval_index_  = 0;
     int64_t numer_of_intervals_      = 0;
@@ -222,6 +230,8 @@ protected:
 
     std::string work_directory_ = "";
     std::string error_info_     = "";
+
+
 };
 #pragma warning( pop )  
 #endif

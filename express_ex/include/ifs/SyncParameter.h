@@ -33,46 +33,15 @@ public:
         return {-1};
     };
 
-    bool open(bool open_to_write = false){
-        if(opened_to_read_ | opened_to_write_)
-            return false;
-        ifs_ = nullptr;
 
-        //seek(0);
-        opened_to_read_ = !open_to_write;
-        opened_to_write_= open_to_write;
-        return opened_to_read_;
-    }
+    bool open(bool open_to_write = false) override;
+    bool close() override;
+    bool seek(int64_t point_umber);
+    uint64_t write(char* data_buffer_ptr, uint64_t point_number) override;
+    uint64_t read(char* data_buffer_ptr, uint64_t point_number) override;
 
-    bool close(){
-        if(opened_to_read_ | opened_to_write_){
-            if(ifs_)
-                ifs_->close();
-            ifs_ = nullptr;
-            opened_to_read_  = false;
-            opened_to_write_ = false;
-            return true;
-        }
-        return false;
-    }
-
-    bool    seek(int64_t point_umber);
-    int64_t write(char* data_buffer_ptr, int64_t point_number) override;
-    int64_t read(char* data_buffer_ptr, int64_t point_number) override;
-
-    PRMTypesEn  getRPMType(){ return interval_list_[0].type; }
-    int64_t     getVirtualSize(){ return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_)); }
-
-    void setName(const std::string& name){
-        name_=name;
-        if(interval_list_.size() == 1)
-            interval_list_.front().file_name = name + ".dat";
-
-        int64_t index=0;
-        for(auto i : interval_list_)
-            i.file_name = name + "_" + std::to_string(index++) + ".dat";
-    }
-
+    PRMTypesEn   getRPMType(){ return interval_list_[0].type; }
+    const size_t getVirtualSize() override{ return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_)); }
 
     ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")override;
     SyncParameter* enlargeFrequency(int64_t arg, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
@@ -86,17 +55,7 @@ public:
 
 protected:
 
-    bool calcExtendedInfo(){
-        if(interval_list_.size()){
-            frequency_=interval_list_.front().frequency;
-            for(auto i : interval_list_)
-                if(frequency_ != i.frequency){
-                    error_info_ = "calcExtendedInfo - different frequencys";
-                    return false;
-                }
-        }
-        return true;
-    }
+    bool calcExtendedInfo();
 
     inline const TimeInterval& getTimeInterval(int64_t nterval_index){
         return interval_list_[(size_t)nterval_index].time_interval;
@@ -132,7 +91,7 @@ protected:
         // std::ios::app |  std::ios::trunc
 
     }
-    const double additional_time_ = 0.0009765625;
+    
     PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
     double  frequency_  = -1;
 };
