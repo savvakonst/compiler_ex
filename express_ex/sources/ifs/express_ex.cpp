@@ -60,7 +60,7 @@ bool Express_ex::parseText(std::string str, bool is_file_name , std::map<std::st
 }
 
 
-bool Express_ex::setParameters(const std::map<std::string ,SyncParameter*> &parameters_map)
+bool Express_ex::setParameters(const std::map<std::string , ParameterIfs*> &parameters_map)
 {
     bool status=false;
 

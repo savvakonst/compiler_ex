@@ -41,7 +41,7 @@ public:
     uint64_t write(char* data_buffer_ptr, uint64_t point_number)override;
     uint64_t read(char* data_buffer_ptr, uint64_t point_number)override;
 
-    PRMTypesEn  getRPMType(){ return interval_list_[0].type; }
+    
 
     const size_t getVirtualSize() override {
         uint64_t total_size = 0;
@@ -79,6 +79,7 @@ protected:
             intermediate_buffer_.current_ptr+=sizeof(float);
             *data_buffer_ptr=*((T*)intermediate_buffer_.current_ptr);
             intermediate_buffer_.current_ptr+=sizeof(T);
+            data_buffer_ptr++;
             points_to_read--;
         }
     }
@@ -86,13 +87,14 @@ protected:
     template<typename T>
     void copyFromBuffer(T* data_buffer_ptr, uint64_t points_to_read){
         //=parent_parameter_.time_buffer_
-        IntermediateBuffer& parent_time_buffer_ = parent_parameter_.time_buffer_;
+        IntermediateBuffer& parent_time_buffer_ = parent_parameter_->time_buffer_;
         while(points_to_read){
             *((float*)intermediate_buffer_.current_ptr)= *((float*)parent_time_buffer_.current_ptr);
             parent_time_buffer_.current_ptr+=sizeof(float);
             intermediate_buffer_.current_ptr+=sizeof(float);
             *((T*)intermediate_buffer_.current_ptr) = *data_buffer_ptr;
             intermediate_buffer_.current_ptr+=sizeof(T);
+            data_buffer_ptr++;
             points_to_read--;
         }
     }
@@ -172,7 +174,7 @@ protected:
     IntermediateBuffer intermediate_buffer_;
     IntermediateBuffer time_buffer_;
 
-    PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
+    
     size_t unused_points_in_current_interval_ = 0;
     size_t data_size_ = 0;
     size_t data_size_factor_ = 0;

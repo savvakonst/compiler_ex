@@ -43,7 +43,7 @@ public:
         is_arg = true;
     }
 
-    Line(std::string name, SyncParameter * parameter) :Value() {
+    Line(std::string name, ParameterIfs* parameter) :Value() {
         names_.push_back(name);
         name_       = name;
         link_name_  = parameter->getName();
@@ -52,7 +52,10 @@ public:
         data_structure_type_     = DataStructureTypeEn::kLargeArr;
         is_arg      = true;
         
-        parameter_  = new SyncParameter(*parameter);
+        if(parameter->isAsync())
+            parameter_ = new AsyncParameter(*(AsyncParameter*)parameter);
+        else
+            parameter_ = new SyncParameter(*(SyncParameter*)parameter);
     }
 
     Line(std::string name) :Value() {

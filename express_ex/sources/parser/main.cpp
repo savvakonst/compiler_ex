@@ -87,7 +87,7 @@ int main(int argc, const char* argv[]) {
             llvm::outs() << delimiter << "Parameter: \n  " << *p << " \n";
             if (p != nullptr) {
                 p->setLocal(false);
-                args.push(new Line(i.first, (SyncParameter*)p));//potential error
+                args.push(new Line(i.first, p));//potential error
             }
             else
                 print_error("can not find parameter " + i.second);
@@ -208,12 +208,12 @@ int main2(int argc, const char* argv[]) {
     express_ex->parseText(content);
     auto map = express_ex->getParameterLinkNamesMap();
 
-    std::map<std::string, SyncParameter*> parameters_map;
+    std::map<std::string, ParameterIfs*> parameters_map;
     for (auto i : map)
-        parameters_map[i.first]=(SyncParameter*)(parameterDB[i.second]);//potential error
+        parameters_map[i.first]=parameterDB[i.second];
 
     express_ex->setParameters(parameters_map);
-    express_ex->getOutputParameterVector(); //
+    express_ex->getOutputParameterVector(); 
     express_ex->genJit();
     express_ex->run();
     llvm::outs() << "complete\n";
@@ -221,9 +221,9 @@ int main2(int argc, const char* argv[]) {
     express_ex->parseText(content);
     map = express_ex->getParameterLinkNamesMap();
 
-    std::map<std::string, SyncParameter*> parameters_map2;
+    std::map<std::string, ParameterIfs*> parameters_map2;
     for (auto i : map)
-        parameters_map2[i.first]=(SyncParameter*)(parameterDB[i.second]);//potential error
+        parameters_map2[i.first]=parameterDB[i.second];
 
     express_ex->setParameters(parameters_map2);
 

@@ -109,14 +109,10 @@ uint64_t AsyncParameter::write(char* data_buffer_ptr, uint64_t points_to_write){
             if(interval_list_.size() > current_interval_index_){
                 unused_points_in_current_interval_ =
                     interval_list_[current_interval_index_].size / data_size_factor_;
-                //////////////////
-                //open next file to write code
-                //////////////////
+                openNewInterval();
             }
             else{
-                //////////////////
-                // it is error point
-                //////////////////
+                // it is error point (unpossible point)
                 break;
             }
         }
@@ -127,12 +123,8 @@ uint64_t AsyncParameter::write(char* data_buffer_ptr, uint64_t points_to_write){
         }
     }
 
-    //////////////////
-    //copy data from intermediate buffer to terminal 
-    //////////////////
 
     ifs_->write(intermediate_buffer_.base_ptr, base * data_size_factor_);
-    
 
     return base - points_to_write;
 }
@@ -169,9 +161,7 @@ uint64_t AsyncParameter::read(char* data_buffer_ptr, uint64_t points_to_read){
                 unused_points_in_current_interval_ =
                     interval_list_[current_interval_index_].size / data_size_factor_;
                 openNewInterval();
-                //////////////////
-                //open next file code
-                //////////////////
+
             }
             else{
                 //////////////////

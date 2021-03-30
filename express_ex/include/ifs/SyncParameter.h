@@ -40,7 +40,6 @@ public:
     uint64_t write(char* data_buffer_ptr, uint64_t point_number) override;
     uint64_t read(char* data_buffer_ptr, uint64_t point_number) override;
 
-    PRMTypesEn   getRPMType(){ return interval_list_[0].type; }
     const size_t getVirtualSize() override{ return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_)); }
 
     ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")override;

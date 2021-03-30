@@ -151,6 +151,7 @@ public:
     const std::string& getName() const{ return name_; }
     const TimeInterval& getMainTimeInterval() const{ return time_interval_; }
     const std::vector<DataInterval>& getDataIntervalList() const{ return interval_list_; }
+    virtual const PRMTypesEn getRPMType(){ return type_; }
     virtual const size_t getVirtualSize() = 0;
 
 
@@ -218,6 +219,7 @@ protected:
     std::vector<DataInterval>   interval_list_;
 
     const double additional_time_ = 0.0009765625;
+    PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
 
     int64_t current_interval_index_  = 0;
     int64_t numer_of_intervals_      = 0;
@@ -227,6 +229,8 @@ protected:
 
     bool    opened_to_read_          = false;
     bool    opened_to_write_         = false;
+
+
 
     std::string work_directory_ = "";
     std::string error_info_     = "";

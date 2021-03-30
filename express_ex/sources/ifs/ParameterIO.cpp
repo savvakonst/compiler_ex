@@ -175,34 +175,40 @@ bool readParametersList(std::string databaseFName, std::vector<ParameterIfs*>& p
     for (auto i : *parametersList) {
         llvm::json::Object   pObject=*i.getAsObject();
 
-        llvm::json::Array & DataFilesList     = *(pObject["Data.Files.List"].getAsArray());
-        llvm::json::Array & DataFragmentsList = *(pObject["Data.Fragments.List"].getAsArray());
-
-        std::vector<DataInterval> interval_list;
-        for (auto k : DataFragmentsList)
-            interval_list.push_back(getDataInterval(k, DataFilesList));
-
-        llvm::json::Path::Root root("bare");
-        llvm::json::ObjectMapper O(i, root);
-
-        std::string  name;
-        TimeInterval time_interval;
-
-
-        bool ret= true;
-        int64_t int_type_represintation=0;
-        ret &=O.map(" Name", name);
-        ret &=O.map("sTime.Begin", time_interval.bgn);
-        ret &=O.map("sTime.End", time_interval.end);
-        ret &=O.map("Data.Type", int_type_represintation);
-
-        ParameterIfs* parameter = nullptr;
-        if (isAsync ((PRMTypesEn)int_type_represintation))
-            parameter= new AsyncParameter(name, time_interval, interval_list);
-        else
-            parameter= new SyncParameter(name, time_interval, interval_list);
         
-        parameterList.push_back(parameter);
+        
+        if(pObject.find("Data.Fragments.List") != pObject.end()){
+
+            
+            llvm::json::Array& DataFilesList     = *(pObject["Data.Files.List"].getAsArray());
+            llvm::json::Array& DataFragmentsList = *(pObject["Data.Fragments.List"].getAsArray());
+
+            std::vector<DataInterval> interval_list;
+            for(auto k : DataFragmentsList)
+                interval_list.push_back(getDataInterval(k, DataFilesList));
+
+            llvm::json::Path::Root root("bare");
+            llvm::json::ObjectMapper O(i, root);
+
+            std::string  name;
+            TimeInterval time_interval;
+
+
+            bool ret= true;
+            int64_t int_type_represintation=0;
+            ret &=O.map(" Name", name);
+            ret &=O.map("sTime.Begin", time_interval.bgn);
+            ret &=O.map("sTime.End", time_interval.end);
+            ret &=O.map("Data.Type", int_type_represintation);
+
+            ParameterIfs* parameter = nullptr;
+            if(isAsync((PRMTypesEn)int_type_represintation))
+                parameter= new AsyncParameter(name, time_interval, interval_list);
+            else
+                parameter= new SyncParameter(name, time_interval, interval_list);
+            //parameterList.size()==47
+            parameterList.push_back(parameter);
+        }
     }
     return true;
 }

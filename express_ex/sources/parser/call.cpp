@@ -66,7 +66,7 @@ CallRecursiveFunction::CallRecursiveFunction(Body* body, const stack<Value*>& ar
 
     auto ret = body_->getRet().front();
 
-    std::vector<SyncParameter*> p_list;
+    std::vector<ParameterIfs*> p_list;
 
 
     for(auto i : args_){
