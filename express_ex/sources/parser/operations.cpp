@@ -120,8 +120,10 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 		isConvolve(op_code_))
 	{
 
-		std::vector<SyncParameter *> p_list;
-		for (auto i : operand_) p_list.push_back(i->getAssignedVal(true)->getPatameter());
+		std::vector<ParameterIfs *> p_list;
+		for(auto i : operand_){
+			p_list.push_back(i->getAssignedVal(true)->getPatameter());
+		}
 		parameter_ = intersection(p_list, RPMType, "");
 	}
 	else if (isTypeConv(op_code_) ) {
@@ -134,7 +136,7 @@ void Operation::genBlocksVisitExit(TableGenContext * context)
 	context->setParameter(parameter_);
 
 	if (isReturned()) {
-		parameter_ =new SyncParameter("", parameter_->getMainTimeInterval(), parameter_->getDataIntervalList(),false);
+		parameter_ =parameter_->newParameter();//new SyncParameter("", parameter_->getMainTimeInterval(), parameter_->getDataIntervalList(),false);
 		context->setParameter(parameter_);
 	}
 

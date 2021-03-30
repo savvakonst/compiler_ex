@@ -51,7 +51,7 @@ public:
     TypeEn getType()const{ return type_; }
     TypeEn getTempType()const{ return isUnknownTy(type_) ? temp_type_ : type_; }
     DataStructureTypeEn getDSType()const{ return data_structure_type_; }
-    SyncParameter* getPatameter()const{ return parameter_; }
+    ParameterIfs* getPatameter()const{ return parameter_; }
 
     llvm::Value* getIRValue(IRGenerator& builder, int64_t parent_level);
     llvm::Value* getIRValueBasePtr(IRGenerator& builder, int64_t parent_level);
@@ -165,7 +165,7 @@ protected:
     llvm::Value* IR_buffer_ptr_ = nullptr;
     llvm::Value* IR_buffer_base_ptr_ = nullptr;
 
-    SyncParameter * parameter_= nullptr;
+    ParameterIfs * parameter_= nullptr;
     friend class TailCallDirectiveTemplate;
 };
 

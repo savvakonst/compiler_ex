@@ -656,7 +656,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
 
     buffer_update_function_ =
         llvm::Function::Create(
-            llvm::FunctionType::get(builder.getInt32Ty(), {}, false),
+            llvm::FunctionType::get(builder.getInt32Ty(), {builder.getInt32Ty()}, false),
             llvm::Function::ExternalLinkage,
             "buffer_update_function",
             M_
@@ -691,7 +691,7 @@ bool Table::generateIR(std::string basicBlockPrefix) {
     
     return true;
 }
-
+//express_ex.exe -i C:/Express_expr_compiler/express/express_ex/x64/Release/li2.kex -db A01_3.json --ansi --llvmIRcode --opt --tableSSR
 
 bool Table::generateIRInGroup(Group &group, uint32_t index){
 
@@ -790,8 +790,9 @@ bool Table::generateIRInGroup(Group &group, uint32_t index){
 
     builder.SetInsertPoint(&(main_function_->back()));
     auto buffer_group_ptr = builder.CreateInBoundsGEP(main_function_->getArg(0), builder.getInt32(index), "offset_incr");
-    builder.CreateCall_(sub_function, buffer_group_ptr);
+    builder.CreateCall_(sub_function, builder.CreateLoad(buffer_group_ptr));
 
+    return true;
 }
 
 

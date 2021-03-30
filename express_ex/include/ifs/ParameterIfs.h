@@ -39,6 +39,7 @@ enum class PRMTypesEn : uint64_t {
     PRM_TYPE_UNKNOWN        = 0xffff    
 };
 
+
 typedef struct {
     double          bgn = 0.0;
     double          end = 0.0;
@@ -71,8 +72,8 @@ typedef struct {
 
 
 
-inline int64_t sizeOfTy(PRMTypesEn  arg) {
-    return ((int64_t)arg) & 0xf;
+inline size_t sizeOfTy(PRMTypesEn  arg) {
+    return ((uint64_t)arg) & 0xf;
 }
 
 //TypeEn      PRMType2JITType(PRMTypesEn arg);
@@ -150,6 +151,8 @@ public:
         interval_list_.push_back(interval);
     }
 
+    virtual bool isAsync() = 0;
+
     // is not supported yet 
     virtual std::vector<int64_t>  read_dots(Dot * dot_buffer, size_t max_point_number, double from, double to) = 0;
 
@@ -165,12 +168,35 @@ public:
     const TimeInterval              & getMainTimeInterval() const { return time_interval_; }
     const std::vector<DataInterval> & getDataIntervalList() const { return interval_list_;}
 
+    virtual int64_t write(char* data_buffer_ptr, int64_t point_number)= 0;
+    virtual int64_t read(char* data_buffer_ptr, int64_t point_number)= 0;
+
     virtual void setName(const std::string &name) = 0;
 
-    virtual std::stringstream &stream(std::stringstream & OS, std::string offset="") const = 0;
+
+    virtual ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")= 0;
+    virtual ParameterIfs* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")= 0;
+
+
 
     void setPath(std::string dirname) { work_directory_ = dirname; }
     void setLocal(bool val = true) { for (auto &i : interval_list_) i.local=val; }
+
+
+    virtual ParameterIfs* newParameter()=0;
+
+    virtual std::stringstream& stream(std::stringstream& OS, std::string offset="") const{
+        OS << offset << "ParameterInfo{\n";
+        OS << offset << "  parameter_name: " << name_ << "\n";
+        OS << offset << "  time_interval.end: " << time_interval_.end << "\n";
+        OS << offset << "  time_interval.bgn: " << time_interval_.bgn << "\n";
+        OS << offset << "  interval_list: [" << "\n";
+        for(auto interval : interval_list_)
+            ::stream(OS, interval, "    ");
+        OS << offset << "  ]\n";
+        OS << offset << "}\n";
+        return OS;
+    }
 
     friend class ParametersDB;
 

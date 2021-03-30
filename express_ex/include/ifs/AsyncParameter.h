@@ -11,15 +11,19 @@
 #include "ParameterIfs.h"
 
 
+
+
 class DLL_EXPORT AsyncParameter: public ParameterIfs{
 public:
-    AsyncParameter(){}
+    AsyncParameter(){ parent_parameter_ = this; }
     AsyncParameter(std::string name, const std::vector<DataInterval>& interval_list, bool save_fnames);
     AsyncParameter(std::string name, const TimeInterval& time_interval,
                    const std::vector<DataInterval>& interval_list, bool save_fnames=true);
 
     ~AsyncParameter(){}
 
+
+    bool isAsync(){ return true; }
     // is not supported yet 
     virtual std::vector<int64_t>  read_dots(Dot* dot_buffer, size_t max_point_number, double from, double to) override{ return {-1}; };
 
@@ -52,11 +56,18 @@ public:
         return false;
     }
 
-    //int64_t write(char* data_buffer_ptr, int64_t point_number);
-    //int64_t read(char* data_buffer_ptr, int64_t point_number);
+    int64_t write(char* data_buffer_ptr, int64_t point_number)override{ return 0; }
+    int64_t read(char* data_buffer_ptr, int64_t point_number)override{ return 0; }
 
     PRMTypesEn  getRPMType(){ return interval_list_[0].type; }
-    int64_t     getVirtualSize(){ return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_)); }
+
+    size_t getVirtualSize(){
+        uint64_t total_size = 0;
+        for(auto& interval : interval_list_)
+            total_size = total_size + interval.size;
+        total_size = total_size * ( sizeOfTy(this->getRPMType()) + PRM_TIME_SIZE_) ;
+        return  total_size;
+    }
 
     void setName(const std::string& name){
         name_=name;
@@ -68,32 +79,19 @@ public:
             i.file_name = name + "_" + std::to_string(index++) + ".dat";
     }
 
-    std::stringstream& stream(std::stringstream& OS, std::string offset="") const override{
-        OS << offset << "ParameterInfo{\n";
-        OS << offset << "  parameter_name: " << name_ << "\n";
-        OS << offset << "  time_interval.end: " << time_interval_.end << "\n";
-        OS << offset << "  time_interval.bgn: " << time_interval_.bgn << "\n";
-        OS << offset << "  interval_list: [" << "\n";
-        for(auto interval : interval_list_)
-            ::stream(OS, interval, "    ");
-        OS << offset << "  ]\n";
-        OS << offset << "}\n";
-        return OS;
-    }
 
+    ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
+    ParameterIfs* enlargeFrequency(int64_t arg, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
+    ParameterIfs* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")override;
 
-    //AsyncParameter* intersection(AsyncParameter* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
-    //AsyncParameter* enlargeFrequency(int64_t arg, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
-    //AsyncParameter* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
-
-
+    virtual ParameterIfs* newParameter()override;
 
     friend void readParametersList(std::string databaseFName, std::vector<ParameterIfs>& parameterList);
     friend class ParametersDB;
 
 
 protected:
-
+    const size_t PRM_TIME_SIZE_ = 4;
     bool calcExtendedInfo(){
         if(interval_list_.size()){
             frequency_=interval_list_.front().frequency;
@@ -143,6 +141,8 @@ protected:
     const double additional_time_ = 0.0009765625;
     PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
     double  frequency_  = -1;
+
+    AsyncParameter *parent_parameter_ = nullptr;
 };
 
 

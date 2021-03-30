@@ -19,9 +19,9 @@
 
 DLL_EXPORT bool readParametersList(std::string database_fname, std::vector<ParameterIfs* >& parameter_list);
 DLL_EXPORT std::vector<ParameterIfs*> readParametersList(std::string database_Fame);
-DLL_EXPORT SyncParameter* intersection(SyncParameter* a, SyncParameter* b, PRMTypesEn target_ty, const std::string& name);
-DLL_EXPORT SyncParameter* intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string& name);
-DLL_EXPORT SyncParameter* retyping(SyncParameter* a, PRMTypesEn target_ty, const std::string& name);
+DLL_EXPORT ParameterIfs* intersection(ParameterIfs* a, ParameterIfs* b, PRMTypesEn target_ty, const std::string& name);
+DLL_EXPORT ParameterIfs* intersection(std::vector<ParameterIfs*> arg_list, PRMTypesEn target_ty, const std::string& name);
+DLL_EXPORT ParameterIfs* retyping(ParameterIfs* a, PRMTypesEn target_ty, const std::string& name);
 
 calcMinMaxTy g_calcMinMax_select(PRMTypesEn arg);
 

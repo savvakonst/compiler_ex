@@ -6,11 +6,12 @@
 //using namespace llvm;
 
 
-IRGenerator::IRGenerator(llvm::LLVMContext & context,Table * table_,bool is_pure_function)
+IRGenerator::IRGenerator(llvm::LLVMContext & context,Table * table,bool is_pure_function)
     :IRBuilder<>(context),
-    is_pure_function_(is_pure_function )
+    is_pure_function_(is_pure_function ),
+    table_(table)
 {
-    table=table_;
+    nextBufferGeoup();
 }
 
 IRGenerator::~IRGenerator(){
@@ -22,13 +23,13 @@ IRGenerator::~IRGenerator(){
 }
 
 llvm::Value * IRGenerator::CreateFPow(llvm::Value *aOperand, llvm::Value *bOperand, const std::string &name) {
-    if (table == nullptr) 
+    if (table_ == nullptr) 
         return nullptr;
 
     if (aOperand->getType() == getFloatTy())
-        return CreateCall(table->getFloatBIFunc(OpCodeEn::fpow),  { aOperand, bOperand }, name);
+        return CreateCall(table_->getFloatBIFunc(OpCodeEn::fpow),  { aOperand, bOperand }, name);
     else
-        return CreateCall(table->getDoubleBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
+        return CreateCall(table_->getDoubleBIFunc(OpCodeEn::fpow), { aOperand, bOperand }, name);
 }
 
 llvm::Value * IRGenerator::CreateConst(int64_t &binaryValue, TypeEn targetTy, const std::string &name) {
@@ -134,18 +135,18 @@ llvm::Value * IRGenerator::CreateTypeConv(llvm::Value * aOperand, OpCodeEn opCod
 
 llvm::Value * IRGenerator::CreateBuiltInFunc(llvm::Value * aOperand, OpCodeEn opCode, const std::string &name)
 {
-    if (table == nullptr) return nullptr;
+    if (table_ == nullptr) return nullptr;
     if (aOperand->getType() == getFloatTy()) {
-        return CreateCall(table->getFloatBIFunc(opCode), { aOperand }, name);
+        return CreateCall(table_->getFloatBIFunc(opCode), { aOperand }, name);
     }
     else {
-        return CreateCall(table->getDoubleBIFunc(opCode), { aOperand }, name);
+        return CreateCall(table_->getDoubleBIFunc(opCode), { aOperand }, name);
     }
 }
 
 llvm::Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,int64_t length, int64_t shift, TypeEn type, const std::string &name)
 {
-    auto function = table->getConvolveFunc(type);
+    auto function = table_->getConvolveFunc(type);
     auto bOperand = CreateIntToPtr(
         llvm::ConstantInt::get(getInt64Ty(), uintptr_t(ptr)),
         llvm::PointerType::getUnqual(getLLVMType(type)));
@@ -154,11 +155,11 @@ llvm::Value * IRGenerator::CreateConvolve(llvm::Value * aOperand,  char * ptr,in
 }
 
 
-llvm::Value *IRGenerator::CreateCall_(llvm::Value *Callee, llvm::ArrayRef<llvm::Value *> Args ,const std::string & Name ) {
+llvm::Value *IRGenerator::CreateCall_(llvm::Value *Calle, llvm::ArrayRef<llvm::Value *> Args ,const std::string & Name ) {
     llvm::MDNode *FPMathTag = nullptr;
 
     return CreateCall(
-        llvm::cast<llvm::FunctionType>(Callee->getType()->getPointerElementType()), Callee,
+        llvm::cast<llvm::FunctionType>(Calle->getType()->getPointerElementType()), Calle,
         Args, Name, FPMathTag);
 }
 
@@ -186,7 +187,7 @@ llvm::Value * IRGenerator::CreateConvolve(llvm::Value * aOperand, llvm::Value * 
 llvm::Value * IRGenerator::CreateGPUConvolve(llvm::Value * aOperand, char * ptr, int64_t length, int64_t shift, TypeEn type, const std::string &name)
 {
     print_IR_error("CreateGPUConvolve is not supported yet");
-    auto function = table->getGPUConvolveFunc(type);
+    auto function = table_->getGPUConvolveFunc(type);
     return nullptr;
 }
 
@@ -366,5 +367,5 @@ llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
 }
 
 llvm::Module* IRGenerator::getCurrentModule(){
-    return table->getModule();
+    return table_->getModule();
 }

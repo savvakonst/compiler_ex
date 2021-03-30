@@ -202,9 +202,6 @@ bool readParametersList(std::string databaseFName, std::vector<ParameterIfs*>& p
         else
             parameter= new SyncParameter(name, time_interval, interval_list);
         
-
-
-
         parameterList.push_back(parameter);
     }
     return true;
@@ -217,3 +214,39 @@ std::vector<ParameterIfs*>  readParametersList(std::string databaseFName) {
 }
 
 
+ParameterIfs* retyping(ParameterIfs * a, PRMTypesEn target_ty, const std::string& name){
+    if(a == nullptr)
+        return nullptr;
+    return a->retyping(target_ty, name);
+}
+
+
+ParameterIfs* intersection(ParameterIfs* a, ParameterIfs* b, PRMTypesEn target_ty, const std::string& name){
+    if(a == nullptr)
+        return b;
+    if(b == nullptr)
+        return a;
+    return a->intersection(b, target_ty, name);
+
+}
+
+ParameterIfs* intersection(std::vector<ParameterIfs*> arg_list, PRMTypesEn target_ty, const std::string& name){
+    std::set<ParameterIfs*> parameterSet;
+    ParameterIfs* p = nullptr;
+    for(auto i : arg_list){
+        p = intersection(p, i, target_ty, name);
+        parameterSet.insert(p);
+    }
+
+    for(auto i : arg_list)
+        parameterSet.erase(i);
+
+    parameterSet.erase(nullptr);
+    //if(p)
+    parameterSet.erase(p);
+
+    for(auto i : parameterSet)
+        delete i;
+
+    return p;
+}

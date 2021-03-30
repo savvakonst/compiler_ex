@@ -275,7 +275,7 @@ private:
     int64_t topLevel = 0;
 
     std::map<OpCodeEn, int> BIF2LLVMmap_;
-    std::set<SyncParameter *> parameterSet_;    //external
+    std::set<ParameterIfs *> parameterSet_;    //external
 
     int64_t min_buffer_length_;
     int64_t max_buffer_length_;
@@ -293,7 +293,7 @@ public:
     
     uint64_t          getUniqueIndex () { unique_name_counter_++; return (unique_name_counter_ - 3); }
     void              setUint(Value * var) { table_->setUint(var);};
-    void              setParameter(SyncParameter * var) { table_->parameterSet_.insert(var); };
+    void              setParameter(ParameterIfs * var) { table_->parameterSet_.insert(var); };
     void              setMaxBufferLength(int64_t length) { 
         int64_t temp = (int64_t)1 << (int8_t)(floor(log2(length)) - 1);
         if (table_->max_buffer_length_> temp)

@@ -127,7 +127,8 @@ void CallRecursiveFunction::genBlocksVisitExit(TableGenContext* context){
 
     context->setParameter(parameter_);
     if(isReturned()){
-        parameter_ =new SyncParameter("", parameter_->getMainTimeInterval(), parameter_->getDataIntervalList(), false);
+        parameter_ = parameter_->newParameter();
+        //parameter_ =new SyncParameter("", parameter_->getMainTimeInterval(), parameter_->getDataIntervalList(), false);
         context->setParameter(parameter_);
     }
 }

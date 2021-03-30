@@ -21,6 +21,8 @@ public:
 
     ~SyncParameter(){}
 
+
+    bool isAsync(){return false;}
     // is not supported yet 
     virtual std::vector<int64_t>  read_dots(Dot* dot_buffer, size_t max_point_number, double from, double to) override{ return {-1}; };
 
@@ -55,8 +57,8 @@ public:
     }
 
     bool    seek(int64_t point_umber);
-    int64_t write(char* data_buffer_ptr, int64_t point_number);
-    int64_t read(char* data_buffer_ptr, int64_t point_number);
+    int64_t write(char* data_buffer_ptr, int64_t point_number) override;
+    int64_t read(char* data_buffer_ptr, int64_t point_number) override;
 
     PRMTypesEn  getRPMType(){ return interval_list_[0].type; }
     int64_t     getVirtualSize(){ return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_)); }
@@ -71,25 +73,12 @@ public:
             i.file_name = name + "_" + std::to_string(index++) + ".dat";
     }
 
-    std::stringstream& stream(std::stringstream& OS, std::string offset="") const override{
-        OS << offset << "ParameterInfo{\n";
-        OS << offset << "  parameter_name: " << name_ << "\n";
-        OS << offset << "  time_interval.end: " << time_interval_.end << "\n";
-        OS << offset << "  time_interval.bgn: " << time_interval_.bgn << "\n";
-        OS << offset << "  interval_list: [" << "\n";
-        for(auto interval : interval_list_)
-            ::stream(OS, interval, "    ");
-        OS << offset << "  ]\n";
-        OS << offset << "}\n";
-        return OS;
-    }
 
-
-    SyncParameter* intersection(SyncParameter* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
+    ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")override;
     SyncParameter* enlargeFrequency(int64_t arg, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
-    SyncParameter* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
+    ParameterIfs* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="") override;
 
-
+    virtual ParameterIfs* newParameter()override;
 
     friend void readParametersList(std::string databaseFName, std::vector<ParameterIfs>& parameterList);
     friend class ParametersDB;

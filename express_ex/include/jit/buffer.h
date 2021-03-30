@@ -143,7 +143,7 @@ public:
 	virtual std::string  getName() { return parameter_->getName(); }
 
 protected:
-	SyncParameter * parameter_ = nullptr;
+	ParameterIfs * parameter_ = nullptr;
 
 };
 
@@ -185,7 +185,7 @@ public:
 
 	virtual std::string  getName() { return parameter_->getName(); }
 protected:
-	SyncParameter * parameter_=nullptr;
+	ParameterIfs* parameter_=nullptr;
 	std::string link_name_="";
 };
 

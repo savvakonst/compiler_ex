@@ -31,7 +31,7 @@ class IRGenerator : public llvm::IRBuilder <>
 public:
 
 
-    IRGenerator(llvm::LLVMContext & context, Table * table_, bool is_pure_function = false);
+    IRGenerator(llvm::LLVMContext & context, Table * table, bool is_pure_function = false);
     ~IRGenerator();
 
      
@@ -122,6 +122,7 @@ public:
     std::vector<std::list<Buffer*>*>* getBufferList(BufferTypeEn bufferType = BufferTypeEn::input) {
         return &buffer_list_;
     }
+
     void nextBufferGeoup(){
         buffer_list_.push_back(new std::list<Buffer*>());
     }
@@ -171,7 +172,7 @@ private:
 
 
 
-    Table * table=nullptr;
+    Table * table_=nullptr;
 
     
 

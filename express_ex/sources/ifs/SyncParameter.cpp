@@ -197,9 +197,9 @@ int64_t SyncParameter::read(char* data_buffer_ptr, int64_t point_number){
 }
 
 
-SyncParameter* SyncParameter::intersection(SyncParameter* b, PRMTypesEn target_ty, const std::string& name){
+ParameterIfs* SyncParameter::intersection(ParameterIfs* b, PRMTypesEn target_ty, const std::string& name){
     auto parameter_a = this;
-    auto parameter_b = b;
+    auto parameter_b = (SyncParameter*)b;
 
     if(parameter_a == parameter_b)
         return this;
@@ -265,7 +265,7 @@ SyncParameter* SyncParameter::enlargeFrequency(int64_t arg, PRMTypesEn target_ty
     return new SyncParameter(name, time_interval_, data_interval);
 }
 
-SyncParameter* SyncParameter::retyping(PRMTypesEn target_ty, const std::string& name){
+ParameterIfs* SyncParameter::retyping(PRMTypesEn target_ty, const std::string& name) {
     if(getRPMType() == target_ty)
         return this;
 
@@ -277,39 +277,10 @@ SyncParameter* SyncParameter::retyping(PRMTypesEn target_ty, const std::string& 
     return new SyncParameter(name, time_interval_, data_interval);
 }
 
-
-SyncParameter* intersection(SyncParameter* a, SyncParameter* b, PRMTypesEn target_ty, const std::string& name){
-    if(a == nullptr)
-        return b;
-    if(b == nullptr)
-        return a;
-    return a->intersection(b, target_ty, name);
-
+ParameterIfs* SyncParameter::newParameter(){
+    return new SyncParameter("", this->getMainTimeInterval(), this->getDataIntervalList(), false);
 }
 
-SyncParameter* intersection(std::vector<SyncParameter*> arg_list, PRMTypesEn target_ty, const std::string& name){
-    std::set<SyncParameter*> parameterSet;
-    SyncParameter* p = nullptr;
-    for(auto i : arg_list){
-        p = intersection(p, i, target_ty, name);
-        parameterSet.insert(p);
-    }
 
-    for(auto i : arg_list)
-        parameterSet.erase(i);
 
-    parameterSet.erase(nullptr);
-    //if(p)
-    parameterSet.erase(p);
 
-    for(auto i : parameterSet)
-        delete i;
-
-    return p;
-}
-
-SyncParameter* retyping(SyncParameter* a, PRMTypesEn target_ty, const std::string& name){
-    if(a == nullptr)
-        return nullptr;
-    return a->retyping(target_ty, name);
-}
