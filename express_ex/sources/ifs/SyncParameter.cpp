@@ -9,9 +9,9 @@
 #include "parser/undefWarningIgnore.h"
 
 
-
-
-
+ 
+    
+ 
 SyncParameter::SyncParameter(
     std::string name,
     const std::vector<DataInterval>& interval_list,
@@ -57,6 +57,18 @@ SyncParameter::SyncParameter(
 
 
 
+
+// is not supported yet 
+
+
+// is not supported yet 
+
+inline std::vector<int64_t> SyncParameter::read_dots(Dot* dot_buffer, size_t max_point_number, double from, double to){ return {-1}; }
+
+inline std::vector<int64_t> SyncParameter::read_dots(double* top_buffer_ptr, double* bottom_buffer_ptr, double* time_buffer_ptr, double from, double to, size_t max_point_number_to_read){
+    return {-1};
+}
+
 inline bool SyncParameter::open(bool open_to_write){
     if(opened_to_read_ | opened_to_write_)
         return false;
@@ -97,8 +109,8 @@ bool SyncParameter::seek(int64_t point_umber){
 
 
 uint64_t SyncParameter::write(char* data_buffer_ptr, uint64_t point_number){
-    if(!opened_to_read_)
-        open();
+    if(!opened_to_write_)
+        open(true);
 
     uint64_t points_to_write = point_number;
     char* ptr = data_buffer_ptr;
@@ -129,7 +141,7 @@ uint64_t SyncParameter::write(char* data_buffer_ptr, uint64_t point_number){
                 return point_number - points_to_write + local_points_to_write;
             }
 
-        }
+        } 
         else{
             DataInterval& di = interval_list_[(size_t)di_index];
 
@@ -300,6 +312,9 @@ ParameterIfs* SyncParameter::retyping(PRMTypesEn target_ty, const std::string& n
     return new SyncParameter(name, time_interval_, data_interval);
 }
 
+
+
+
 ParameterIfs* SyncParameter::newParameter(){
     return new SyncParameter("", this->getMainTimeInterval(), this->getDataIntervalList(), false);
 }
@@ -316,6 +331,40 @@ inline bool SyncParameter::calcExtendedInfo(){
     return true;
 }
 
+inline int64_t SyncParameter::getDataIntervalIndex(double time){
+    // debug cond => { time == 134.00097656250000 }
+    for(int64_t i = (current_interval_index_ < 0 ? 0 : current_interval_index_); i < numer_of_intervals_; i++){
+        DataInterval& a =interval_list_[(size_t)i];
+        if((a.time_interval.bgn <= time) && (time < (a.time_interval.end + additional_time_))) return i;
+    }
+    return -1;
+}
 
+inline void SyncParameter::openNewInterval(double di_index){
+    if(ifs_){
+        current_interval_index_ = (int64_t)di_index;
+        ifs_->close();
+        delete ifs_;
+        ifs_=nullptr;
+    }
 
+    const DataInterval& current_interval = getCufrrentInterval();
+    std::string file_name = (current_interval.local ? work_directory_ + "/" : "") + current_interval.file_name;
+    
+    if(opened_to_read_){
+        ifs_ = new std::fstream(file_name, std::ios::in | std::ios::binary);
+        ifs_->seekg(current_interval.offs);
+    }
+    else if(opened_to_write_){
+
+        if (current_interval.offs == 0) 
+            ifs_ =new std::fstream(file_name, std::ios::out | std::ios::binary);
+        else
+            ifs_ =new std::fstream(file_name, std::ios::out | std::ios::binary | std::ios::app);
+    }
+    // std::ios::app |  std::ios::trunc
+}
+
+//23152640
+//225988608
 

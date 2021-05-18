@@ -52,10 +52,12 @@ public:
         data_structure_type_     = DataStructureTypeEn::kLargeArr;
         is_arg      = true;
         
-        if(parameter->isAsync())
-            parameter_ = new AsyncParameter(*(AsyncParameter*)parameter);
+        if(parameter->isAsync()){
+            parameter_ = new AsyncParameter(*(AsyncParameter*)parameter);      
+        }
         else
             parameter_ = new SyncParameter(*(SyncParameter*)parameter);
+
     }
 
     Line(std::string name) :Value() {

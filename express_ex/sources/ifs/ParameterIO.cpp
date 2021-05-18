@@ -226,6 +226,26 @@ ParameterIfs* retyping(ParameterIfs * a, PRMTypesEn target_ty, const std::string
     return a->retyping(target_ty, name);
 }
 
+ParameterIfs* newParameter(std::string name, const std::vector<DataInterval>& interval_list, bool save_fnames){
+    if(interval_list.size()){
+        if(isAsync(interval_list.front().type))
+            return  new AsyncParameter(name, interval_list, save_fnames);
+        else
+            return new SyncParameter(name, interval_list, save_fnames);
+    }
+    return nullptr;
+}
+
+ParameterIfs* newParameter(std::string name, const TimeInterval& time_interval, const std::vector<DataInterval>& interval_list, bool save_fnames){
+    if(interval_list.size()){
+        if(isAsync(interval_list.front().type))
+            return new AsyncParameter(name, time_interval, interval_list);
+        else
+            return new SyncParameter(name, time_interval, interval_list);
+    }
+    return nullptr;
+}
+
 
 ParameterIfs* intersection(ParameterIfs* a, ParameterIfs* b, PRMTypesEn target_ty, const std::string& name){
     if(a == nullptr)

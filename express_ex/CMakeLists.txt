@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(express_ex)
 
-SET(IS_SHARED false)
+SET(IS_SHARED true)
 
 if( NOT CMAKE_CL_64 )
     set(SPlatform  x86)
@@ -190,34 +190,35 @@ if(MSVC)
    
 
     
-    
     if(IS_SHARED)
+    #if(false)
         set_property(TARGET express_ex APPEND PROPERTY
             COMPILE_DEFINITIONS ${commonMSVC_Definitions} DLL_express_ex_EXPORT
         )
 
         set(FILE_NAMES_TO_COPY "express_ex.*" "syntaxhighlighter.*" "topsyntaxhighlighter.*" "antlr4-runtime.*")
 
-
         
-        foreach( FILE_NAME_MASK ${FILE_NAMES_TO_COPY})
-            message( "-------------------------FILES_TO_COPY: " $<CONFIG:express_ex> )   
-            #file(GLOB FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}")
-            #set(FILES_TO_COPYasfsaf "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
-            file(GLOB FILES_TO_COPY "$<CONFIG>/${FILE_NAME_MASK}")
-            set(FILES_TO_COPYasfsaf "$<CONFIG>/${FILE_NAME_MASK}" )
-            message( "-------------------------FILES_TO_COPY: " "$<TARGET_FILE_DIR:express_ex>" )   
-            #set(FILES_TO_COPY "$<TARGET_FILE_DIR:express_ex>/${FILE_NAME_MASK}" )
+        foreach( TARGET_CONFIG  Debug Release)
 
-            foreach( FILE_NAME_VAR ${FILES_TO_COPY})
-                message( "-------------------------FILE_NAME_VAR: ${FILE_NAME_VAR}" )   
-                add_custom_command(TARGET express_ex POST_BUILD 
-                    COMMAND  ${CMAKE_COMMAND} -E copy_if_different
-                        ${FILE_NAME_VAR}
-                        //nas_sy/Common/svk/express_ex/$<CONFIG>.Shared
-                    ) 
-            endforeach( FILE_NAME_VAR )
-        endforeach( FILE_NAME_MASK )
+            foreach( FILE_NAME_MASK ${FILE_NAMES_TO_COPY})
+
+                #set(FILES_TO_COPY_PATTERN ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${FILE_NAME_MASK} )   
+                file(GLOB FILES_TO_COPY "${SPlatform}/${TARGET_CONFIG}/${FILE_NAME_MASK}" )
+            
+                #add_custom_command(TARGET express_ex POST_BUILD COMMAND ${CMAKE_COMMAND} -E echo "-------------------------FILES_TO_COPY: $<FILES_TO_COPY>")
+
+                foreach( FILE_NAME_VAR ${FILES_TO_COPY})
+                    add_custom_command(TARGET express_ex POST_BUILD COMMAND ${CMAKE_COMMAND} -E echo "-------------------------FILE_NAME_VAR: ${FILE_NAME_VAR}")
+  
+                    add_custom_command(TARGET express_ex POST_BUILD 
+                        COMMAND  ${CMAKE_COMMAND} -E copy_if_different
+                            ${FILE_NAME_VAR}
+                            //nas_sy/Common/svk/express_ex/${APlarform}/${TARGET_CONFIG}.Shared
+                        ) 
+                endforeach( FILE_NAME_VAR )
+            endforeach( FILE_NAME_MASK )
+        endforeach( TARGET_CONFIG )
         
         
 

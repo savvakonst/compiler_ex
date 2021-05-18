@@ -111,7 +111,7 @@ int main(int argc, const char* argv[]) {
         if (showBits.isSet(allFSR))
             llvm::outs() << delimiter << body->print("");
 
-        if (showBits.isSet(redusedFSR)) 
+        if (showBits.isSet(redusedFSR))  
             llvm::outs() << delimiter << body->print("", false, true);
 
 
@@ -121,7 +121,7 @@ int main(int argc, const char* argv[]) {
         Table*            table = new Table();
         TableGenContext context = TableGenContext(table);
         
-        body->genTable(&context);
+        body->genTable(&context); 
 
         int index=0;
         for (auto i : body->getOutputParameterList()) {

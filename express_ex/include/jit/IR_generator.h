@@ -69,12 +69,23 @@ public:
 
     void        * AddBufferAlloca(Buffer * s);
 
+
+
+
+    llvm::BasicBlock* CreateNewIntermediateBB(const std::string& postfix){return CreateNewBB(init_bock_, "intermediate_" + postfix);}
+    llvm::BasicBlock* CreateNewLoadBB(const std::string& postfix){return CreateNewBB(load_block_, "load_" + postfix);}
+    llvm::BasicBlock* CreateNewCalcBB(const std::string& postfix){return CreateNewBB(calc_block_, "calc_" + postfix);}
+    llvm::BasicBlock* CreateNewStoreBB(const std::string& postfix){return CreateNewBB(store_block_, "store_" + postfix);}
+
+
     void SetInitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(init_bock_, bb); };
     void SetLoadInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(load_block_, bb); };
     void SetCalcInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(calc_block_, bb); };
     void SetStoreInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(store_block_, bb); };
     void SetTerminalOpInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(terminal_op_block_, bb); };
     
+
+
     void SetLoopEnterInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(loop_enter_block_, bb); };
     void SetIntermediateInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(intermediate_block_, bb); };
     void SetCycleExitInsertPoint(llvm::BasicBlock*bb=nullptr) { SetCInsertPoint(cycle_exit_block_, bb); };
@@ -120,6 +131,7 @@ public:
     llvm::Module* getCurrentModule();
     
     std::vector<std::list<Buffer*>*>* getBufferList(BufferTypeEn bufferType = BufferTypeEn::input) {
+
         return &buffer_list_;
     }
 
@@ -130,7 +142,14 @@ public:
     std::vector<llvm::Value*> arg_ptr_list_;
     const bool is_pure_function_;
 private:
+
+
+
+
     typedef llvm::BasicBlock* BasicBlockPtr;
+
+    llvm::BasicBlock* CreateNewBB(BasicBlockPtr& prot, const std::string& name="");
+
 
     void SetCInsertPoint(BasicBlockPtr & prot, llvm::BasicBlock * bb=nullptr) {
         if (bb == nullptr)

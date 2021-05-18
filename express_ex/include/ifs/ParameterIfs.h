@@ -9,9 +9,20 @@
 #include <iostream>     
 #include <fstream>      
 #include "config.h"
- 
-#pragma warning( push )  
-#pragma warning( disable : 4251)
+
+
+
+
+#ifdef _MSC_VER 
+    #pragma warning( push )  
+    #pragma warning(disable : 5208)
+    #pragma warning( disable : 4251)
+    #pragma warning( disable : 4100)
+    #pragma warning( disable : 4189)
+#endif 
+
+
+
 
 enum class PRMTypesEn : uint64_t {
     PRM_TYPE_U08            = 0x0001, 
@@ -151,7 +162,10 @@ public:
     const std::string& getName() const{ return name_; }
     const TimeInterval& getMainTimeInterval() const{ return time_interval_; }
     const std::vector<DataInterval>& getDataIntervalList() const{ return interval_list_; }
-    virtual const PRMTypesEn getRPMType(){ return type_; }
+    virtual const PRMTypesEn getRPMType(){ 
+        if(interval_list_.size())
+            type_=interval_list_[0].type;
+        return type_; }
     virtual const size_t getVirtualSize() = 0;
 
 
@@ -175,13 +189,17 @@ public:
     virtual ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")= 0;
     virtual ParameterIfs* retyping(PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")= 0;
 
-    virtual void setName(const std::string& name){
-        name_=name;
-        if(interval_list_.size() == 1)
-            interval_list_.front().file_name = name + ".dat";
+    virtual void setName(const std::string& name, bool single_file = true){
+        name_ = name;
+
+        if((interval_list_.size() == 1) || single_file){
+            for(auto& i : interval_list_)
+                i.file_name = name + ".dat";
+            return;
+        }
 
         int64_t index=0;
-        for(auto i : interval_list_)
+        for(auto& i : interval_list_)
             i.file_name = name + "_" + std::to_string(index++) + ".dat";
     }
 
@@ -237,5 +255,9 @@ protected:
 
 
 };
+
+#ifdef _MSC_VER 
 #pragma warning( pop )  
+#endif 
+
 #endif

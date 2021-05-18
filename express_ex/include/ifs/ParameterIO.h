@@ -8,13 +8,16 @@
 #include <fstream>  
 
 #include "ParameterIfs.h"
-
-#pragma warning( push )  
-#pragma warning( disable : 4251)
-
-
 #include "AsyncParameter.h"
 #include "SyncParameter.h"
+
+#ifdef _MSC_VER 
+#pragma warning( push )  
+#pragma warning( disable : 5208)
+#pragma warning( disable : 4251)
+#pragma warning( disable : 4100)
+#pragma warning( disable : 4189)
+#endif 
 
 
 DLL_EXPORT bool readParametersList(std::string database_fname, std::vector<ParameterIfs* >& parameter_list);
@@ -22,8 +25,12 @@ DLL_EXPORT std::vector<ParameterIfs*> readParametersList(std::string database_Fa
 DLL_EXPORT ParameterIfs* intersection(ParameterIfs* a, ParameterIfs* b, PRMTypesEn target_ty, const std::string& name);
 DLL_EXPORT ParameterIfs* intersection(std::vector<ParameterIfs*> arg_list, PRMTypesEn target_ty, const std::string& name);
 DLL_EXPORT ParameterIfs* retyping(ParameterIfs* a, PRMTypesEn target_ty, const std::string& name);
+DLL_EXPORT ParameterIfs* newParameter(std::string name, const std::vector<DataInterval>& interval_list, bool save_fnames);
+DLL_EXPORT ParameterIfs* newParameter(std::string name, const TimeInterval& time_interval,
+                                      const std::vector<DataInterval>& interval_list, bool save_fnames=true);
 
 calcMinMaxTy g_calcMinMax_select(PRMTypesEn arg);
+
 
 
 class DLL_EXPORT ParametersDB
@@ -40,7 +47,7 @@ public:
     }
 
     ParametersDB(std::vector<ParameterIfs*> &parameterInfoList, std::string code) {
-        db_parameters_=parameterInfoList;
+        db_parameters_ = parameterInfoList;
         for (auto &i : db_parameters_)
             calcExtendedInfo(i);
     }
@@ -166,6 +173,8 @@ private:
 };
 
 
+#ifdef _MSC_VER 
 #pragma warning( pop )  
+#endif 
 
 #endif

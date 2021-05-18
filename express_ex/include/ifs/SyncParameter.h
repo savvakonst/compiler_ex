@@ -11,6 +11,8 @@
 #include "ParameterIfs.h"
 
 
+
+
 class DLL_EXPORT SyncParameter: public ParameterIfs{
 public:
 
@@ -24,14 +26,12 @@ public:
 
     bool isAsync(){return false;}
     // is not supported yet 
-    virtual std::vector<int64_t>  read_dots(Dot* dot_buffer, size_t max_point_number, double from, double to) override{ return {-1}; };
+    virtual std::vector<int64_t>  read_dots(Dot* dot_buffer, size_t max_point_number, double from, double to) override;;
 
     // is not supported yet 
     virtual std::vector<int64_t>  read_dots(
         double* top_buffer_ptr, double* bottom_buffer_ptr, double* time_buffer_ptr,
-        double from, double to, size_t max_point_number_to_read) override{
-        return {-1};
-    };
+        double from, double to, size_t max_point_number_to_read) override;;
 
 
     bool open(bool open_to_write = false) override;
@@ -64,37 +64,12 @@ protected:
         return interval_list_[(size_t)current_interval_index_];
     }
 
-    inline int64_t getDataIntervalIndex(double time){
-        // debug cond => { time == 134.00097656250000 }
-        for(int64_t i = (current_interval_index_ < 0 ? 0 : current_interval_index_); i < numer_of_intervals_; i++){
-            DataInterval& a =interval_list_[(size_t)i];
-            if((a.time_interval.bgn <= time) && (time < (a.time_interval.end + additional_time_))) return i;
-        }
-        return -1;
-    }
+    inline int64_t getDataIntervalIndex(double time);
 
-    inline void openNewInterval(double di_index){
-        if(ifs_){
-            current_interval_index_ = (int64_t)di_index;
-            ifs_->close();
-            delete ifs_;
-            ifs_=nullptr;
-        }
-        std::string file_name = (getCufrrentInterval().local ? work_directory_ + "/" : "") + getCufrrentInterval().file_name;
-        if(opened_to_read_){
-            ifs_ = new std::fstream(file_name, std::ios::in | std::ios::binary);
-            bool op =ifs_->is_open();
-        }
-        else if(opened_to_write_)
-            ifs_ =new std::fstream(file_name, std::ios::out | std::ios::binary);
-        // std::ios::app |  std::ios::trunc
+    void openNewInterval(double di_index);
 
-    }
-    
-    PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
     double  frequency_  = -1;
 };
-
 
 
 #endif

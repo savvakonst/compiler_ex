@@ -276,7 +276,7 @@ llvm::Value * IRGenerator::CreateBufferInit(TypeEn targetTy, const std::string &
         name+"untyped_buffer_"+ number_of_buffer_txt);
 
 
-    llvm::Value* buffer           = CreateBitCast(
+    llvm::Value* buffer = CreateBitCast(
         untyped_buffer,
         getLLVMType(targetTy)->getPointerTo(),
         name + "buffer_"+ number_of_buffer_txt);
@@ -310,6 +310,10 @@ void * IRGenerator::AddBufferAlloca(Buffer *s)
     buffer_list_.back()->push_back(s);
     return nullptr;
 }
+
+
+
+
 
 void IRGenerator::SetDeclareConvolve(llvm::Type * type, uintptr_t addr) //atavism
 {
@@ -368,4 +372,10 @@ llvm::Type * IRGenerator::getLLVMType(TypeEn targetTy) {
 
 llvm::Module* IRGenerator::getCurrentModule(){
     return table_->getModule();
+}
+
+llvm::BasicBlock* IRGenerator::CreateNewBB(BasicBlockPtr& prot, const std::string& name){
+    prot = llvm::BasicBlock::Create(Context, name, getCurrentFunction());
+    bb_List_.push_back(prot);
+    return prot;
 }

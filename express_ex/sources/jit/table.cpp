@@ -51,35 +51,26 @@ bool SubBlock::generateIR(IRGenerator & builder, CycleStageEn type, std::string 
 {
     llvm::LLVMContext & context = builder.getContext();
 
-    std::string  level_txt=basic_block_postfix;
+    const std::string postfix = basic_block_prefix + basic_block_postfix;
+
+    llvm::BasicBlock* bb_intermediate = builder.CreateNewIntermediateBB(postfix);
+    builder.CreateNewLoadBB(postfix);
+    builder.CreateNewCalcBB(postfix);
+    builder.CreateNewStoreBB(postfix);
+    //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + postfix, builder.getCurrentFunction());
 
 
-    llvm::BasicBlock* bb_intermediate  = llvm::BasicBlock::Create(context, "intermediate_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
-    llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"   + basic_block_prefix + level_txt, builder.getCurrentFunction());
-    llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"   + basic_block_prefix + level_txt, builder.getCurrentFunction());
-    llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_"   + basic_block_prefix + level_txt, builder.getCurrentFunction());
-    //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
-
-    llvm::BasicBlock* bb_last_store=builder.getStoreBlock();
-
-    if (nullptr != bb_last_store)
+    if (nullptr != builder.getStoreBlock())
     {
         builder.CreateStartBRs();
         builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_intermediate);
     }
 
     builder.ClearInitializedValueList();
-
-    builder.SetIntermediateInsertPoint(bb_intermediate);
-    builder.SetLoadInsertPoint(bb_load);
-    builder.SetCalcInsertPoint(bb_calc);
-    builder.SetStoreInsertPoint(bb_store);
-    //builder.SetTerminalOpInsertPoint(bb_terminal_op);
-
     builder.SetCalcInsertPoint();
 
 
-    llvm::Value* alloc =builder.CreatePositionalOffset(basic_block_prefix + level_txt, - (int64_t)left_length_ );
+    llvm::Value* alloc =builder.CreatePositionalOffset(postfix, - (int64_t)left_length_ );
     //Value* alloc =builder.CreatePositionalOffset(basic_block_prefix + level_txt, 0);
     builder.SetStoreInsertPoint();
     llvm::Value* next_offset =builder.CreateAdd(builder.getCurrentOffsetValue(), builder.getInt64(1));
@@ -177,15 +168,15 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
             return false;
 
 
-        llvm::BasicBlock* bb_intermediate = llvm::BasicBlock::Create(context, "intermediate_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
-        llvm::BasicBlock* bb_load  = llvm::BasicBlock::Create(context, "load_"  + basic_block_prefix + level_txt, builder.getCurrentFunction());
-        llvm::BasicBlock* bb_calc  = llvm::BasicBlock::Create(context, "calc_"  + basic_block_prefix + level_txt, builder.getCurrentFunction());
-        llvm::BasicBlock* bb_store = llvm::BasicBlock::Create(context, "store_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
-        //BasicBlock* bb_terminal_op = BasicBlock::Create(context_, "terminal_op_" + basic_block_prefix + level_txt, builder.getCurrentFunction());
+        const std::string postfix = basic_block_prefix + level_txt;
 
-        llvm::BasicBlock* bb_last_store=builder.getStoreBlock();
+        llvm::BasicBlock * bb_intermediate = builder.CreateNewIntermediateBB(postfix);
+        builder.CreateNewLoadBB(postfix);
+        builder.CreateNewCalcBB(postfix);
+        builder.CreateNewStoreBB(postfix);
 
-        if (nullptr != bb_last_store) {
+
+        if (nullptr != builder.getStoreBlock()) {
             builder.CreateMidleBRs();
             builder.CreateCondBr(builder.getCurrentCMPRes(), builder.getLoadBlock(), bb_intermediate);
         } else {
@@ -195,14 +186,8 @@ bool Block::generateIR(IRGenerator &builder, CycleStageEn type, std::string basi
 
         builder.ClearInitializedValueList();
 
-        builder.SetIntermediateInsertPoint(bb_intermediate);
-        //builder.SetOffsetToZero();
+        builder.SetIntermediateInsertPoint();
         builder.SetOffsetTo(right_length_);
-
-        builder.SetLoadInsertPoint(bb_load);
-        builder.SetCalcInsertPoint(bb_calc);
-        builder.SetStoreInsertPoint(bb_store);
-        
         builder.SetLoadInsertPoint();
 
         llvm::Value* offset_alloc = builder.getCurrentOffsetValueAlloca();
@@ -849,6 +834,13 @@ bool Table::run() {
         for(auto& i : *buffer_group)
             *(buffers_array++)=i->getPtr();
     }
+
+    auto order = [](Buffer* a, Buffer* b){
+        return (a->getBufferType() > b->getBufferType());
+    };
+    for(auto list : *g_list_of_buffer_groups)
+        list->sort(order);
+
 
     Call(buffer_groups_array);
 
