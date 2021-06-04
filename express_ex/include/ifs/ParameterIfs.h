@@ -154,6 +154,7 @@ inline DataInterval createInterval(TimeInterval time_interval, double frequency,
 typedef void (*calcMinMaxTy)(char* carg, int64_t Number, double & dmax, double & dmin, bool init);
 
 
+class BareChunk;
 
 class DLL_EXPORT ParameterIfs {
 public:
@@ -166,7 +167,7 @@ public:
         if(interval_list_.size())
             type_=interval_list_[0].type;
         return type_; }
-    virtual const size_t getVirtualSize() = 0;
+    virtual const uint64_t getVirtualSize() = 0;
 
 
     virtual bool isAsync() = 0;
@@ -203,6 +204,15 @@ public:
             i.file_name = name + "_" + std::to_string(index++) + ".dat";
     }
 
+    int64_t getDataIntervalIndex(double time){
+        for(int64_t i = (current_interval_index_ < 0 ? 0 : current_interval_index_); i < numer_of_intervals_; i++){
+            DataInterval& a =interval_list_[(size_t)i];
+            if((a.time_interval.bgn <= time) && (time < (a.time_interval.end + additional_time_))) return i;
+            // this is very bad idea, but it will be here  until nikolay fixes the problem with interval boundaries
+        }
+        return -1;
+    }
+
 
     void setPath(std::string dirname) { work_directory_ = dirname; }
     void setLocal(bool val = true) { for (auto &i : interval_list_) i.local=val; }
@@ -234,9 +244,11 @@ protected:
 
     std::string                 name_ = "";
     TimeInterval                time_interval_;
-    std::vector<DataInterval>   interval_list_;
+    std::vector< DataInterval > interval_list_;
 
-    const double additional_time_ = 0.0009765625;
+
+
+    const double additional_time_ = 0.0009765625; // this is very bad idea, but it will be here  until nikolay fixes the problem with interval boundaries
     PRMTypesEn type_    = PRMTypesEn::PRM_TYPE_UNKNOWN;
 
     int64_t current_interval_index_  = 0;

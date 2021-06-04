@@ -4,6 +4,15 @@
 #include <map>
 #include "parameterIO.h"
 
+#ifdef _MSC_VER 
+#pragma warning( push )  
+#pragma warning(disable : 5208)
+#pragma warning( disable : 4251)
+#pragma warning( disable : 4100)
+#pragma warning( disable : 4189)
+#endif 
+
+
 class KEXParser;
 class Body;
 class BodyTemplate;
@@ -35,10 +44,13 @@ private:
     Body*   body_ = nullptr;
     Table*  table_ = nullptr;
 
-    std::string error_str_ ="";
+    std::string error_str_  = "";
 };
 
 
+#ifdef _MSC_VER 
+#pragma warning( pop )  
+#endif 
 
 
 #endif //EXPRESS_EX_H

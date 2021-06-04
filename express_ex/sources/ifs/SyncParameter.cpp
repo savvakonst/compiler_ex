@@ -9,7 +9,8 @@
 #include "parser/undefWarningIgnore.h"
 
 
- 
+#include "Intervals.h"
+
     
  
 SyncParameter::SyncParameter(
@@ -37,11 +38,34 @@ SyncParameter::SyncParameter(
     }
 
 
-    auto bgn=interval_list_.front().time_interval.bgn;
-    auto end=interval_list_.back().time_interval.end;
+    auto bgn = interval_list_.front().time_interval.bgn;
+    auto end = interval_list_.back().time_interval.end;
 
     time_interval_ ={bgn, end};
     calcExtendedInfo();
+
+
+    const DataInterval* last_interval = nullptr;
+    for(auto& i : interval_list_){
+        if(last_interval){
+            ex_size_t size =
+                (uint64_t)((i.time_interval.bgn - last_interval->time_interval.bgn) * frequency_) * sizeof_data_type_ - last_interval->time_interval.bgn;
+
+            if(size)
+                current_chunk_->addNextChunk(new BareChunk(size));
+        }
+        BareChunk* chunk = new Chunk(&i, &work_directory_);
+
+        if(chunk_){
+            chunk_ = chunk;
+            current_chunk_ = chunk;
+        }
+        else
+            current_chunk_->addNextChunk(chunk);
+        
+        last_interval = &i;
+    }
+    current_chunk_ = chunk_;
 }
 
 
@@ -53,6 +77,17 @@ SyncParameter::SyncParameter(
 ):SyncParameter(name, interval_list, save_fnames){
     time_interval_ = time_interval;
     calcExtendedInfo();
+}
+
+SyncParameter::~SyncParameter(){
+    current_chunk_ = chunk_;
+
+    while(current_chunk_){
+        chunk_ = current_chunk_->getNext();
+        delete current_chunk_;
+        current_chunk_ = chunk_;
+    }
+
 }
 
 
@@ -72,9 +107,7 @@ inline std::vector<int64_t> SyncParameter::read_dots(double* top_buffer_ptr, dou
 inline bool SyncParameter::open(bool open_to_write){
     if(opened_to_read_ | opened_to_write_)
         return false;
-    ifs_ = nullptr;
 
-    //seek(0);
     opened_to_read_ = !open_to_write;
     opened_to_write_= open_to_write;
     return opened_to_read_;
@@ -82,153 +115,53 @@ inline bool SyncParameter::open(bool open_to_write){
 
 inline bool SyncParameter::close(){
     if(opened_to_read_ | opened_to_write_){
-        if(ifs_)
-            ifs_->close();
-        ifs_ = nullptr;
         opened_to_read_  = false;
         opened_to_write_ = false;
         return true;
     }
+
     return false;
 }
 
 bool SyncParameter::seek(int64_t point_umber){
-
-    point_number_ = point_umber;
-    const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
-    current_interval_index_ = getDataIntervalIndex(current_time);
-
-    if(current_interval_index_ != -1){
-        openNewInterval((double)current_interval_index_);
-        int64_t local_start_pos =    (int)((current_time - getTimeInterval(current_interval_index_).bgn) * frequency_);
-        ifs_->seekg(local_start_pos * sizeof_data_type_);
-    }
-    return true;
+    return false;
 }
 
 
 
 uint64_t SyncParameter::write(char* data_buffer_ptr, uint64_t point_number){
-    if(!opened_to_write_)
-        open(true);
 
-    uint64_t points_to_write = point_number;
-    char* ptr = data_buffer_ptr;
-    //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
+    ex_size_t bytes_to_write = point_number * sizeof_data_type_;
+    ex_size_t written_bytes = 0;
 
-
-    while(points_to_write){
-        const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
-
-        int64_t di_index = getDataIntervalIndex(current_time);
-        int64_t local_points_to_write;
-
-        if(di_index == -1){
-
-            double end_time;
-            bool   is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
-
-            if(is_last_interval)
-                end_time = time_interval_.end + additional_time_;
-            else
-                end_time = getTimeInterval(current_interval_index_ + 1).bgn;
-
-            local_points_to_write = (int)((end_time - current_time) * frequency_);
-
-            if(points_to_write <= local_points_to_write)
-                local_points_to_write = points_to_write;
-            else if(is_last_interval){
-                return point_number - points_to_write + local_points_to_write;
-            }
-
-        } 
-        else{
-            DataInterval& di = interval_list_[(size_t)di_index];
-
-            int64_t local_start_pos = (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_write = (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
-
-            bool is_new_interval = (di_index != current_interval_index_) || (ifs_ == nullptr);
-            if(is_new_interval){
-                openNewInterval((double)di_index);
-                //ifs_->seekg(local_start_pos * sizeof_data_type_);
-            }
-
-            if(points_to_write <= local_points_to_write)
-                local_points_to_write = points_to_write;
-
-            if(calcMinMaxPtr)
-                calcMinMaxPtr(ptr, local_points_to_write, di.val_max, di.val_min, is_new_interval);
-
-            ifs_->write(ptr, local_points_to_write * sizeof_data_type_);
-        }
-
-        ptr += local_points_to_write * sizeof_data_type_;
-        points_to_write -= local_points_to_write;
-        point_number_ += local_points_to_write;
+    while((bytes_to_write != 0) && (current_chunk_ != nullptr)){
+        written_bytes = current_chunk_->write(data_buffer_ptr, bytes_to_write, calcMinMaxPtr);
+        bytes_to_write -= written_bytes;
+        current_chunk_ = current_chunk_->getNext();
     }
-
-    return point_number - points_to_write;
+    return written_bytes;
 }
 
+
 uint64_t SyncParameter::read(char* data_buffer_ptr, uint64_t point_number){
-    if(!opened_to_read_)
-        open();
 
-    uint64_t points_to_read = point_number;
-    uint8_t* ptr = (uint8_t*)data_buffer_ptr;
-    //std::vector<DataInterval> &interval_list = parameter_info_.interval_list;
-    // (*((ParameterIfs*)this)).point_number_ == 1704067;
-    while(points_to_read){
-        const double current_time = time_interval_.bgn + ((double)point_number_) / frequency_;
+    ex_size_t bytes_to_read = point_number * sizeof_data_type_;
+    ex_size_t readed_bytes = 0;
 
-        // debug cond =>{ points_to_read == 393088 }
-        int64_t di_index = getDataIntervalIndex(current_time);
-        int64_t local_points_to_read;
-
-        if(di_index == -1){
-
-            const bool is_last_interval = current_interval_index_ >= (numer_of_intervals_ - 1);
-
-            const double end_time = is_last_interval ?
-                time_interval_.end + additional_time_ :
-                getTimeInterval(current_interval_index_ + 1).bgn;
-
-            local_points_to_read = (int)((end_time - current_time) * frequency_);
-
-            if(points_to_read <= local_points_to_read)
-                local_points_to_read = points_to_read;
-            else if(is_last_interval){
-                memset(ptr, 0, (size_t)(local_points_to_read * sizeof_data_type_));
-                return point_number - points_to_read + local_points_to_read;
-            }
-
-            memset(ptr, 0, (size_t)(local_points_to_read * sizeof_data_type_));
-
-        }
-        else{
-            const DataInterval& di = interval_list_[(size_t)di_index];
-
-            int64_t local_start_pos = (int)((current_time - di.time_interval.bgn) * frequency_);
-            local_points_to_read = (int)((di.time_interval.end + additional_time_ - current_time) * frequency_);
-
-            if(di_index != current_interval_index_ || (ifs_ == nullptr)){
-                openNewInterval((double)di_index);
-                ifs_->seekp(local_start_pos * sizeof_data_type_);
-            }
-
-            if(points_to_read <= local_points_to_read)
-                local_points_to_read = points_to_read;
-
-            ifs_->read((char*)ptr, local_points_to_read * sizeof_data_type_);
-        }
-
-        ptr += local_points_to_read * sizeof_data_type_;
-        points_to_read -= local_points_to_read;
-        point_number_ += local_points_to_read;
+    while(( bytes_to_read != 0) && (current_chunk_ != nullptr)){
+        
+        readed_bytes = current_chunk_->read(data_buffer_ptr, bytes_to_read);
+        bytes_to_read -= readed_bytes;
+        current_chunk_ = current_chunk_->getNext();
     }
+    return readed_bytes;
+}
 
-    return point_number - points_to_read;
+const uint64_t SyncParameter::getVirtualSize(){
+    if(interval_list_.size() == 1)
+        return ((uint64_t)interval_list_.front().size) / sizeof_data_type_;
+    else
+        return (uint64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_));
 }
 
 
@@ -331,14 +264,6 @@ inline bool SyncParameter::calcExtendedInfo(){
     return true;
 }
 
-inline int64_t SyncParameter::getDataIntervalIndex(double time){
-    // debug cond => { time == 134.00097656250000 }
-    for(int64_t i = (current_interval_index_ < 0 ? 0 : current_interval_index_); i < numer_of_intervals_; i++){
-        DataInterval& a =interval_list_[(size_t)i];
-        if((a.time_interval.bgn <= time) && (time < (a.time_interval.end + additional_time_))) return i;
-    }
-    return -1;
-}
 
 inline void SyncParameter::openNewInterval(double di_index){
     if(ifs_){

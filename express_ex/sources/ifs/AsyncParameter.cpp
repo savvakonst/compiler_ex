@@ -52,6 +52,10 @@ AsyncParameter::AsyncParameter(
     time_interval_ = time_interval;
 }
 
+AsyncParameter::~AsyncParameter(){ 
+
+}
+
 void AsyncParameter::readFromBuffer(char* data_buffer_ptr, uint64_t points_to_read){
     DataInterval& di = interval_list_[current_interval_index_];
     if(calcMinMaxPtr)
@@ -163,14 +167,6 @@ void AsyncParameter::readRawData(uint64_t points_to_read){
     intermediate_buffer_.current_ptr += points_to_read * data_size_factor_;
 }
 
-inline int64_t AsyncParameter::getDataIntervalIndex(double time){
-    // debug cond => { time == 134.00097656250000 }
-    for(int64_t i = (current_interval_index_ < 0 ? 0 : current_interval_index_); i < numer_of_intervals_; i++){
-        DataInterval& a =interval_list_[(size_t)i];
-        if((a.time_interval.bgn <= time) && (time < (a.time_interval.end + additional_time_))) return i;
-    }
-    return -1;
-}
 
 inline void AsyncParameter::openNewInterval(){
     if(ifs_){
@@ -255,7 +251,7 @@ uint64_t AsyncParameter::read(char* data_buffer_ptr, uint64_t points_to_read){
     return base - points_to_read;
 }
 
-inline const size_t AsyncParameter::getVirtualSize(){
+inline const uint64_t AsyncParameter::getVirtualSize(){
     uint64_t total_size = 0;
     for(auto& interval : interval_list_)
         total_size = total_size + interval.size;

@@ -22,7 +22,7 @@ public:
     AsyncParameter(std::string name, const TimeInterval& time_interval,
                    const std::vector<DataInterval>& interval_list, bool save_fnames=true);
 
-    ~AsyncParameter(){}
+    ~AsyncParameter();
 
 
     bool isAsync(){ return true; }
@@ -39,7 +39,7 @@ public:
     uint64_t write(char* data_buffer_ptr, uint64_t point_number)override;
     uint64_t read(char* data_buffer_ptr, uint64_t point_number)override;
 
-    const size_t getVirtualSize() override;
+    const uint64_t getVirtualSize() override;
 
     ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
     ParameterIfs* enlargeFrequency(int64_t arg, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
@@ -97,11 +97,11 @@ protected:
         return interval_list_[(size_t)current_interval_index_];
     }
 
-    inline int64_t getDataIntervalIndex(double time);
+
 
     inline void openNewInterval();
 
-    struct IntermediateBuffer{
+    struct DLL_EXPORT IntermediateBuffer{
         char* base_ptr;
         char* current_ptr;
         //char* read_ptr;
@@ -137,8 +137,8 @@ protected:
         }
     };
 
-    IntermediateBuffer intermediate_buffer_=IntermediateBuffer();
-    IntermediateBuffer time_buffer_=IntermediateBuffer();
+    IntermediateBuffer intermediate_buffer_ = IntermediateBuffer();
+    IntermediateBuffer time_buffer_ = IntermediateBuffer();
 
     
     size_t unused_points_in_current_interval_ = 0;

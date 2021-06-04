@@ -13,6 +13,8 @@
 
 
 
+
+
 class DLL_EXPORT SyncParameter: public ParameterIfs{
 public:
 
@@ -21,7 +23,7 @@ public:
     SyncParameter(std::string name, const TimeInterval& time_interval,
                   const std::vector<DataInterval>& interval_list, bool save_fnames=true);
 
-    ~SyncParameter(){}
+    ~SyncParameter();
 
 
     bool isAsync(){return false;}
@@ -40,7 +42,7 @@ public:
     uint64_t write(char* data_buffer_ptr, uint64_t point_number) override;
     uint64_t read(char* data_buffer_ptr, uint64_t point_number) override;
 
-    const size_t getVirtualSize() override{ return (int64_t)(frequency_ * (time_interval_.end - time_interval_.bgn + additional_time_)); }
+    const uint64_t getVirtualSize() override;
 
     ParameterIfs* intersection(ParameterIfs* b, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="")override;
     SyncParameter* enlargeFrequency(int64_t arg, PRMTypesEn target_ty = PRMTypesEn::PRM_TYPE_UNKNOWN, const std::string& name="");
@@ -64,11 +66,13 @@ protected:
         return interval_list_[(size_t)current_interval_index_];
     }
 
-    inline int64_t getDataIntervalIndex(double time);
+
 
     void openNewInterval(double di_index);
 
-    double  frequency_  = -1;
+    BareChunk* chunk_;
+    BareChunk* current_chunk_;
+    double  frequency_  = -1; 
 };
 
 
