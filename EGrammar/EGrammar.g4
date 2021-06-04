@@ -28,7 +28,7 @@ tConvBInFunc: C_FLOAT|C_INT|C_DOUBLE|C_INT64;
 //cond: expr;
 left_expr: expr;
 right_expr: expr ;
-
+/// add some comment
 
 expr:   ID '(' (expr (','expr)*) ')'                                    # callFunc
     |   SPEC_SYM='convolve'  '('expr','expr(','STRINGLITERAL)?')'       # callConvolve
